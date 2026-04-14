@@ -205,7 +205,7 @@ export default function App(){
   return(
     <div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'Segoe UI',sans-serif",background:"#f0f4f9",color:"#1a2b4a",overflow:"hidden"}}>
       <TopBar user={user} page={page} setPage={setPage} landscape={landscape} setLandscape={setLandscape} setUser={setUser}/>
-      <div style={{flex:1,overflowY:"auto",padding:landscape?"24px 28px":"16px 14px"}}>
+      <div style={{flex:1,overflowY:"auto",padding:landscape?"24px 28px":"16px 14px",paddingBottom:"80px"}}>
         {page==="dashboard"  && <Dashboard {...ctx} landscape={landscape}/>}
         {page==="sites"      && <Sites {...ctx}/>}
         {page==="workers"    && <Workers {...ctx}/>}
@@ -228,43 +228,88 @@ export default function App(){
   );
 }
 
-// ── TOP BAR ───────────────────────────────────────────
+// ── TOP BAR + HAMBURGER + BOTTOM NAV ─────────────────
 function TopBar({user,page,setPage,landscape,setLandscape,setUser}){
-  const scrollRef=useRef(null);
-  const [dragging,setDragging]=useState(false);
-  const [startX,setStartX]=useState(0);
-  const [scrollLeft,setScrollLeft]=useState(0);
-  const onMD=e=>{setDragging(true);setStartX(e.pageX-(scrollRef.current?.offsetLeft||0));setScrollLeft(scrollRef.current?.scrollLeft||0);};
-  const onMM=e=>{if(!dragging||!scrollRef.current)return;e.preventDefault();const x=e.pageX-(scrollRef.current.offsetLeft||0);scrollRef.current.scrollLeft=scrollLeft-(x-startX);};
-  const onMU=()=>setDragging(false);
+  const [drawerOpen,setDrawerOpen]=useState(false);
+  const bottomNav=[
+    {id:"dashboard", label:"Dash",    icon:"📊"},
+    {id:"sites",     label:"Sites",   icon:"🏗️"},
+    {id:"workers",   label:"Workers", icon:"👷"},
+    {id:"attendance",label:"Attend",  icon:"✅"},
+    {id:"permit",    label:"Permit",  icon:"🪪"},
+    {id:"invoice",   label:"Invoice", icon:"🧾"},
+  ];
   return(
-    <div style={{background:"#0f3172",boxShadow:"0 2px 12px rgba(0,0,0,0.2)"}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-          <LogoHex size={36}/>
-          <div><div style={{fontSize:"14px",fontWeight:800,color:"#fff",lineHeight:1}}>VinoDhan</div><div style={{fontSize:"9px",color:"#f59e0b",letterSpacing:"2px"}}>COATING</div></div>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-          <div style={{display:"flex",alignItems:"center",gap:"7px",background:"rgba(255,255,255,0.1)",padding:"5px 10px",borderRadius:"20px"}}>
-            <div style={{width:"26px",height:"26px",borderRadius:"50%",background:"#1e50a0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"12px",color:"#fff",fontWeight:700}}>{user.name[0]}</div>
-            <div><div style={{fontSize:"11px",fontWeight:600,color:"#fff",lineHeight:1}}>{user.name}</div><div style={{fontSize:"10px",color:"#90afd4"}}>{user.role}</div></div>
+    <>
+      {/* ── SLIM TOP BAR ── */}
+      <div style={{background:"#0f3172",boxShadow:"0 2px 12px rgba(0,0,0,0.2)",flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px"}}>
+          {/* Left — Logo + Name */}
+          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+            <LogoHex size={32}/>
+            <div>
+              <div style={{fontSize:"14px",fontWeight:800,color:"#fff",lineHeight:1}}>VinoDhan</div>
+              <div style={{fontSize:"9px",color:"#f59e0b",letterSpacing:"2px"}}>COATING</div>
+            </div>
           </div>
-          <button onClick={()=>setLandscape(p=>!p)} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"8px",padding:"6px 10px",cursor:"pointer",color:"#fff",fontSize:"14px",display:"flex",alignItems:"center",gap:"4px"}}>
-            {landscape?"⬜":"📱"}<span style={{fontSize:"10px",fontWeight:600}}>{landscape?"Wide":"Tall"}</span>
-          </button>
-          <button onClick={()=>setUser(null)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:"8px",padding:"6px 10px",cursor:"pointer",color:"#90afd4",fontSize:"12px",fontWeight:600}}>🚪</button>
+          {/* Right — Avatar + Hamburger */}
+          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+            <div style={{width:"30px",height:"30px",borderRadius:"50%",background:"#1e50a0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"13px",color:"#fff",fontWeight:700}}>{user.name[0]}</div>
+            <button onClick={()=>setDrawerOpen(true)} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"8px",padding:"7px 10px",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1}}>☰</button>
+          </div>
         </div>
       </div>
-      <div ref={scrollRef} onMouseDown={onMD} onMouseMove={onMM} onMouseLeave={onMU} onMouseUp={onMU}
-        style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",padding:"0 10px 10px",gap:"6px",cursor:dragging?"grabbing":"grab",userSelect:"none"}}>
-        {NAV.map(item=>{const active=page===item.id;return(
-          <button key={item.id} onClick={()=>setPage(item.id)} style={{flexShrink:0,display:"flex",alignItems:"center",gap:"7px",padding:"9px 18px",borderRadius:"22px",border:"none",cursor:"pointer",background:active?"#fff":"rgba(255,255,255,0.1)",color:active?"#0f3172":"#fff",fontWeight:active?700:500,fontSize:"13px",boxShadow:active?"0 2px 8px rgba(0,0,0,0.15)":"none",whiteSpace:"nowrap"}}>
-            <span style={{fontSize:"15px"}}>{item.icon}</span>{item.label}
-          </button>
-        );})}
-        <div style={{flexShrink:0,width:"10px"}}/>
+
+      {/* ── HAMBURGER DRAWER ── */}
+      {drawerOpen&&<>
+        {/* Backdrop */}
+        <div onClick={()=>setDrawerOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000}}/>
+        {/* Drawer */}
+        <div style={{position:"fixed",top:0,right:0,width:"260px",height:"100%",background:"#0f3172",zIndex:1001,display:"flex",flexDirection:"column",boxShadow:"-4px 0 20px rgba(0,0,0,0.3)"}}>
+          {/* Header */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"20px 16px",borderBottom:"1px solid rgba(255,255,255,0.1)"}}>
+            <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+              <div style={{width:"40px",height:"40px",borderRadius:"50%",background:"#1e50a0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"16px",color:"#fff",fontWeight:700}}>{user.name[0]}</div>
+              <div>
+                <div style={{fontSize:"14px",fontWeight:700,color:"#fff"}}>{user.name}</div>
+                <div style={{fontSize:"11px",color:"#90afd4"}}>{user.role}</div>
+              </div>
+            </div>
+            <button onClick={()=>setDrawerOpen(false)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:"8px",padding:"6px 10px",cursor:"pointer",color:"#fff",fontSize:"16px"}}>✕</button>
+          </div>
+          {/* Orientation Toggle */}
+          <div style={{padding:"16px"}}>
+            <div style={{fontSize:"11px",fontWeight:600,color:"#90afd4",marginBottom:"10px",letterSpacing:"1px"}}>DISPLAY MODE</div>
+            <div style={{display:"flex",gap:"8px"}}>
+              <button onClick={()=>{setLandscape(true);setDrawerOpen(false);}} style={{flex:1,padding:"10px",borderRadius:"8px",border:"none",cursor:"pointer",background:landscape?"#1e50a0":"rgba(255,255,255,0.1)",color:"#fff",fontSize:"12px",fontWeight:600}}>⬜ Wide</button>
+              <button onClick={()=>{setLandscape(false);setDrawerOpen(false);}} style={{flex:1,padding:"10px",borderRadius:"8px",border:"none",cursor:"pointer",background:!landscape?"#1e50a0":"rgba(255,255,255,0.1)",color:"#fff",fontSize:"12px",fontWeight:600}}>📱 Tall</button>
+            </div>
+          </div>
+          {/* Spacer */}
+          <div style={{flex:1}}/>
+          {/* Logout */}
+          <div style={{padding:"16px",borderTop:"1px solid rgba(255,255,255,0.1)"}}>
+            <button onClick={()=>{setDrawerOpen(false);setUser(null);}} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"#fee2e2",color:"#991b1b",fontSize:"14px",fontWeight:700}}>
+              🚪 Logout
+            </button>
+          </div>
+        </div>
+      </>}
+
+      {/* ── FIXED BOTTOM TAB BAR ── */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0f3172",borderTop:"1px solid rgba(255,255,255,0.1)",display:"flex",zIndex:900,boxShadow:"0 -2px 12px rgba(0,0,0,0.2)"}}>
+        {bottomNav.map(item=>{
+          const active=page===item.id;
+          return(
+            <button key={item.id} onClick={()=>setPage(item.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"8px 2px",border:"none",cursor:"pointer",background:"transparent",color:active?"#f59e0b":"#90afd4",transition:"all .15s",minWidth:0}}>
+              <span style={{fontSize:"18px",lineHeight:1,marginBottom:"3px"}}>{item.icon}</span>
+              <span style={{fontSize:"9px",fontWeight:active?700:400,whiteSpace:"nowrap"}}>{item.label}</span>
+              {active&&<div style={{width:"20px",height:"2px",background:"#f59e0b",borderRadius:"2px",marginTop:"3px"}}/>}
+            </button>
+          );
+        })}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -676,6 +721,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
   const [repYear,setRepYear]=useState(new Date().getFullYear());
   const [repClient,setRepClient]=useState("Swathi Engineering Agency");
   const [repPlace,setRepPlace]=useState("Chennai");
+  const [repNameOfWork,setRepNameOfWork]=useState("");
   const [repFromDate,setRepFromDate]=useState(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}-01`);
   const [repToDate,setRepToDate]=useState(today);
 
@@ -744,6 +790,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
             <div><label style={S.lbl}>Month</label><select value={repMonth} onChange={e=>setRepMonth(Number(e.target.value))} style={S.inp}>{MONTHS.map((m,i)=><option key={i} value={i}>{m}</option>)}</select></div>
             <div><label style={S.lbl}>Year</label><select value={repYear} onChange={e=>setRepYear(Number(e.target.value))} style={S.inp}>{Array.from({length:5},(_,i)=>new Date().getFullYear()-2+i).map(y=><option key={y}>{y}</option>)}</select></div>
             <div><label style={S.lbl}>Client Name</label><input value={repClient} onChange={e=>setRepClient(e.target.value)} style={S.inp}/></div>
+            <div><label style={S.lbl}>Name of Work</label><input value={repNameOfWork} onChange={e=>setRepNameOfWork(e.target.value)} placeholder="e.g. Epoxy Floor Coating" style={S.inp}/></div>
             <div><label style={S.lbl}>Place</label><input value={repPlace} onChange={e=>setRepPlace(e.target.value)} style={S.inp}/></div>
             <div><label style={S.lbl}>Work From Date</label><input type="date" value={repFromDate} onChange={e=>setRepFromDate(e.target.value)} style={S.inp}/></div>
             <div><label style={S.lbl}>Work To Date</label><input type="date" value={repToDate} onChange={e=>setRepToDate(e.target.value)} style={S.inp}/></div>
@@ -756,7 +803,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
             <div style={{fontSize:"12px",color:"#6b84a3",marginTop:"4px"}}>{MONTHS[repMonth]} {repYear}</div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 20px",marginBottom:"20px",fontSize:"13px"}}>
-            {[["Client",repClient],["Site Name",repSiteObj?.name||"—"],["Place",repPlace],["Duration",`${fromDate} to ${toDate}`]].map(([lbl,val])=>(
+            {[["Client",repClient],["Site Name",repSiteObj?.name||"—"],["Name of Work",repNameOfWork||"—"],["Place",repPlace],["Duration",`${fromDate} to ${toDate}`]].map(([lbl,val])=>(
               <div key={lbl} style={{display:"flex",gap:"8px",padding:"4px 0",borderBottom:"1px solid #f0f4f9"}}>
                 <span style={{fontWeight:600,color:"#6b84a3",minWidth:"90px"}}>{lbl}</span>
                 <span style={{color:"#1a2b4a"}}>: {val}</span>
