@@ -1,82 +1,55 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
-const printCSS = `@page{size:A4;margin:15mm;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:20px;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:6px 8px;}img{max-width:100%;object-fit:cover;}`;
+// ── PRINT ─────────────────────────────────────────────
+const printCSS = `@page{size:A4;margin:15mm;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:20px;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:6px 8px;}img{max-width:100%;object-fit:cover;}.no-print{display:none!important;}`;
 const se = document.createElement("style"); se.innerText=""; document.head.appendChild(se);
+const printContentArea = document.createElement("div");
+printContentArea.id="print-content-area";
+printContentArea.style.cssText="display:none;font-family:'Segoe UI',sans-serif;color:#1a2b4a;";
+document.body.appendChild(printContentArea);
 
 function printSection(id) {
   const el = document.getElementById(id);
   if(!el) return;
-
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>VinoDhan Coating</title>
-  <style>
-    @page{size:A4;margin:15mm;}
-    body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:20px;margin:0;}
-    table{border-collapse:collapse;width:100%;}
-    th,td{padding:6px 8px;}
-    img{max-width:100%;object-fit:cover;}
-    .no-print{display:none!important;}
-  </style></head>
-  <body onload="window.print();">${el.outerHTML}</body></html>`;
-
-  // Remove existing overlay
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>VinoDhan Coating</title><style>${printCSS}</style></head><body onload="window.print();">${el.outerHTML}</body></html>`;
   const existing = document.getElementById("print-overlay");
   if(existing) document.body.removeChild(existing);
-
   const overlay = document.createElement("div");
-  overlay.id = "print-overlay";
-  overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;";
-
-  // Top bar
+  overlay.id="print-overlay";
+  overlay.style.cssText="position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;";
   const bar = document.createElement("div");
-  bar.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;flex-wrap:wrap;";
-
+  bar.style.cssText="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;flex-wrap:wrap;";
   const backBtn = document.createElement("button");
-  backBtn.innerText = "← Back";
-  backBtn.style.cssText = "background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
-  backBtn.onclick = () => document.body.removeChild(overlay);
-
+  backBtn.innerText="← Back";
+  backBtn.style.cssText="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
+  backBtn.onclick=()=>document.body.removeChild(overlay);
   const title = document.createElement("div");
-  title.innerText = "Preview — scroll to review";
-  title.style.cssText = "color:#fff;font-size:13px;font-weight:600;flex:1;text-align:center;";
-
-  const btnGroup = document.createElement("div");
-  btnGroup.style.cssText = "display:flex;gap:8px;";
-
-  // Download button — saves as .html file, open in browser and Ctrl+P
+  title.innerText="Preview — scroll to review";
+  title.style.cssText="color:#fff;font-size:13px;font-weight:600;flex:1;text-align:center;";
   const dlBtn = document.createElement("button");
-  dlBtn.innerText = "⬇️ Download & Print";
-  dlBtn.style.cssText = "background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
-  dlBtn.onclick = () => {
-    const encoded = "data:text/html;charset=utf-8," + encodeURIComponent(html);
-    const a = document.createElement("a");
-    a.href = encoded;
-    a.download = "VinoDhan-Document.html";
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  dlBtn.innerText="⬇️ Download & Print";
+  dlBtn.style.cssText="background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
+  dlBtn.onclick=()=>{
+    const encoded="data:text/html;charset=utf-8,"+encodeURIComponent(html);
+    const a=document.createElement("a");
+    a.href=encoded; a.download="VinoDhan-Document.html";
+    a.style.display="none";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
-
-  btnGroup.appendChild(dlBtn);
-  bar.appendChild(backBtn);
-  bar.appendChild(title);
-  bar.appendChild(btnGroup);
-
-  // Scrollable preview
-  const content = document.createElement("div");
-  content.style.cssText = "flex:1;overflow-y:auto;padding:24px;background:#f0f4f9;";
-  content.innerHTML = el.outerHTML;
-
-  overlay.appendChild(bar);
-  overlay.appendChild(content);
+  bar.appendChild(backBtn); bar.appendChild(title); bar.appendChild(dlBtn);
+  const content=document.createElement("div");
+  content.style.cssText="flex:1;overflow-y:auto;padding:24px;background:#f0f4f9;";
+  content.innerHTML=el.outerHTML;
+  overlay.appendChild(bar); overlay.appendChild(content);
   document.body.appendChild(overlay);
 }
 
+// ── CONSTANTS ─────────────────────────────────────────
 const USERS = [
-  { id:"owner", name:"DS",              role:"Owner",          password:"owner123" },
-  { id:"exec",  name:"Vinoth Kumar. N", role:"Site Executive", password:"exec123"  },
+  { id:"DHANS1416",      name:"DS",              role:"Owner",          password:"Riseup1416" },
+  { id:"Site Executive", name:"Vinoth Kumar. N", role:"Site Executive", password:"Vinoth1024" },
 ];
-const USER_PHONES = { owner:"98XXXXXX01", exec:"98XXXXXX02" };
+const USER_PHONES = { "DHANS1416":"9488246119", "Site Executive":"9486971024" };
 const CATEGORIES = ["Applicator","Semi-Applicator","Helper"];
 const CAT_COLOR = {
   "Applicator":      { bg:"#dbeafe", color:"#1e40af" },
@@ -111,12 +84,16 @@ const S = {
   badge:cat=>({...CAT_COLOR[cat],fontSize:"11px",fontWeight:600,borderRadius:"20px",padding:"2px 10px",display:"inline-block"}),
 };
 
+// ── STORAGE ───────────────────────────────────────────
+function loadS(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback;}catch{return fallback;}}
+function saveS(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch{}}
+
 // ── LOGO ──────────────────────────────────────────────
-function LogoHex({ size=48 }) {
-  const cx=size/2, r=size*0.46, ri=size*0.38;
+function LogoHex({size=48}){
+  const cx=size/2,r=size*0.46,ri=size*0.38;
   const pts=rad=>Array.from({length:6},(_,i)=>{const a=Math.PI/180*(60*i-30);return `${cx+rad*Math.cos(a)},${cx+rad*Math.sin(a)}`;}).join(" ");
-  const lw=size*0.38, lx=cx-lw/2, lh=size*0.072, dotY=cx+size*0.16, dotCount=5, dotGap=lw/(dotCount+1);
-  return (
+  const lw=size*0.38,lx=cx-lw/2,lh=size*0.072,dotY=cx+size*0.16,dotCount=5,dotGap=lw/(dotCount+1);
+  return(
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <defs>
         <linearGradient id="lg1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#d97706"/><stop offset="100%" stopColor="#f59e0b"/></linearGradient>
@@ -148,25 +125,16 @@ function EditField({value,onChange,style={},placeholder="Click to edit"}){
 }
 
 function PhotoUpload({value,onChange}){
-  const handle=e=>{
-    e.stopPropagation();
-    const f=e.target.files?.[0];
-    if(!f)return;
-    const r=new FileReader();
-    r.onload=ev=>onChange(ev.target.result);
-    r.readAsDataURL(f);
-  };
+  const handle=e=>{e.stopPropagation();const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>onChange(ev.target.result);r.readAsDataURL(f);};
   return(
     <div style={{marginBottom:"10px"}} onClick={e=>e.stopPropagation()}>
       <label style={S.lbl}>Photo</label>
       <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-        {value
-          ?<img src={value} style={{width:"56px",height:"56px",borderRadius:"8px",objectFit:"cover",border:"1.5px solid #bfdbfe"}}/>
-          :<div style={{width:"56px",height:"56px",borderRadius:"8px",background:"#f0f4f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px",border:"1.5px dashed #bfdbfe"}}>👤</div>
-        }
+        {value?<img src={value} style={{width:"56px",height:"56px",borderRadius:"8px",objectFit:"cover",border:"1.5px solid #bfdbfe"}}/>
+        :<div style={{width:"56px",height:"56px",borderRadius:"8px",background:"#f0f4f9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px",border:"1.5px dashed #bfdbfe"}}>👤</div>}
         <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
           <label onClick={e=>e.stopPropagation()} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"6px 12px",fontSize:"12px",cursor:"pointer",display:"inline-block"}}>
-            📷 Upload Photo
+            📷 {value?"Change":"Upload"} Photo
             <input type="file" accept="image/*" onChange={handle} style={{display:"none"}} onClick={e=>e.stopPropagation()}/>
           </label>
           {value&&<button type="button" onClick={e=>{e.stopPropagation();onChange("");}} style={{...S.btn("#fee2e2","#991b1b"),padding:"6px 10px",fontSize:"12px"}}>✗</button>}
@@ -177,36 +145,85 @@ function PhotoUpload({value,onChange}){
 }
 
 // ── ROOT ──────────────────────────────────────────────
-export default function App() {
-  const [user,setUser]         = useState(null);
-  const [page,setPage]         = useState("dashboard");
+export default function App(){
+  const [user,setUser]           = useState(null);
+  const [page,setPage]           = useState("dashboard");
   const [landscape,setLandscape] = useState(true);
-  const [workers,setWorkers]   = useState(INIT_WORKERS);
-  const [execProfile,setExecProfile] = useState(EMPTY_EXEC);
-  const [sites,setSites]       = useState([{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}]);
-  const [attendance,setAttendance] = useState({});
-  const [assignments,setAssignments] = useState({1:{1:"Applicator",2:"Applicator",3:"Semi-Applicator",4:"Helper",5:"Helper",6:"Helper"}});
-  const [invoices,setInvoices] = useState([]);
-  const [company,setCompany]   = useState(INIT_COMPANY);
-  const [client,setClient]     = useState(INIT_CLIENT);
-  const [bank,setBank]         = useState(INIT_BANK);
-  const [passwords,setPasswords] = useState({owner:"owner123",exec:"exec123"});
+  const [showWarning,setShowWarning] = useState(false);
+  const [countdown,setCountdown] = useState(30);
+  const [workers,setWorkers]     = useState(()=>loadS("vd_workers",INIT_WORKERS));
+  const [execProfile,setExecProfile] = useState(()=>loadS("vd_exec",EMPTY_EXEC));
+  const [sites,setSites]         = useState(()=>loadS("vd_sites",[{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}]));
+  const [attendance,setAttendance] = useState(()=>loadS("vd_attendance",{}));
+  const [assignments,setAssignments] = useState(()=>loadS("vd_assignments",{1:{1:"Applicator",2:"Applicator",3:"Semi-Applicator",4:"Helper",5:"Helper",6:"Helper"}}));
+  const [invoices,setInvoices]   = useState(()=>loadS("vd_invoices",[]));
+  const [company,setCompany]     = useState(()=>loadS("vd_company",INIT_COMPANY));
+  const [client,setClient]       = useState(()=>loadS("vd_client",INIT_CLIENT));
+  const [bank,setBank]           = useState(()=>loadS("vd_bank",INIT_BANK));
+  const [passwords,setPasswords] = useState(()=>loadS("vd_passwords",{"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"}));
+
+  useEffect(()=>saveS("vd_workers",workers),[workers]);
+  useEffect(()=>saveS("vd_exec",execProfile),[execProfile]);
+  useEffect(()=>saveS("vd_sites",sites),[sites]);
+  useEffect(()=>saveS("vd_attendance",attendance),[attendance]);
+  useEffect(()=>saveS("vd_assignments",assignments),[assignments]);
+  useEffect(()=>saveS("vd_invoices",invoices),[invoices]);
+  useEffect(()=>saveS("vd_company",company),[company]);
+  useEffect(()=>saveS("vd_client",client),[client]);
+  useEffect(()=>saveS("vd_bank",bank),[bank]);
+  useEffect(()=>saveS("vd_passwords",passwords),[passwords]);
+
+  const logoutTimer=useRef(null);
+  const warningTimer=useRef(null);
+  const countdownRef=useRef(null);
+
+  const doLogout=useCallback(()=>{setShowWarning(false);setUser(null);setPage("dashboard");},[]);
+
+  const resetTimer=useCallback(()=>{
+    if(!user)return;
+    clearTimeout(logoutTimer.current);clearTimeout(warningTimer.current);clearInterval(countdownRef.current);
+    setShowWarning(false);setCountdown(30);
+    warningTimer.current=setTimeout(()=>{
+      setShowWarning(true);setCountdown(30);
+      countdownRef.current=setInterval(()=>setCountdown(p=>{if(p<=1){clearInterval(countdownRef.current);return 0;}return p-1;}),1000);
+      logoutTimer.current=setTimeout(doLogout,30000);
+    },30000);
+  },[user,doLogout]);
+
+  useEffect(()=>{
+    if(!user)return;
+    const events=["mousemove","mousedown","keydown","touchstart","scroll","click"];
+    events.forEach(e=>window.addEventListener(e,resetTimer,true));
+    resetTimer();
+    return()=>{events.forEach(e=>window.removeEventListener(e,resetTimer,true));clearTimeout(logoutTimer.current);clearTimeout(warningTimer.current);clearInterval(countdownRef.current);};
+  },[user,resetTimer]);
 
   if(!user) return <LoginPage onLogin={setUser} passwords={passwords} setPasswords={setPasswords}/>;
 
   const ctx={user,workers,setWorkers,execProfile,setExecProfile,sites,setSites,attendance,setAttendance,assignments,setAssignments,invoices,setInvoices,company,setCompany,client,setClient,bank,setBank};
 
-  return (
+  return(
     <div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'Segoe UI',sans-serif",background:"#f0f4f9",color:"#1a2b4a",overflow:"hidden"}}>
       <TopBar user={user} page={page} setPage={setPage} landscape={landscape} setLandscape={setLandscape} setUser={setUser}/>
-      <div style={{flex:1,overflowY:"auto",padding:landscape?"24px 28px":"16px 14px"}} className="no-print">
+      <div style={{flex:1,overflowY:"auto",padding:landscape?"24px 28px":"16px 14px"}}>
         {page==="dashboard"  && <Dashboard {...ctx} landscape={landscape}/>}
         {page==="sites"      && <Sites {...ctx}/>}
         {page==="workers"    && <Workers {...ctx}/>}
         {page==="attendance" && <Attendance {...ctx}/>}
-        {page==="permit"     && <EntryPermit {...ctx} setWorkers={ctx.setWorkers}/>}
+        {page==="permit"     && <EntryPermit {...ctx}/>}
         {page==="invoice"    && <Invoice {...ctx}/>}
       </div>
+      {showWarning&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:99998}}>
+          <div style={{background:"#fff",borderRadius:"16px",padding:"32px",width:"300px",textAlign:"center",boxShadow:"0 8px 40px rgba(0,0,0,0.3)"}}>
+            <div style={{fontSize:"40px",marginBottom:"12px"}}>⏱️</div>
+            <h3 style={{margin:"0 0 8px",fontSize:"16px",color:"#1a2b4a"}}>Session Expiring</h3>
+            <p style={{fontSize:"13px",color:"#6b84a3",margin:"0 0 8px"}}>You will be logged out due to inactivity in</p>
+            <div style={{fontSize:"36px",fontWeight:800,color:"#dc2626",marginBottom:"20px"}}>{countdown}s</div>
+            <button onClick={()=>{resetTimer();setShowWarning(false);}} style={{...S.btn("#1e50a0"),width:"100%",padding:"12px",fontSize:"14px"}}>Stay Logged In</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -221,7 +238,7 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser}){
   const onMM=e=>{if(!dragging||!scrollRef.current)return;e.preventDefault();const x=e.pageX-(scrollRef.current.offsetLeft||0);scrollRef.current.scrollLeft=scrollLeft-(x-startX);};
   const onMU=()=>setDragging(false);
   return(
-    <div style={{background:"#0f3172",boxShadow:"0 2px 12px rgba(0,0,0,0.2)"}} className="no-print">
+    <div style={{background:"#0f3172",boxShadow:"0 2px 12px rgba(0,0,0,0.2)"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px"}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
           <LogoHex size={36}/>
@@ -232,7 +249,7 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser}){
             <div style={{width:"26px",height:"26px",borderRadius:"50%",background:"#1e50a0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"12px",color:"#fff",fontWeight:700}}>{user.name[0]}</div>
             <div><div style={{fontSize:"11px",fontWeight:600,color:"#fff",lineHeight:1}}>{user.name}</div><div style={{fontSize:"10px",color:"#90afd4"}}>{user.role}</div></div>
           </div>
-          <button onClick={()=>setLandscape(p=>!p)} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"8px",padding:"6px 10px",cursor:"pointer",color:"#fff",fontSize:"16px",display:"flex",alignItems:"center",gap:"4px"}}>
+          <button onClick={()=>setLandscape(p=>!p)} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"8px",padding:"6px 10px",cursor:"pointer",color:"#fff",fontSize:"14px",display:"flex",alignItems:"center",gap:"4px"}}>
             {landscape?"⬜":"📱"}<span style={{fontSize:"10px",fontWeight:600}}>{landscape?"Wide":"Tall"}</span>
           </button>
           <button onClick={()=>setUser(null)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:"8px",padding:"6px 10px",cursor:"pointer",color:"#90afd4",fontSize:"12px",fontWeight:600}}>🚪</button>
@@ -240,12 +257,11 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser}){
       </div>
       <div ref={scrollRef} onMouseDown={onMD} onMouseMove={onMM} onMouseLeave={onMU} onMouseUp={onMU}
         style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",padding:"0 10px 10px",gap:"6px",cursor:dragging?"grabbing":"grab",userSelect:"none"}}>
-        {NAV.map(item=>{
-          const active=page===item.id;
-          return <button key={item.id} onClick={()=>setPage(item.id)} style={{flexShrink:0,display:"flex",alignItems:"center",gap:"7px",padding:"9px 18px",borderRadius:"22px",border:"none",cursor:"pointer",background:active?"#fff":"rgba(255,255,255,0.1)",color:active?"#0f3172":"#fff",fontWeight:active?700:500,fontSize:"13px",boxShadow:active?"0 2px 8px rgba(0,0,0,0.15)":"none",whiteSpace:"nowrap"}}>
+        {NAV.map(item=>{const active=page===item.id;return(
+          <button key={item.id} onClick={()=>setPage(item.id)} style={{flexShrink:0,display:"flex",alignItems:"center",gap:"7px",padding:"9px 18px",borderRadius:"22px",border:"none",cursor:"pointer",background:active?"#fff":"rgba(255,255,255,0.1)",color:active?"#0f3172":"#fff",fontWeight:active?700:500,fontSize:"13px",boxShadow:active?"0 2px 8px rgba(0,0,0,0.15)":"none",whiteSpace:"nowrap"}}>
             <span style={{fontSize:"15px"}}>{item.icon}</span>{item.label}
-          </button>;
-        })}
+          </button>
+        );})}
         <div style={{flexShrink:0,width:"10px"}}/>
       </div>
     </div>
@@ -254,16 +270,29 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser}){
 
 // ── LOGIN ─────────────────────────────────────────────
 function LoginPage({onLogin,passwords,setPasswords}){
-  const [mode,setMode]=useState("login");
-  const [id,setId]=useState(""); const [pw,setPw]=useState(""); const [err,setErr]=useState("");
-  const [fStep,setFStep]=useState(1); const [fUser,setFUser]=useState(""); const [genOtp,setGenOtp]=useState("");
-  const [entOtp,setEntOtp]=useState(""); const [newPw,setNewPw]=useState(""); const [cnfPw,setCnfPw]=useState("");
-  const [fErr,setFErr]=useState(""); const [fMsg,setFMsg]=useState("");
-  const login=()=>{const u=USERS.find(u=>u.id===id&&u.password===passwords[id]);u?onLogin(u):setErr("Invalid User ID or Password.");};
+  const [mode,setMode]     = useState("login");
+  const [id,setId]         = useState("");
+  const [pw,setPw]         = useState("");
+  const [err,setErr]       = useState("");
+  const [showPw,setShowPw] = useState(false);
+  const [fStep,setFStep]   = useState(1);
+  const [fUser,setFUser]   = useState("");
+  const [genOtp,setGenOtp] = useState("");
+  const [entOtp,setEntOtp] = useState("");
+  const [newPw,setNewPw]   = useState("");
+  const [cnfPw,setCnfPw]   = useState("");
+  const [fErr,setFErr]     = useState("");
+  const [fMsg,setFMsg]     = useState("");
+  const [showNewPw,setShowNewPw] = useState(false);
+  const [showCnfPw,setShowCnfPw] = useState(false);
+
+  const login=()=>{const u=USERS.find(u=>u.id===id&&u.password===passwords[id]);u?onLogin(u):setErr("Invalid User ID or Password. Password is case sensitive.");};
   const sendOtp=()=>{if(!fUser){setFErr("Please select a user.");return;}const otp=String(Math.floor(100000+Math.random()*900000));setGenOtp(otp);setFStep(2);setFErr("");setFMsg(`OTP sent to ${USER_PHONES[fUser]} — Demo OTP: ${otp}`);};
   const verifyOtp=()=>{entOtp===genOtp?(setFStep(3),setFErr(""),setFMsg("")):setFErr("Incorrect OTP. Try again.");};
-  const resetPw=()=>{if(!newPw||newPw.length<6){setFErr("Min 6 characters.");return;}if(newPw!==cnfPw){setFErr("Passwords do not match.");return;}setPasswords(p=>({...p,[fUser]:newPw}));setMode("login");setFStep(1);setFUser("");setEntOtp("");setNewPw("");setCnfPw("");setGenOtp("");setFErr("");setFMsg("");alert("✅ Password reset! Log in with new password.");};
+  const resetPw=()=>{if(!newPw||newPw.length<6){setFErr("Min 6 characters.");return;}if(newPw!==cnfPw){setFErr("Passwords do not match.");return;}setPasswords(p=>({...p,[fUser]:newPw}));setMode("login");setFStep(1);setFUser("");setEntOtp("");setNewPw("");setCnfPw("");setGenOtp("");setFErr("");setFMsg("");alert("✅ Password reset! Please log in with your new password.");};
   const resetForgot=()=>{setMode("login");setFStep(1);setFUser("");setEntOtp("");setNewPw("");setCnfPw("");setGenOtp("");setFErr("");setFMsg("");};
+
+  const inpDark={...S.inp,background:"rgba(255,255,255,0.08)",color:"#fff",border:"1.5px solid rgba(255,255,255,0.2)"};
 
   return(
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628 0%,#1e3a5f 50%,#0f2040 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI',sans-serif",padding:"20px",position:"relative",overflow:"hidden"}}>
@@ -271,35 +300,44 @@ function LoginPage({onLogin,passwords,setPasswords}){
         {Array.from({length:8},(_,row)=>Array.from({length:6},(_,col)=>{
           const x=col*70+(row%2)*35,y=row*60;
           const pts=Array.from({length:6},(_,i)=>{const a=Math.PI/180*(60*i-30);return `${x+28*Math.cos(a)},${y+28*Math.sin(a)}`;}).join(" ");
-          return <polygon key={`${row}-${col}`} points={pts} fill="none" stroke="#ffffff" strokeWidth="0.5"/>;
+          return <polygon key={`${row}-${col}`} points={pts} fill="none" stroke="#fff" strokeWidth="0.5"/>;
         })).flat()}
       </svg>
       <div style={{position:"absolute",top:"35%",left:"50%",transform:"translate(-50%,-50%)",width:"300px",height:"300px",background:"radial-gradient(circle,rgba(217,119,6,0.12) 0%,transparent 70%)",pointerEvents:"none"}}/>
-      <div style={{textAlign:"center",marginBottom:"32px",zIndex:1}}>
-        <div style={{display:"flex",justifyContent:"center",marginBottom:"16px"}}><LogoHex size={110}/></div>
-        <h1 style={{margin:"0 0 4px",fontSize:"30px",fontWeight:800,color:"#ffffff",letterSpacing:"2px"}}>VinoDhan</h1>
-        <div style={{fontSize:"12px",fontWeight:600,color:"#f59e0b",letterSpacing:"6px",marginBottom:"10px"}}>COATING</div>
-        <div style={{width:"160px",height:"1px",background:"linear-gradient(90deg,transparent,#f59e0b,transparent)",margin:"0 auto 10px"}}/>
+
+      {/* Logo splash */}
+      <div style={{textAlign:"center",marginBottom:"28px",zIndex:1}}>
+        <div style={{display:"flex",justifyContent:"center",marginBottom:"14px"}}><LogoHex size={100}/></div>
+        <h1 style={{margin:"0 0 4px",fontSize:"28px",fontWeight:800,color:"#fff",letterSpacing:"2px"}}>VinoDhan</h1>
+        <div style={{fontSize:"12px",fontWeight:600,color:"#f59e0b",letterSpacing:"6px",marginBottom:"8px"}}>COATING</div>
+        <div style={{width:"160px",height:"1px",background:"linear-gradient(90deg,transparent,#f59e0b,transparent)",margin:"0 auto 8px"}}/>
         <p style={{margin:0,fontSize:"11px",color:"#93c5fd",letterSpacing:"1px"}}>Specialised Epoxy Coating Services</p>
-        <div style={{display:"flex",justifyContent:"center",gap:"16px",marginTop:"8px"}}>
+        <div style={{display:"flex",justifyContent:"center",gap:"14px",marginTop:"6px"}}>
           {["Anti-Shock","Anti-Skid","Slip Resistant"].map(t=><span key={t} style={{fontSize:"9px",color:"#64748b",letterSpacing:"1px"}}>{t}</span>)}
         </div>
       </div>
+
+      {/* Card */}
       <div style={{background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",borderRadius:"20px",padding:"28px",width:"100%",maxWidth:"360px",border:"1px solid rgba(255,255,255,0.12)",zIndex:1}}>
         {mode==="login"&&<>
           <div style={{textAlign:"center",marginBottom:"20px"}}>
             <h2 style={{margin:0,fontSize:"16px",fontWeight:700,color:"#fff"}}>Welcome Back</h2>
             <p style={{margin:"4px 0 0",fontSize:"11px",color:"#93c5fd"}}>Sign in to continue</p>
           </div>
-          <div style={{marginBottom:"12px"}}><label style={{...S.lbl,color:"#93c5fd"}}>USER ID</label>
-            <select value={id} onChange={e=>setId(e.target.value)} style={{...S.inp,background:"rgba(255,255,255,0.08)",color:"#fff",border:"1.5px solid rgba(255,255,255,0.2)"}}>
-              <option value="" style={{background:"#1e3a5f"}}>Select user...</option>
-              <option value="owner" style={{background:"#1e3a5f"}}>Owner (DS)</option>
-              <option value="exec" style={{background:"#1e3a5f"}}>Site Executive (Vinoth Kumar)</option>
+          <div style={{marginBottom:"12px"}}>
+            <label style={{...S.lbl,color:"#93c5fd"}}>USER ID</label>
+            <select value={id} onChange={e=>setId(e.target.value)} style={inpDark}>
+              <option value="" style={{background:"#1e3a5f"}}>Select User ID...</option>
+              <option value="DHANS1416" style={{background:"#1e3a5f"}}>DHANS1416</option>
+              <option value="Site Executive" style={{background:"#1e3a5f"}}>Site Executive</option>
             </select>
           </div>
-          <div style={{marginBottom:"8px"}}><label style={{...S.lbl,color:"#93c5fd"}}>PASSWORD</label>
-            <input type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()} placeholder="Enter password" style={{...S.inp,background:"rgba(255,255,255,0.08)",color:"#fff",border:"1.5px solid rgba(255,255,255,0.2)"}}/>
+          <div style={{marginBottom:"8px"}}>
+            <label style={{...S.lbl,color:"#93c5fd"}}>PASSWORD</label>
+            <div style={{position:"relative"}}>
+              <input type={showPw?"text":"password"} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()} placeholder="Enter password" style={{...inpDark,paddingRight:"42px"}}/>
+              <span onClick={()=>setShowPw(p=>!p)} style={{position:"absolute",right:"12px",top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:"16px",userSelect:"none"}}>{showPw?"🙈":"👁️"}</span>
+            </div>
           </div>
           <div style={{textAlign:"right",marginBottom:"16px"}}>
             <span onClick={()=>setMode("forgot")} style={{fontSize:"12px",color:"#f59e0b",cursor:"pointer",fontWeight:700,textDecoration:"underline",textUnderlineOffset:"3px"}}>Forgot Password / ID?</span>
@@ -307,6 +345,7 @@ function LoginPage({onLogin,passwords,setPasswords}){
           {err&&<ErrBox msg={err}/>}
           <button onClick={login} style={{...S.btn("#f59e0b","#1a1a1a"),width:"100%",padding:"12px",fontSize:"14px",fontWeight:800}}>Login →</button>
         </>}
+
         {mode==="forgot"&&<>
           <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"18px"}}>
             <span onClick={resetForgot} style={{cursor:"pointer",fontSize:"18px",color:"#93c5fd"}}>←</span>
@@ -316,22 +355,24 @@ function LoginPage({onLogin,passwords,setPasswords}){
             {[1,2,3].map(n=><div key={n} style={{width:"26px",height:"5px",borderRadius:"3px",background:fStep>=n?"#f59e0b":"rgba(255,255,255,0.2)"}}/>)}
           </div>
           {fStep===1&&<>
-            <p style={{fontSize:"13px",color:"#93c5fd",margin:"0 0 14px"}}>Select your account to receive an OTP.</p>
-            <div style={{marginBottom:"14px"}}><label style={{...S.lbl,color:"#93c5fd"}}>SELECT ACCOUNT</label>
-              <select value={fUser} onChange={e=>setFUser(e.target.value)} style={{...S.inp,background:"rgba(255,255,255,0.08)",color:"#fff",border:"1.5px solid rgba(255,255,255,0.2)"}}>
-                <option value="" style={{background:"#1e3a5f"}}>Select...</option>
-                <option value="owner" style={{background:"#1e3a5f"}}>Owner (DS)</option>
-                <option value="exec" style={{background:"#1e3a5f"}}>Site Executive (Vinoth Kumar)</option>
+            <p style={{fontSize:"13px",color:"#93c5fd",margin:"0 0 14px"}}>Select your User ID to receive an OTP on your registered mobile.</p>
+            <div style={{marginBottom:"14px"}}>
+              <label style={{...S.lbl,color:"#93c5fd"}}>SELECT USER ID</label>
+              <select value={fUser} onChange={e=>setFUser(e.target.value)} style={inpDark}>
+                <option value="" style={{background:"#1e3a5f"}}>Select User ID...</option>
+                <option value="DHANS1416" style={{background:"#1e3a5f"}}>DHANS1416</option>
+                <option value="Site Executive" style={{background:"#1e3a5f"}}>Site Executive</option>
               </select>
             </div>
-            {fUser&&<div style={{padding:"9px 13px",background:"rgba(245,158,11,0.15)",borderRadius:"8px",fontSize:"12px",color:"#f59e0b",marginBottom:"13px",border:"1px solid rgba(245,158,11,0.3)"}}>📱 OTP to: <strong>{USER_PHONES[fUser]}</strong></div>}
+            {fUser&&<div style={{padding:"9px 13px",background:"rgba(245,158,11,0.15)",borderRadius:"8px",fontSize:"12px",color:"#f59e0b",marginBottom:"13px",border:"1px solid rgba(245,158,11,0.3)"}}>📱 OTP will be sent to: <strong>{USER_PHONES[fUser]}</strong></div>}
             {fErr&&<ErrBox msg={fErr}/>}
             <button onClick={sendOtp} style={{...S.btn("#f59e0b","#1a1a1a"),width:"100%",padding:"11px",fontWeight:800}}>Send OTP →</button>
           </>}
           {fStep===2&&<>
             {fMsg&&<div style={{padding:"9px 13px",background:"rgba(74,222,128,0.1)",borderRadius:"8px",fontSize:"12px",color:"#4ade80",marginBottom:"14px",border:"1px solid rgba(74,222,128,0.2)",lineHeight:"1.6"}}>{fMsg}</div>}
-            <div style={{marginBottom:"14px"}}><label style={{...S.lbl,color:"#93c5fd"}}>ENTER 6-DIGIT OTP</label>
-              <input value={entOtp} onChange={e=>setEntOtp(e.target.value)} placeholder="······" maxLength={6} style={{...S.inp,fontSize:"22px",letterSpacing:"8px",textAlign:"center",fontWeight:700,background:"rgba(255,255,255,0.08)",color:"#fff",border:"1.5px solid rgba(255,255,255,0.2)"}}/>
+            <div style={{marginBottom:"14px"}}>
+              <label style={{...S.lbl,color:"#93c5fd"}}>ENTER 6-DIGIT OTP</label>
+              <input value={entOtp} onChange={e=>setEntOtp(e.target.value)} placeholder="······" maxLength={6} style={{...inpDark,fontSize:"22px",letterSpacing:"8px",textAlign:"center",fontWeight:700}}/>
             </div>
             {fErr&&<ErrBox msg={fErr}/>}
             <button onClick={verifyOtp} style={{...S.btn("#f59e0b","#1a1a1a"),width:"100%",padding:"11px",marginBottom:"9px",fontWeight:800}}>Verify OTP →</button>
@@ -339,8 +380,20 @@ function LoginPage({onLogin,passwords,setPasswords}){
           </>}
           {fStep===3&&<>
             <div style={{padding:"9px 13px",background:"rgba(74,222,128,0.1)",borderRadius:"8px",fontSize:"12px",color:"#4ade80",marginBottom:"14px",border:"1px solid rgba(74,222,128,0.2)"}}>✅ OTP verified!</div>
-            <div style={{marginBottom:"11px"}}><label style={{...S.lbl,color:"#93c5fd"}}>NEW PASSWORD</label><input type="password" value={newPw} onChange={e=>setNewPw(e.target.value)} placeholder="Min 6 characters" style={{...S.inp,background:"rgba(255,255,255,0.08)",color:"#fff",border:"1.5px solid rgba(255,255,255,0.2)"}}/></div>
-            <div style={{marginBottom:"14px"}}><label style={{...S.lbl,color:"#93c5fd"}}>CONFIRM PASSWORD</label><input type="password" value={cnfPw} onChange={e=>setCnfPw(e.target.value)} placeholder="Re-enter password" style={{...S.inp,background:"rgba(255,255,255,0.08)",color:"#fff",border:"1.5px solid rgba(255,255,255,0.2)"}} onKeyDown={e=>e.key==="Enter"&&resetPw()}/></div>
+            <div style={{marginBottom:"11px"}}>
+              <label style={{...S.lbl,color:"#93c5fd"}}>NEW PASSWORD</label>
+              <div style={{position:"relative"}}>
+                <input type={showNewPw?"text":"password"} value={newPw} onChange={e=>setNewPw(e.target.value)} placeholder="Min 6 characters" style={{...inpDark,paddingRight:"42px"}}/>
+                <span onClick={()=>setShowNewPw(p=>!p)} style={{position:"absolute",right:"12px",top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:"16px"}}>{showNewPw?"🙈":"👁️"}</span>
+              </div>
+            </div>
+            <div style={{marginBottom:"14px"}}>
+              <label style={{...S.lbl,color:"#93c5fd"}}>CONFIRM PASSWORD</label>
+              <div style={{position:"relative"}}>
+                <input type={showCnfPw?"text":"password"} value={cnfPw} onChange={e=>setCnfPw(e.target.value)} placeholder="Re-enter password" style={{...inpDark,paddingRight:"42px"}} onKeyDown={e=>e.key==="Enter"&&resetPw()}/>
+                <span onClick={()=>setShowCnfPw(p=>!p)} style={{position:"absolute",right:"12px",top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:"16px"}}>{showCnfPw?"🙈":"👁️"}</span>
+              </div>
+            </div>
             {fErr&&<ErrBox msg={fErr}/>}
             <button onClick={resetPw} style={{...S.btn("#f59e0b","#1a1a1a"),width:"100%",padding:"11px",fontWeight:800}}>Reset Password ✓</button>
           </>}
@@ -578,55 +631,33 @@ function WCard({w,isEditing,form,setF,onEdit,onSave,onCancel,onDelete,showAadhaa
   return(
     <div style={{...S.card,padding:"13px"}}>
       <div onClick={()=>!isEditing&&setExp(p=>!p)} style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:exp||isEditing?"11px":"0",cursor:"pointer"}}>
-        {w.photo
-          ?<img src={w.photo} style={{width:"38px",height:"38px",borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
-          :<div style={{width:"38px",height:"38px",borderRadius:"50%",background:CAT_COLOR[w.category].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px",fontWeight:700,color:CAT_COLOR[w.category].color,flexShrink:0}}>{w.name[0]}</div>
-        }
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontWeight:600,fontSize:"13px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{w.name}</div>
-          <span style={S.badge(w.category)}>{w.category}</span>
-        </div>
+        {w.photo?<img src={w.photo} style={{width:"38px",height:"38px",borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
+        :<div style={{width:"38px",height:"38px",borderRadius:"50%",background:CAT_COLOR[w.category].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px",fontWeight:700,color:CAT_COLOR[w.category].color,flexShrink:0}}>{w.name[0]}</div>}
+        <div style={{flex:1,minWidth:0}}><div style={{fontWeight:600,fontSize:"13px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{w.name}</div><span style={S.badge(w.category)}>{w.category}</span></div>
         <div style={{fontSize:"12px",color:"#90afd4"}}>{exp||isEditing?"▲":"▼"}</div>
       </div>
-      {isEditing&&(
-        <div>
-          <WForm form={form} setF={setF}/>
-          <div style={{display:"flex",gap:"7px"}}>
-            <button onClick={onSave} style={{...S.btn(),padding:"6px 12px",fontSize:"12px"}}>💾</button>
-            <button onClick={onCancel} style={{...S.btn("#f0f4f9","#1a2b4a"),padding:"6px 12px",fontSize:"12px"}}>Cancel</button>
-          </div>
-        </div>
-      )}
-      {!isEditing&&exp&&(
-        <div>
-          {w.photo&&<img src={w.photo} style={{width:"80px",height:"80px",borderRadius:"8px",objectFit:"cover",marginBottom:"10px"}}/>}
-          <PRow label="📞 Phone" value={w.phone||"—"}/>
-          <PRow label="🪪 Aadhaar" value={showAadhaar?(w.aadhaar||"—"):mask(w.aadhaar)} toggle={toggleAadhaar}/>
-          <PRow label="🎂 DOB" value={w.dob?fmtDate(w.dob):"—"}/>
-          <PRow label="📅 Joined" value={w.doj?fmtDate(w.doj):"—"}/>
-          <div style={{display:"flex",gap:"7px",marginTop:"10px"}}>
-            <button onClick={onEdit} style={{...S.btn(),padding:"5px 12px",fontSize:"12px"}}>✏️ Edit</button>
-            <button onClick={onDelete} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 12px",fontSize:"12px"}}>🗑️ Delete</button>
-          </div>
-        </div>
-      )}
+      {isEditing&&<div><WForm form={form} setF={setF}/><div style={{display:"flex",gap:"7px"}}><button onClick={onSave} style={{...S.btn(),padding:"6px 12px",fontSize:"12px"}}>💾</button><button onClick={onCancel} style={{...S.btn("#f0f4f9","#1a2b4a"),padding:"6px 12px",fontSize:"12px"}}>Cancel</button></div></div>}
+      {!isEditing&&exp&&<div>
+        {w.photo&&<img src={w.photo} style={{width:"80px",height:"80px",borderRadius:"8px",objectFit:"cover",marginBottom:"10px"}}/>}
+        <PRow label="📞 Phone" value={w.phone||"—"}/>
+        <PRow label="🪪 Aadhaar" value={showAadhaar?(w.aadhaar||"—"):mask(w.aadhaar)} toggle={toggleAadhaar}/>
+        <PRow label="🎂 DOB" value={w.dob?fmtDate(w.dob):"—"}/>
+        <PRow label="📅 Joined" value={w.doj?fmtDate(w.doj):"—"}/>
+        <div style={{display:"flex",gap:"7px",marginTop:"10px"}}><button onClick={onEdit} style={{...S.btn(),padding:"5px 12px",fontSize:"12px"}}>✏️ Edit</button><button onClick={onDelete} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 12px",fontSize:"12px"}}>🗑️ Delete</button></div>
+      </div>}
     </div>
   );
 }
 function PRow({label,value,toggle}){return <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid #f0f4f9",fontSize:"12px"}}><span style={{color:"#6b84a3",fontWeight:600,fontSize:"11px"}}>{label}</span><span style={{fontWeight:500}}>{value}{toggle&&<span onClick={toggle} style={{marginLeft:"7px",fontSize:"11px",color:"#1e50a0",cursor:"pointer"}}>👁</span>}</span></div>;}
-function WForm({form,setF}){
-  return(
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"12px"}}>
-      <div style={{gridColumn:"1/-1"}}><PhotoUpload value={form.photo||""} onChange={v=>setF("photo",v)}/></div>
-      <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Full Name</label><input value={form.name} onChange={e=>setF("name",e.target.value)} placeholder="Worker name" style={S.inp}/></div>
-      <div><label style={S.lbl}>Default Category</label><select value={form.category} onChange={e=>setF("category",e.target.value)} style={S.inp}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></div>
-      <div><label style={S.lbl}>Phone</label><input value={form.phone} onChange={e=>setF("phone",e.target.value)} placeholder="10-digit" style={S.inp} maxLength={10}/></div>
-      <div><label style={S.lbl}>Aadhaar</label><input value={form.aadhaar} onChange={e=>setF("aadhaar",e.target.value)} placeholder="12-digit" style={S.inp} maxLength={12}/></div>
-      <div><label style={S.lbl}>Date of Birth</label><input type="date" value={form.dob} onChange={e=>setF("dob",e.target.value)} style={S.inp}/></div>
-      <div><label style={S.lbl}>Date of Joining</label><input type="date" value={form.doj} onChange={e=>setF("doj",e.target.value)} style={S.inp}/></div>
-    </div>
-  );
-}
+function WForm({form,setF}){return<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"12px"}}>
+  <div style={{gridColumn:"1/-1"}}><PhotoUpload value={form.photo||""} onChange={v=>setF("photo",v)}/></div>
+  <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Full Name</label><input value={form.name} onChange={e=>setF("name",e.target.value)} placeholder="Worker name" style={S.inp}/></div>
+  <div><label style={S.lbl}>Default Category</label><select value={form.category} onChange={e=>setF("category",e.target.value)} style={S.inp}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></div>
+  <div><label style={S.lbl}>Phone</label><input value={form.phone} onChange={e=>setF("phone",e.target.value)} placeholder="10-digit" style={S.inp} maxLength={10}/></div>
+  <div><label style={S.lbl}>Aadhaar</label><input value={form.aadhaar} onChange={e=>setF("aadhaar",e.target.value)} placeholder="12-digit" style={S.inp} maxLength={12}/></div>
+  <div><label style={S.lbl}>Date of Birth</label><input type="date" value={form.dob} onChange={e=>setF("dob",e.target.value)} style={S.inp}/></div>
+  <div><label style={S.lbl}>Date of Joining</label><input type="date" value={form.doj} onChange={e=>setF("doj",e.target.value)} style={S.inp}/></div>
+</div>;}
 function EForm({form,setF}){return<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"12px"}}>
   <div style={{gridColumn:"1/-1"}}><PhotoUpload value={form.photo||""} onChange={v=>setF("photo",v)}/></div>
   <div><label style={S.lbl}>Phone</label><input value={form.phone} onChange={e=>setF("phone",e.target.value)} style={S.inp} maxLength={10}/></div>
@@ -645,6 +676,8 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
   const [repYear,setRepYear]=useState(new Date().getFullYear());
   const [repClient,setRepClient]=useState("Swathi Engineering Agency");
   const [repPlace,setRepPlace]=useState("Chennai");
+  const [repFromDate,setRepFromDate]=useState(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}-01`);
+  const [repToDate,setRepToDate]=useState(today);
 
   const mark=(wid,status)=>setAttendance(p=>({...p,[`${selDate}_${selSite}_${wid}`]:status}));
   const getStatus=wid=>attendance[`${selDate}_${selSite}_${wid}`]||null;
@@ -653,21 +686,13 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
   const present=aids.filter(w=>getStatus(w)==="Present").length;
   const absent=aids.filter(w=>getStatus(w)==="Absent").length;
   const half=aids.filter(w=>getStatus(w)==="Half").length;
-
   const daysInMonth=getDaysInMonth(repMonth,repYear);
   const days=Array.from({length:daysInMonth},(_,i)=>i+1);
   const repSiteObj=sites.find(s=>s.id===repSite);
   const repAssign=assignments[repSite]||{};
   const repWorkers=workers.filter(w=>repAssign[w.id]);
-
-  const getAttVal=(wid,day)=>{
-    const dd=String(day).padStart(2,"0");
-    const mm=String(repMonth+1).padStart(2,"0");
-    return attendance[`${repYear}-${mm}-${dd}_${repSite}_${wid}`]||"";
-  };
+  const getAttVal=(wid,day)=>{const dd=String(day).padStart(2,"0");const mm=String(repMonth+1).padStart(2,"0");return attendance[`${repYear}-${mm}-${dd}_${repSite}_${wid}`]||"";};
   const getTotalDays=wid=>days.reduce((acc,d)=>{const v=getAttVal(wid,d);if(v==="Present")return acc+1;if(v==="Half")return acc+0.5;return acc;},0);
-    const [repFromDate,setRepFromDate]=useState(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}-01`);
-  const [repToDate,setRepToDate]=useState(today);
   const fromDate=fmtDate(repFromDate);
   const toDate=fmtDate(repToDate);
 
@@ -679,7 +704,6 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
           <button key={t} onClick={()=>setTab(t)} style={{...S.btn(tab===t?"#1e50a0":"#e5e7eb",tab===t?"#fff":"#374151"),flexShrink:0}}>{lbl}</button>
         ))}
       </div>
-
       {tab==="mark"&&<>
         <div style={{display:"flex",gap:"12px",marginBottom:"16px",flexWrap:"wrap"}}>
           <div style={{flex:1,minWidth:"140px"}}><label style={S.lbl}>Site</label><select value={selSite} onChange={e=>setSelSite(Number(e.target.value))} style={S.inp}>{sites.map(st=><option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
@@ -703,8 +727,8 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
                   <div><div style={{fontWeight:600,fontSize:"13px"}}>{w.name}</div><span style={S.badge(desig)}>{desig}</span></div>
                 </div>
                 <div style={{display:"flex",gap:"5px"}}>
-                  {[["Present","✓ P","#166534"],["Half","½ H","#d97706"],["Absent","✗ A","#991b1b"]].map(([st,lbl,activeColor])=>(
-                    <button key={st} onClick={()=>mark(wid,st)} style={{flex:1,padding:"6px 4px",borderRadius:"6px",border:"none",fontSize:"11px",fontWeight:600,cursor:"pointer",background:status===st?activeColor:"#e5e7eb",color:status===st?"#fff":"#6b7280"}}>{lbl}</button>
+                  {[["Present","✓ P","#166534"],["Half","½ H","#d97706"],["Absent","✗ A","#991b1b"]].map(([st,lbl,ac])=>(
+                    <button key={st} onClick={()=>mark(wid,st)} style={{flex:1,padding:"6px 4px",borderRadius:"6px",border:"none",fontSize:"11px",fontWeight:600,cursor:"pointer",background:status===st?ac:"#e5e7eb",color:status===st?"#fff":"#6b7280"}}>{lbl}</button>
                   ))}
                 </div>
               </div>
@@ -712,9 +736,8 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
           })}
         </div>}
       </>}
-
       {tab==="report"&&<>
-        <div style={{...S.card,marginBottom:"16px"}} className="no-print">
+        <div style={{...S.card,marginBottom:"16px"}}>
           <h3 style={{margin:"0 0 14px",fontSize:"14px",fontWeight:700}}>Report Settings</h3>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:"10px",marginBottom:"12px"}}>
             <div><label style={S.lbl}>Site</label><select value={repSite} onChange={e=>setRepSite(Number(e.target.value))} style={S.inp}>{sites.map(st=><option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
@@ -740,37 +763,33 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
               </div>
             ))}
           </div>
-          {repWorkers.length===0
-            ?<div style={{textAlign:"center",color:"#9db3cc",padding:"30px"}}>No workers assigned to this site.</div>
-            :<div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:"11px"}}>
-                <thead>
-                  <tr style={{background:"#0f3172",color:"#fff"}}>
-                    <th style={{padding:"8px 10px",textAlign:"left",fontWeight:600,whiteSpace:"nowrap",minWidth:"130px"}}>Worker Name</th>
-                    {days.map(d=><th key={d} style={{padding:"6px 4px",textAlign:"center",fontWeight:600,minWidth:"22px"}}>{d}</th>)}
-                    <th style={{padding:"8px 10px",textAlign:"center",fontWeight:600,whiteSpace:"nowrap"}}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {repWorkers.map((w,idx)=>{
-                    const total=getTotalDays(w.id);
-                    return(
-                      <tr key={w.id} style={{background:idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #f0f4f9"}}>
-                        <td style={{padding:"7px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{w.name}</td>
-                        {days.map(d=>{
-                          const v=getAttVal(w.id,d);
-                          const bg=v==="Present"?"#dcfce7":v==="Half"?"#fef9c3":v==="Absent"?"#fee2e2":"transparent";
-                          const col=v==="Present"?"#166534":v==="Half"?"#d97706":v==="Absent"?"#991b1b":"#d1d5db";
-                          return <td key={d} style={{padding:"4px 2px",textAlign:"center",background:bg,color:col,fontWeight:600,fontSize:"10px"}}>{v==="Present"?"P":v==="Half"?"H":v==="Absent"?"A":""}</td>;
-                        })}
-                        <td style={{padding:"7px 10px",textAlign:"center",fontWeight:800,color:"#1e50a0"}}>{total}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          }
+          {repWorkers.length===0?<div style={{textAlign:"center",color:"#9db3cc",padding:"30px"}}>No workers assigned to this site.</div>
+          :<div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:"11px"}}>
+              <thead><tr style={{background:"#0f3172",color:"#fff"}}>
+                <th style={{padding:"8px 10px",textAlign:"left",fontWeight:600,whiteSpace:"nowrap",minWidth:"130px"}}>Worker Name</th>
+                {days.map(d=><th key={d} style={{padding:"6px 4px",textAlign:"center",fontWeight:600,minWidth:"22px"}}>{d}</th>)}
+                <th style={{padding:"8px 10px",textAlign:"center",fontWeight:600,whiteSpace:"nowrap"}}>Total</th>
+              </tr></thead>
+              <tbody>
+                {repWorkers.map((w,idx)=>{
+                  const total=getTotalDays(w.id);
+                  return(
+                    <tr key={w.id} style={{background:idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #f0f4f9"}}>
+                      <td style={{padding:"7px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{w.name}</td>
+                      {days.map(d=>{
+                        const v=getAttVal(w.id,d);
+                        const bg=v==="Present"?"#dcfce7":v==="Half"?"#fef9c3":v==="Absent"?"#fee2e2":"transparent";
+                        const col=v==="Present"?"#166534":v==="Half"?"#d97706":v==="Absent"?"#991b1b":"#d1d5db";
+                        return <td key={d} style={{padding:"4px 2px",textAlign:"center",background:bg,color:col,fontWeight:600,fontSize:"10px"}}>{v==="Present"?"P":v==="Half"?"H":v==="Absent"?"A":""}</td>;
+                      })}
+                      <td style={{padding:"7px 10px",textAlign:"center",fontWeight:800,color:"#1e50a0"}}>{total}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>}
           <div style={{display:"flex",gap:"16px",marginTop:"14px",fontSize:"11px"}}>
             {[["P","Present","#dcfce7","#166534"],["H","Half Day","#fef9c3","#d97706"],["A","Absent","#fee2e2","#991b1b"]].map(([sym,lbl,bg,col])=>(
               <div key={sym} style={{display:"flex",alignItems:"center",gap:"5px"}}>
@@ -785,6 +804,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
   );
 }
 
+// ── ENTRY PERMIT ──────────────────────────────────────
 function EntryPermit({workers,sites,assignments,setWorkers}){
   const [selSite,setSelSite]=useState(sites[0]?.id||0);
   const [selectedWorkers,setSelectedWorkers]=useState([]);
@@ -793,8 +813,6 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
   const [permitClient,setPermitClient]=useState("Swathi Engineering Agency");
   const [permitSiteName,setPermitSiteName]=useState("");
   const [permitPlace,setPermitPlace]=useState("Chennai");
-  const [expandedWorker,setExpandedWorker]=useState(null);
-
   const sa=assignments[selSite]||{};
   const assignedWorkers=workers.filter(w=>sa[w.id]);
   const toggleWorker=wid=>setSelectedWorkers(p=>p.includes(wid)?p.filter(x=>x!==wid):[...p,wid]);
@@ -802,26 +820,20 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
   const clearAll=()=>setSelectedWorkers([]);
   const permitWorkers=workers.filter(w=>selectedWorkers.includes(w.id));
   const siteObj=sites.find(s=>s.id===selSite);
-
-  const updateWorkerPhoto=(wid,photo)=>{
-    setWorkers(p=>p.map(w=>w.id===wid?{...w,photo}:w));
-  };
-
+  const updateWorkerPhoto=(wid,photo)=>setWorkers(p=>p.map(w=>w.id===wid?{...w,photo}:w));
   return(
     <div>
       <h2 style={{margin:"0 0 16px",fontSize:"20px",fontWeight:800}}>🪪 Entry Permit</h2>
-      <div style={{...S.card,marginBottom:"16px"}} className="no-print">
+      <div style={{...S.card,marginBottom:"16px"}}>
         <h3 style={{margin:"0 0 14px",fontSize:"14px",fontWeight:700}}>Permit Settings</h3>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:"10px",marginBottom:"14px"}}>
           <div><label style={S.lbl}>Site</label><select value={selSite} onChange={e=>{setSelSite(Number(e.target.value));setSelectedWorkers([]);}} style={S.inp}>{sites.map(st=><option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
           <div><label style={S.lbl}>Client</label><input value={permitClient} onChange={e=>setPermitClient(e.target.value)} style={S.inp}/></div>
-          <div><label style={S.lbl}>Site Name (on permit)</label><input value={permitSiteName||siteObj?.name||""} onChange={e=>setPermitSiteName(e.target.value)} placeholder={siteObj?.name} style={S.inp}/></div>
+          <div><label style={S.lbl}>Site Name (on permit)</label><input value={permitSiteName||siteObj?.name||""} onChange={e=>setPermitSiteName(e.target.value)} style={S.inp}/></div>
           <div><label style={S.lbl}>Place</label><input value={permitPlace} onChange={e=>setPermitPlace(e.target.value)} style={S.inp}/></div>
           <div><label style={S.lbl}>Valid From</label><input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)} style={S.inp}/></div>
           <div><label style={S.lbl}>Valid To</label><input type="date" value={toDate} onChange={e=>setToDate(e.target.value)} style={S.inp}/></div>
         </div>
-
-        {/* Worker selection with photo upload */}
         <div style={{marginBottom:"14px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
             <label style={S.lbl}>Select Workers & Upload Photos ({selectedWorkers.length} selected)</label>
@@ -830,58 +842,36 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
               <button onClick={clearAll} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 10px",fontSize:"11px"}}>Clear</button>
             </div>
           </div>
-          {assignedWorkers.length===0
-            ?<div style={{color:"#9db3cc",fontSize:"13px",padding:"12px",background:"#f8faff",borderRadius:"8px"}}>No workers assigned to this site.</div>
-            :<div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
-              {assignedWorkers.map(w=>{
-                const sel=selectedWorkers.includes(w.id);
-                const desig=sa[w.id]||w.category;
-                const isExpanded=expandedWorker===w.id;
-                return(
-                  <div key={w.id} style={{borderRadius:"10px",border:sel?`1.5px solid ${CAT_COLOR[desig].color}`:"1.5px solid #e5e7eb",overflow:"hidden",background:sel?CAT_COLOR[desig].bg:"#f8faff"}}>
-                    {/* Worker row */}
-                    <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px"}}>
-                      {/* Checkbox */}
-                      <div onClick={()=>toggleWorker(w.id)} style={{width:"22px",height:"22px",borderRadius:"5px",flexShrink:0,background:sel?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:"13px",fontWeight:700}}>
-                        {sel?"✓":""}
-                      </div>
-                      {/* Photo thumbnail */}
-                      {w.photo
-                        ?<img src={w.photo} style={{width:"36px",height:"36px",borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
-                        :<div style={{width:"36px",height:"36px",borderRadius:"50%",background:"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px",fontWeight:700,color:"#9ca3af",flexShrink:0}}>{w.name[0]}</div>
-                      }
-                      {/* Name & role */}
-                      <div style={{flex:1}}>
-                        <div style={{fontWeight:600,fontSize:"13px",color:sel?CAT_COLOR[desig].color:"#1a2b4a"}}>{w.name}</div>
-                        <span style={S.badge(desig)}>{desig}</span>
-                      </div>
-                      {/* Upload photo button */}
-                      <div onClick={e=>e.stopPropagation()}>
-                        <label style={{...S.btn("#fff","#1e50a0"),padding:"5px 10px",fontSize:"11px",cursor:"pointer",border:"1.5px solid #bfdbfe",display:"inline-block"}}>
-                          📷 {w.photo?"Change":"Add"} Photo
-                          <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
-                            e.stopPropagation();
-                            const f=e.target.files?.[0];
-                            if(!f)return;
-                            const r=new FileReader();
-                            r.onload=ev=>updateWorkerPhoto(w.id,ev.target.result);
-                            r.readAsDataURL(f);
-                          }}/>
-                        </label>
-                      </div>
+          {assignedWorkers.length===0?<div style={{color:"#9db3cc",fontSize:"13px",padding:"12px",background:"#f8faff",borderRadius:"8px"}}>No workers assigned to this site.</div>
+          :<div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+            {assignedWorkers.map(w=>{
+              const sel=selectedWorkers.includes(w.id);const desig=sa[w.id]||w.category;
+              return(
+                <div key={w.id} style={{borderRadius:"10px",border:sel?`1.5px solid ${CAT_COLOR[desig].color}`:"1.5px solid #e5e7eb",overflow:"hidden",background:sel?CAT_COLOR[desig].bg:"#f8faff"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px"}}>
+                    <div onClick={()=>toggleWorker(w.id)} style={{width:"22px",height:"22px",borderRadius:"5px",flexShrink:0,background:sel?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:"13px",fontWeight:700}}>{sel?"✓":""}</div>
+                    {w.photo?<img src={w.photo} style={{width:"36px",height:"36px",borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
+                    :<div style={{width:"36px",height:"36px",borderRadius:"50%",background:"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px",fontWeight:700,color:"#9ca3af",flexShrink:0}}>{w.name[0]}</div>}
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:600,fontSize:"13px",color:sel?CAT_COLOR[desig].color:"#1a2b4a"}}>{w.name}</div>
+                      <span style={S.badge(desig)}>{desig}</span>
+                    </div>
+                    <div onClick={e=>e.stopPropagation()}>
+                      <label style={{...S.btn("#fff","#1e50a0"),padding:"5px 10px",fontSize:"11px",cursor:"pointer",border:"1.5px solid #bfdbfe",display:"inline-block"}}>
+                        📷 {w.photo?"Change":"Add"} Photo
+                        <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{e.stopPropagation();const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>updateWorkerPhoto(w.id,ev.target.result);r.readAsDataURL(f);}}/>
+                      </label>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          }
+                </div>
+              );
+            })}
+          </div>}
         </div>
-
         <button onClick={()=>printSection("entry-permit")} style={{...S.btn(),opacity:selectedWorkers.length===0?0.5:1}} disabled={selectedWorkers.length===0}>
           🖨️ Print Entry Permit ({selectedWorkers.length} workers)
         </button>
       </div>
-
       {permitWorkers.length>0?(
         <div id="entry-permit" style={{background:"#fff",padding:"28px",borderRadius:"12px",boxShadow:"0 2px 16px rgba(30,80,160,0.08)"}}>
           <div style={{textAlign:"center",marginBottom:"20px",paddingBottom:"14px",borderBottom:"2px solid #0f3172"}}>
@@ -899,10 +889,8 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
             {permitWorkers.map(w=>(
               <div key={w.id} style={{border:"1.5px solid #e5e7eb",borderRadius:"10px",overflow:"hidden",display:"flex",minHeight:"130px"}}>
                 <div style={{width:"100px",flexShrink:0,background:"#f0f4f9",display:"flex",alignItems:"center",justifyContent:"center",borderRight:"1px solid #e5e7eb"}}>
-                  {w.photo
-                    ?<img src={w.photo} style={{width:"100px",height:"130px",objectFit:"cover"}}/>
-                    :<div style={{textAlign:"center",padding:"10px"}}><div style={{fontSize:"32px"}}>👤</div><div style={{fontSize:"9px",color:"#9db3cc",marginTop:"4px"}}>No Photo</div></div>
-                  }
+                  {w.photo?<img src={w.photo} style={{width:"100px",height:"130px",objectFit:"cover"}}/>
+                  :<div style={{textAlign:"center",padding:"10px"}}><div style={{fontSize:"32px"}}>👤</div><div style={{fontSize:"9px",color:"#9db3cc",marginTop:"4px"}}>No Photo</div></div>}
                 </div>
                 <div style={{flex:1,padding:"12px 14px",fontSize:"12px"}}>
                   <div style={{fontWeight:800,fontSize:"14px",color:"#0f3172",marginBottom:"8px"}}>{w.name}</div>
@@ -948,13 +936,11 @@ function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setC
   const [sigImage,setSigImage]=useState(null);
   const [sigDrawing,setSigDrawing]=useState(false);
   const lastPt=useRef(null);
-
   const startDraw=e=>{setSigDrawing(true);const r=sigCanvas.current.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;lastPt.current={x,y};};
   const draw=e=>{if(!sigDrawing||!sigCanvas.current||!lastPt.current)return;e.preventDefault();const r=sigCanvas.current.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;const ctx=sigCanvas.current.getContext("2d");ctx.strokeStyle="#1a2b4a";ctx.lineWidth=2;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(lastPt.current.x,lastPt.current.y);ctx.lineTo(x,y);ctx.stroke();lastPt.current={x,y};};
   const endDraw=()=>{setSigDrawing(false);if(sigCanvas.current)setSigImage(sigCanvas.current.toDataURL());};
   const clearSig=()=>{sigCanvas.current?.getContext("2d")?.clearRect(0,0,180,90);setSigImage(null);};
   const uploadSig=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{if(ev.target?.result)setSigImage(ev.target.result);};r.readAsDataURL(f);};
-
   const filtSites=selSite==="all"?sites:sites.filter(s=>s.id===Number(selSite));
   const allWorks=filtSites.flatMap(s=>(s.works||[]).map(w=>({...w,siteId:s.id,siteName:s.name,amount:(w.area||0)*(w.rate||0)})));
   const total=allWorks.reduce((a,w)=>a+w.amount,0);
@@ -966,10 +952,8 @@ function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setC
   const fmtD=d=>{if(!d)return"—";const[y,m,dy]=d.split("-");return`${dy}/${m}/${y}`;};
 
   const InvDoc=({inv})=>{
-    const works=inv?inv.works:allWorks;
-    const tot=inv?inv.total:total;
-    const num=inv?inv.number:invNum;
-    const dt=inv?fmtD(inv.date):fmtD(invDate);
+    const works=inv?inv.works:allWorks;const tot=inv?inv.total:total;
+    const num=inv?inv.number:invNum;const dt=inv?fmtD(inv.date):fmtD(invDate);
     const editable=!inv;
     return(
       <div style={{maxWidth:"750px",margin:"0 auto",background:"#fff",padding:"28px",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px"}}>
@@ -977,9 +961,9 @@ function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setC
           <div>
             <div style={{fontSize:"20px",fontWeight:800,color:"#0f3172",marginBottom:"4px"}}>{editable?<EditField value={company.name} onChange={v=>upC("name",v)} style={{fontSize:"20px",fontWeight:800,color:"#0f3172"}}/>:company.name}</div>
             <div style={{fontSize:"11px",color:"#6b84a3",lineHeight:"1.9"}}>
-              {editable?<EditField value={company.address} onChange={v=>upC("address",v)} style={{fontSize:"11px"}}/>:company.address}<br/>
-              Ph: {editable?<EditField value={company.phone} onChange={v=>upC("phone",v)} style={{fontSize:"11px"}}/>:company.phone}<br/>
-              GSTIN: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)} style={{fontSize:"11px"}}/>:company.gstin}
+              {editable?<EditField value={company.address} onChange={v=>upC("address",v)}/>:company.address}<br/>
+              Ph: {editable?<EditField value={company.phone} onChange={v=>upC("phone",v)}/>:company.phone}<br/>
+              GSTIN: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>:company.gstin}
             </div>
           </div>
           <div style={{textAlign:"right"}}>
@@ -990,7 +974,7 @@ function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setC
             </div>
           </div>
         </div>
-        <div style={{flex:1,padding:"13px 16px",background:"#f0f6ff",borderRadius:"9px",marginBottom:"16px"}}>
+        <div style={{padding:"13px 16px",background:"#f0f6ff",borderRadius:"9px",marginBottom:"16px"}}>
           <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>BILL TO {editable&&tip}</div>
           <div style={{fontSize:"11px",lineHeight:"2.1"}}>
             <span style={{fontWeight:600,color:"#6b84a3"}}>To: </span>{editable?<EditField value={client.sendTo} onChange={v=>upCl("sendTo",v)} placeholder="Recipient"/>:client.sendTo}<br/>
@@ -1036,7 +1020,7 @@ function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setC
               :sigMode==="draw"?<canvas ref={sigCanvas} width={180} height={90} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw} onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} style={{cursor:"crosshair",touchAction:"none",display:"block"}}/>
               :<span style={{fontSize:"11px",color:"#9db3cc"}}>Seal / Signature</span>}
             </div>
-            {editable&&<div className="no-print" style={{display:"flex",gap:"4px",justifyContent:"center",marginBottom:"6px",flexWrap:"wrap"}}>
+            {editable&&<div style={{display:"flex",gap:"4px",justifyContent:"center",marginBottom:"6px",flexWrap:"wrap"}}>
               <button onClick={()=>{setSigMode("draw");setSigImage(null);setTimeout(()=>sigCanvas.current?.getContext("2d")?.clearRect(0,0,180,90),50);}} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"4px 8px",fontSize:"10px"}}>✏️ Draw</button>
               <label style={{...S.btn("#f0f6ff","#1e50a0"),padding:"4px 8px",fontSize:"10px",cursor:"pointer"}}>📁 Upload<input type="file" accept="image/*" onChange={uploadSig} style={{display:"none"}}/></label>
               {(sigImage||sigMode==="draw")&&<button onClick={()=>{clearSig();setSigMode("none");}} style={{...S.btn("#fee2e2","#991b1b"),padding:"4px 8px",fontSize:"10px"}}>✗</button>}
@@ -1051,13 +1035,13 @@ function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setC
   return(
     <div>
       <h2 style={{margin:"0 0 16px",fontSize:"20px",fontWeight:800}}>🧾 Invoice</h2>
-      <div style={{display:"flex",gap:"7px",marginBottom:"20px"}} className="no-print">
+      <div style={{display:"flex",gap:"7px",marginBottom:"20px"}}>
         {[["new","➕ New"],["history","📁 History"]].map(([t,lbl])=>(
           <button key={t} onClick={()=>setTab(t)} style={S.btn(tab===t?"#1e50a0":"#e5e7eb",tab===t?"#fff":"#374151")}>{lbl}</button>
         ))}
       </div>
       {tab==="new"&&<>
-        <div style={{...S.card,marginBottom:"16px"}} className="no-print">
+        <div style={{...S.card,marginBottom:"16px"}}>
           <h3 style={{margin:"0 0 11px",fontSize:"13px",fontWeight:700}}>Invoice Settings</h3>
           <div style={{display:"flex",gap:"10px",flexWrap:"wrap"}}>
             <div style={{flex:1,minWidth:"120px"}}><label style={S.lbl}>From Date</label><input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)} style={S.inp}/></div>
@@ -1069,16 +1053,15 @@ function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setC
             <button onClick={saveInv} style={S.btn("#166534")}>💾 Save Invoice</button>
           </div>
         </div>
-        <div id="invoice-doc">
-          <InvDoc inv={null}/>
-        </div>
+        <div id="invoice-doc"><InvDoc inv={null}/></div>
       </>}
       {tab==="history"&&(viewInv
-        ?<><div style={{display:"flex",gap:"9px",marginBottom:"16px"}} className="no-print">
-          <button onClick={()=>setViewInv(null)} style={S.btn("#f0f4f9","#1a2b4a")}>← Back</button>
-          <button onClick={()=>printSection("invoice-history-doc")} style={S.btn()}>🖨️ Print</button>
-        </div>
-        <div id="invoice-history-doc"><InvDoc inv={viewInv}/></div></>
+        ?<><div style={{display:"flex",gap:"9px",marginBottom:"16px"}}>
+            <button onClick={()=>setViewInv(null)} style={S.btn("#f0f4f9","#1a2b4a")}>← Back</button>
+            <button onClick={()=>printSection("invoice-history-doc")} style={S.btn()}>🖨️ Print</button>
+          </div>
+          <div id="invoice-history-doc"><InvDoc inv={viewInv}/></div>
+        </>
         :<div style={S.card}><h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>Saved Invoices</h3>
           {invoices.length===0?<p style={{color:"#9db3cc",fontSize:"13px"}}>No invoices saved yet.</p>
           :invoices.map(inv=>(
