@@ -282,7 +282,7 @@ function LoginPage({onLogin,passwords,setPasswords}){
         <div style={{width:"160px",height:"1px",background:"linear-gradient(90deg,transparent,#f59e0b,transparent)",margin:"0 auto 10px"}}/>
         <p style={{margin:0,fontSize:"11px",color:"#93c5fd",letterSpacing:"1px"}}>Specialised Epoxy Coating Services</p>
         <div style={{display:"flex",justifyContent:"center",gap:"16px",marginTop:"8px"}}>
-          {["Anti-Shock","Anti-Skid","Easy Apply"].map(t=><span key={t} style={{fontSize:"9px",color:"#64748b",letterSpacing:"1px"}}>{t}</span>)}
+          {["Anti-Shock","Anti-Skid","Slip Resistant"].map(t=><span key={t} style={{fontSize:"9px",color:"#64748b",letterSpacing:"1px"}}>{t}</span>)}
         </div>
       </div>
       <div style={{background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",borderRadius:"20px",padding:"28px",width:"100%",maxWidth:"360px",border:"1px solid rgba(255,255,255,0.12)",zIndex:1}}>
