@@ -43,11 +43,6 @@ function fbPoll(docId, callback, interval=5000) {
 
 // ── PRINT ─────────────────────────────────────────────
 const printCSS = `@page{size:A4;margin:15mm;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:20px;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:6px 8px;}img{max-width:100%;object-fit:cover;}.no-print{display:none!important;}`;
-const se = document.createElement("style"); se.innerText=""; document.head.appendChild(se);
-const printContentArea = document.createElement("div");
-printContentArea.id="print-content-area";
-printContentArea.style.cssText="display:none;font-family:'Segoe UI',sans-serif;color:#1a2b4a;";
-document.body.appendChild(printContentArea);
 
 function printSection(id) {
   const el = document.getElementById(id);
