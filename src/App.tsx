@@ -204,16 +204,16 @@ const [passwords,setPasswords]     = useState({"DHANS1416":"Riseup1416","Site Ex
 useEffect(()=>{
   async function loadAll(){
     const [w,e,s,a,as,inv,co,cl,b,pw] = await Promise.all([
-      fbGet("workers",    loadS("vd_workers",    INIT_WORKERS)),
-      fbGet("exec",       loadS("vd_exec",        EMPTY_EXEC)),
-      fbGet("sites",      loadS("vd_sites",       [{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}])),
-      fbGet("attendance", loadS("vd_attendance",  {})),
-      fbGet("assignments",loadS("vd_assignments", {1:{1:"Applicator",2:"Applicator",3:"Semi-Applicator",4:"Helper",5:"Helper",6:"Helper"}})),
-      fbGet("invoices",   loadS("vd_invoices",    [])),
-      fbGet("company",    loadS("vd_company",     INIT_COMPANY)),
-      fbGet("client",     loadS("vd_client",      INIT_CLIENT)),
-      fbGet("bank",       loadS("vd_bank",        INIT_BANK)),
-      fbGet("passwords",  loadS("vd_passwords",   {"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"})),
+      fbGet("workers",     INIT_WORKERS),
+      fbGet("exec",        EMPTY_EXEC),
+      fbGet("sites",       [{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}]),
+      fbGet("attendance",  {}),
+      fbGet("assignments", {}),
+      fbGet("invoices",    []),
+      fbGet("company",     INIT_COMPANY),
+      fbGet("client",      INIT_CLIENT),
+      fbGet("bank",        INIT_BANK),
+      fbGet("passwords",   {"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"}),
     ]);
     setWorkers(w); setExecProfile(e); setSites(s);
     setAttendance(a); setAssignments(as); setInvoices(inv);
