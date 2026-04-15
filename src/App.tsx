@@ -261,7 +261,14 @@ useEffect(()=>{ if(!ready) return; saveS("vd_passwords",passwords); fbSet("passw
     return()=>{events.forEach(e=>window.removeEventListener(e,resetTimer,true));clearTimeout(logoutTimer.current);clearTimeout(warningTimer.current);clearInterval(countdownRef.current);};
   },[user,resetTimer]);
 
-  if(!user) return <LoginPage onLogin={setUser} passwords={passwords} setPasswords={setPasswords}/>;
+  if(!ready) return (
+  <div style={{minHeight:"100vh",background:"#0f3172",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI',sans-serif"}}>
+    <div style={{marginBottom:"20px"}}><LogoHex size={80}/></div>
+    <div style={{color:"#fff",fontSize:"16px",fontWeight:700,marginBottom:"8px"}}>VinoDhan Coating</div>
+    <div style={{color:"#f59e0b",fontSize:"12px"}}>Loading your data...</div>
+  </div>
+);
+if(!user) return <LoginPage onLogin={setUser} passwords={passwords} setPasswords={setPasswords}/>;
 
   const ctx={user,workers,setWorkers,execProfile,setExecProfile,sites,setSites,attendance,setAttendance,assignments,setAssignments,invoices,setInvoices,company,setCompany,client,setClient,bank,setBank};
 
