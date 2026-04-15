@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 // ── FIREBASE REST API ─────────────────────────────────
 const FB_PROJECT = "vinodhan-coating";
-const FB_API_KEY = import.meta.env.VITE_FB_API_KEY;
+const FB_API_KEY = "AIzaSyAz13tZTrb-qRfIui_6Q_X0U4NNm0mxtfE";
 const FB_BASE    = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents/vinodhan`;
 
 async function fbGet(docId, fallback) {
