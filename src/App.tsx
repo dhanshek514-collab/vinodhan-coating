@@ -367,7 +367,12 @@ function LoginPage({onLogin,passwords,setPasswords}){
   const [showNewPw,setShowNewPw] = useState(false);
   const [showCnfPw,setShowCnfPw] = useState(false);
 
-  const login=()=>{const u=USERS.find(u=>u.id===id&&u.password===passwords[id]);u?onLogin(u):setErr("Invalid User ID or Password. Password is case sensitive.");};
+  const login=()=>{
+  if(!id){setErr("Please select a User ID.");return;}
+  if(!pw){setErr("Please enter your password.");return;}
+  const u=USERS.find(u=>u.id===id&&passwords[id]===pw);
+  u?onLogin(u):setErr("Invalid User ID or Password. Password is case sensitive.");
+};
   const sendOtp=()=>{if(!fUser){setFErr("Please select a user.");return;}const otp=String(Math.floor(100000+Math.random()*900000));setGenOtp(otp);setFStep(2);setFErr("");setFMsg(`OTP sent to ${USER_PHONES[fUser]} — Demo OTP: ${otp}`);};
   const verifyOtp=()=>{entOtp===genOtp?(setFStep(3),setFErr(""),setFMsg("")):setFErr("Incorrect OTP. Try again.");};
   const resetPw=()=>{if(!newPw||newPw.length<6){setFErr("Min 6 characters.");return;}if(newPw!==cnfPw){setFErr("Passwords do not match.");return;}setPasswords(p=>({...p,[fUser]:newPw}));setMode("login");setFStep(1);setFUser("");setEntOtp("");setNewPw("");setCnfPw("");setGenOtp("");setFErr("");setFMsg("");alert("✅ Password reset! Please log in with your new password.");};
