@@ -187,27 +187,54 @@ export default function App(){
   const [landscape,setLandscape] = useState(true);
   const [showWarning,setShowWarning] = useState(false);
   const [countdown,setCountdown] = useState(30);
-  const [workers,setWorkers]     = useState(()=>loadS("vd_workers",INIT_WORKERS));
-  const [execProfile,setExecProfile] = useState(()=>loadS("vd_exec",EMPTY_EXEC));
-  const [sites,setSites]         = useState(()=>loadS("vd_sites",[{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}]));
-  const [attendance,setAttendance] = useState(()=>loadS("vd_attendance",{}));
-  const [assignments,setAssignments] = useState(()=>loadS("vd_assignments",{1:{1:"Applicator",2:"Applicator",3:"Semi-Applicator",4:"Helper",5:"Helper",6:"Helper"}}));
-  const [invoices,setInvoices]   = useState(()=>loadS("vd_invoices",[]));
-  const [company,setCompany]     = useState(()=>loadS("vd_company",INIT_COMPANY));
-  const [client,setClient]       = useState(()=>loadS("vd_client",INIT_CLIENT));
-  const [bank,setBank]           = useState(()=>loadS("vd_bank",INIT_BANK));
-  const [passwords,setPasswords] = useState(()=>loadS("vd_passwords",{"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"}));
+  
+const [ready, setReady]           = useState(false);
+const [workers,setWorkers]         = useState(INIT_WORKERS);
+const [execProfile,setExecProfile] = useState(EMPTY_EXEC);
+const [sites,setSites]             = useState([{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}]);
+const [attendance,setAttendance]   = useState({});
+const [assignments,setAssignments] = useState({1:{1:"Applicator",2:"Applicator",3:"Semi-Applicator",4:"Helper",5:"Helper",6:"Helper"}});
+const [invoices,setInvoices]       = useState([]);
+const [company,setCompany]         = useState(INIT_COMPANY);
+const [client,setClient]           = useState(INIT_CLIENT);
+const [bank,setBank]               = useState(INIT_BANK);
+const [passwords,setPasswords]     = useState({"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"});
 
-  useEffect(()=>saveS("vd_workers",workers),[workers]);
-  useEffect(()=>saveS("vd_exec",execProfile),[execProfile]);
-  useEffect(()=>saveS("vd_sites",sites),[sites]);
-  useEffect(()=>saveS("vd_attendance",attendance),[attendance]);
-  useEffect(()=>saveS("vd_assignments",assignments),[assignments]);
-  useEffect(()=>saveS("vd_invoices",invoices),[invoices]);
-  useEffect(()=>saveS("vd_company",company),[company]);
-  useEffect(()=>saveS("vd_client",client),[client]);
-  useEffect(()=>saveS("vd_bank",bank),[bank]);
-  useEffect(()=>saveS("vd_passwords",passwords),[passwords]);
+// ── LOAD FROM FIREBASE ON STARTUP ──
+useEffect(()=>{
+  async function loadAll(){
+    const [w,e,s,a,as,inv,co,cl,b,pw] = await Promise.all([
+      fbGet("workers",    loadS("vd_workers",    INIT_WORKERS)),
+      fbGet("exec",       loadS("vd_exec",        EMPTY_EXEC)),
+      fbGet("sites",      loadS("vd_sites",       [{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}])),
+      fbGet("attendance", loadS("vd_attendance",  {})),
+      fbGet("assignments",loadS("vd_assignments", {1:{1:"Applicator",2:"Applicator",3:"Semi-Applicator",4:"Helper",5:"Helper",6:"Helper"}})),
+      fbGet("invoices",   loadS("vd_invoices",    [])),
+      fbGet("company",    loadS("vd_company",     INIT_COMPANY)),
+      fbGet("client",     loadS("vd_client",      INIT_CLIENT)),
+      fbGet("bank",       loadS("vd_bank",        INIT_BANK)),
+      fbGet("passwords",  loadS("vd_passwords",   {"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"})),
+    ]);
+    setWorkers(w); setExecProfile(e); setSites(s);
+    setAttendance(a); setAssignments(as); setInvoices(inv);
+    setCompany(co); setClient(cl); setBank(b); setPasswords(pw);
+    setReady(true);
+  }
+  loadAll();
+},[]);
+
+// ── SAVE TO FIREBASE + LOCALSTORAGE ON CHANGE ──
+useEffect(()=>{ if(!ready) return; saveS("vd_workers",workers);    fbSet("workers",workers);     },[workers,ready]);
+useEffect(()=>{ if(!ready) return; saveS("vd_exec",execProfile);   fbSet("exec",execProfile);    },[execProfile,ready]);
+useEffect(()=>{ if(!ready) return; saveS("vd_sites",sites);        fbSet("sites",sites);         },[sites,ready]);
+useEffect(()=>{ if(!ready) return; saveS("vd_attendance",attendance); fbSet("attendance",attendance); },[attendance,ready]);
+useEffect(()=>{ if(!ready) return; saveS("vd_assignments",assignments); fbSet("assignments",assignments); },[assignments,ready]);
+useEffect(()=>{ if(!ready) return; saveS("vd_invoices",invoices);  fbSet("invoices",invoices);   },[invoices,ready]);
+useEffect(()=>{ if(!ready) return; saveS("vd_company",company);    fbSet("company",company);     },[company,ready]);
+useEffect(()=>{ if(!ready) return; saveS("vd_client",client);      fbSet("client",client);       },[client,ready]);
+useEffect(()=>{ if(!ready) return; saveS("vd_bank",bank);          fbSet("bank",bank);           },[bank,ready]);
+useEffect(()=>{ if(!ready) return; saveS("vd_passwords",passwords); fbSet("passwords",passwords); },[passwords,ready]);
+  
 
   const logoutTimer=useRef(null);
   const warningTimer=useRef(null);
