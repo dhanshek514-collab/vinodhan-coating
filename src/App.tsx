@@ -577,6 +577,40 @@ function Dashboard({user,workers,sites,attendance,assignments,landscape}){
 }
 
 // ── SITES ─────────────────────────────────────────────
+function SiteWorksDropdown({works,siteId,isExp,tab,startEdit,deleteWork}){
+  const [open,setOpen]=useState(false);
+  return(
+    <div style={{marginBottom:"10px",borderRadius:"10px",overflow:"hidden",border:"1.5px solid #bfdbfe"}}>
+      {/* Header */}
+      <div onClick={()=>setOpen(p=>!p)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",background:"#1e50a0",cursor:"pointer"}}>
+        <span style={{fontSize:"12px",fontWeight:700,color:"#fff"}}>📐 {works.length} Work{works.length!==1?"s":""}</span>
+        <span style={{color:"#fff",fontSize:"12px"}}>{open?"▲":"▼"}</span>
+      </div>
+      {/* Works */}
+      {open&&<div style={{background:"#f8faff",padding:"8px 10px"}}>
+        {works.map(w=>(
+          <div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #e8f0ff"}}>
+            <div>
+              <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"2px"}}>
+                <span style={S.wbadge(w.workType||"SQM")}>{w.workType||"SQM"}</span>
+                <span style={{fontWeight:600,fontSize:"12px"}}>{w.place}</span>
+              </div>
+              {w.fromDate&&<div style={{fontSize:"10px",color:"#6b84a3"}}>{w.fromDate} → {w.toDate||"ongoing"}</div>}
+              <div style={{fontSize:"10px",color:"#6b84a3"}}>{workUnitLabel(w)}</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontWeight:700,fontSize:"13px",color:"#166534"}}>₹{calcWork(w).toLocaleString()}</div>
+              {isExp&&tab==="works"&&<div style={{display:"flex",gap:"4px",marginTop:"4px"}}>
+                <button onClick={e=>{e.stopPropagation();startEdit(siteId,w);}} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"3px 7px",fontSize:"11px"}}>✏️</button>
+                <button onClick={e=>{e.stopPropagation();deleteWork(siteId,w.id);}} style={{...S.btn("#fee2e2","#991b1b"),padding:"3px 7px",fontSize:"11px"}}>🗑️</button>
+              </div>}
+            </div>
+          </div>
+        ))}
+      </div>}
+    </div>
+  );
+}
 function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,setRecycleBin}){
   const [showAdd,setShowAdd]=useState(false);
   const [siteForm,setSiteForm]=useState({name:"",client:"Swathi Engineering Agency",status:"Active"});
@@ -643,28 +677,7 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
               </div>
             </div>
 
-            {/* Works always visible */}
-            {(site.works||[]).length>0&&<div style={{marginBottom:"10px",background:"#f8faff",borderRadius:"10px",padding:"10px"}}>
-              {(site.works||[]).map(w=>(
-                <div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #e8f0ff"}}>
-                  <div>
-                    <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"2px"}}>
-                      <span style={S.wbadge(w.workType||"SQM")}>{w.workType||"SQM"}</span>
-                      <span style={{fontWeight:600,fontSize:"12px"}}>{w.place}</span>
-                    </div>
-                    {w.fromDate&&<div style={{fontSize:"10px",color:"#6b84a3"}}>{w.fromDate} → {w.toDate||"ongoing"}</div>}
-                    <div style={{fontSize:"10px",color:"#6b84a3"}}>{workUnitLabel(w)}</div>
-                  </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontWeight:700,fontSize:"13px",color:"#166534"}}>₹{calcWork(w).toLocaleString()}</div>
-                    {isExp&&tab==="works"&&<div style={{display:"flex",gap:"4px",marginTop:"4px"}}>
-                      <button onClick={()=>startEdit(site.id,w)} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"3px 7px",fontSize:"11px"}}>✏️</button>
-                      <button onClick={()=>deleteWork(site.id,w.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"3px 7px",fontSize:"11px"}}>🗑️</button>
-                    </div>}
-                  </div>
-                </div>
-              ))}
-            </div>}
+            {(site.works||[]).length>0&&<SiteWorksDropdown works={site.works} siteId={site.id} isExp={isExp} tab={tab} startEdit={startEdit} deleteWork={deleteWork}/>}
 
             <button onClick={()=>setExpandSite(isExp?null:site.id)} style={S.btn("#f0f6ff","#1e50a0")}>{isExp?"Close ▲":"Manage ▼"}</button>
 
@@ -1166,10 +1179,8 @@ const [openSites,setOpenSites]=useState([]);
                   <tr key={w.id||i} style={{borderBottom:"1px solid #f0f4f9",background:i%2===0?"#fff":"#f8faff"}}>
                     <td style={{padding:"8px 9px",color:"#6b84a3",textAlign:"center"}}>{i+1}</td>
                     <td style={{padding:"8px 9px"}}>
-                      <div>{w.siteName} — {w.place}</div>
-                      {w.fromDate&&<div style={{fontSize:"10px",color:"#6b84a3"}}>{fmtD(w.fromDate)}{w.toDate?` → ${fmtD(w.toDate)}`:""}</div>}
-                      <span style={S.wbadge(type)}>{type}</span>
-                    </td>
+  <div>{w.siteName} — {w.place}</div>
+</td>
                     <td style={{padding:"8px 9px",textAlign:"right"}}>{unitStr}</td>
                     <td style={{padding:"8px 9px",textAlign:"right"}}>₹{w.rate}</td>
                     <td style={{padding:"8px 9px",fontWeight:700,textAlign:"right"}}>₹{w.amount.toLocaleString()}</td>
