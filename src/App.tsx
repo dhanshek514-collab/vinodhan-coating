@@ -507,6 +507,27 @@ function LoginPage({onLogin,passwords,setPasswords}){
 }
 
 // ── DASHBOARD ─────────────────────────────────────────
+function DashSiteWorks({works}){
+  const [open,setOpen]=useState(false);
+  return(
+    <div style={{borderTop:"1px solid #e0eaff",marginTop:"6px"}}>
+      <div onClick={()=>setOpen(p=>!p)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",cursor:"pointer"}}>
+        <span style={{fontSize:"11px",color:"#1e50a0",fontWeight:600}}>{open?"▲ Hide":"▼ Show"} {works.length} work{works.length!==1?"s":""}</span>
+      </div>
+      {open&&<div style={{display:"flex",flexDirection:"column",gap:"4px",paddingBottom:"4px"}}>
+        {works.map(w=>(
+          <div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"12px",padding:"3px 0"}}>
+            <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+              <span style={S.wbadge(w.workType||"SQM")}>{w.workType||"SQM"}</span>
+              <span style={{color:"#1a2b4a"}}>{w.place}</span>
+            </div>
+            <span style={{fontWeight:600,color:"#166534"}}>₹{calcWork(w).toLocaleString()}</span>
+          </div>
+        ))}
+      </div>}
+    </div>
+  );
+}
 function Dashboard({user,workers,sites,attendance,assignments,landscape}){
   const activeSites=sites.filter(s=>s.status==="Active").length;
   const totalSqm=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="SQM"||!w.workType).reduce((a,w)=>a+(Number(w.area)||0),sum),0);
@@ -546,17 +567,7 @@ function Dashboard({user,workers,sites,attendance,assignments,landscape}){
                 <div><div style={{fontWeight:600,fontSize:"14px"}}>{site.name}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div></div>
                 <div style={{textAlign:"right"}}><div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{rev.toLocaleString()}</div><span style={{background:site.status==="Active"?"#dcfce7":"#fee2e2",color:site.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{site.status}</span></div>
               </div>
-              {(site.works||[]).length>0&&<div style={{borderTop:"1px solid #e0eaff",paddingTop:"8px",display:"flex",flexDirection:"column",gap:"4px"}}>
-                {(site.works||[]).map(w=>(
-                  <div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"12px"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
-                      <span style={S.wbadge(w.workType||"SQM")}>{w.workType||"SQM"}</span>
-                      <span style={{color:"#1a2b4a"}}>{w.place}</span>
-                    </div>
-                    <span style={{fontWeight:600,color:"#166534"}}>₹{calcWork(w).toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>}
+              {(site.works||[]).length>0&&<DashSiteWorks works={site.works}/>}
             </div>
           );
         })}
@@ -1058,6 +1069,7 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
 // ── INVOICE ───────────────────────────────────────────
 function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient,bank,setBank,recycleBin,setRecycleBin}){
   const [selWorks,setSelWorks]=useState([]);
+const [openSites,setOpenSites]=useState([]);
   const [viewInv,setViewInv]=useState(null);
   const [tab,setTab]=useState("new");
   const [invNum,setInvNum]=useState(`INV-${new Date().getFullYear()}-001`);
@@ -1214,21 +1226,28 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
           <div style={{marginBottom:"12px"}}>
             <label style={S.lbl}>Select Sites to Invoice</label>
             <div style={{display:"flex",flexDirection:"column",gap:"6px",marginTop:"6px"}}>
-              {sites.map(s=>{
+{sites.map(s=>{
   const uninvoiced=(s.works||[]).filter(w=>!invoicedWorkIds.has(w.id));
   if(uninvoiced.length===0) return null;
   const selAll=uninvoiced.every(w=>selWorks.includes(w.id));
+  const siteOpen=openSites.includes(s.id);
   return(
-    <div key={s.id} style={{marginBottom:"8px",border:"1.5px solid #e5e7eb",borderRadius:"10px",overflow:"hidden"}}>
-      <div onClick={()=>{if(selAll)setSelWorks(p=>p.filter(id=>!uninvoiced.map(w=>w.id).includes(id)));else setSelWorks(p=>[...new Set([...p,...uninvoiced.map(w=>w.id)])]);}} style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px",background:selAll?"#eff6ff":"#f8faff",cursor:"pointer"}}>
-        <div style={{width:"20px",height:"20px",borderRadius:"5px",flexShrink:0,background:selAll?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"12px",fontWeight:700}}>{selAll?"✓":""}</div>
-        <div style={{flex:1}}><div style={{fontWeight:600,fontSize:"13px"}}>{s.name}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{uninvoiced.length} uninvoiced work{uninvoiced.length!==1?"s":""}</div></div>
+    <div key={s.id} style={{marginBottom:"8px",border:"1.5px solid #bfdbfe",borderRadius:"10px",overflow:"hidden"}}>
+      {/* Site Header Row */}
+      <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px",background:"#1e50a0"}}>
+        <div onClick={()=>{if(selAll)setSelWorks(p=>p.filter(id=>!uninvoiced.map(w=>w.id).includes(id)));else setSelWorks(p=>[...new Set([...p,...uninvoiced.map(w=>w.id)])]);}} style={{width:"20px",height:"20px",borderRadius:"5px",flexShrink:0,background:selAll?"#f59e0b":"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"12px",fontWeight:700,cursor:"pointer"}}>{selAll?"✓":""}</div>
+        <div onClick={()=>setOpenSites(p=>siteOpen?p.filter(x=>x!==s.id):[...p,s.id])} style={{flex:1,cursor:"pointer"}}>
+          <div style={{fontWeight:700,fontSize:"13px",color:"#fff"}}>{s.name}</div>
+        </div>
+        <span style={{background:"rgba(255,255,255,0.15)",color:"#fff",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{uninvoiced.length} work{uninvoiced.length!==1?"s":""}</span>
         <span style={{background:s.status==="Active"?"#dcfce7":"#fee2e2",color:s.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{s.status}</span>
+        <span onClick={()=>setOpenSites(p=>siteOpen?p.filter(x=>x!==s.id):[...p,s.id])} style={{color:"#fff",fontSize:"12px",cursor:"pointer"}}>{siteOpen?"▲":"▼"}</span>
       </div>
-      {uninvoiced.map(w=>{
+      {/* Works Dropdown */}
+      {siteOpen&&uninvoiced.map(w=>{
         const wsel=selWorks.includes(w.id);
         return(
-          <div key={w.id} onClick={()=>setSelWorks(p=>wsel?p.filter(id=>id!==w.id):[...p,w.id])} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px 8px 20px",background:wsel?"#f0f6ff":"#fff",borderTop:"1px solid #f0f4f9",cursor:"pointer"}}>
+          <div key={w.id} onClick={()=>setSelWorks(p=>wsel?p.filter(id=>id!==w.id):[...p,w.id])} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px 8px 20px",background:wsel?"#eff6ff":"#fff",borderTop:"1px solid #e5e7eb",cursor:"pointer"}}>
             <div style={{width:"16px",height:"16px",borderRadius:"4px",flexShrink:0,background:wsel?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"10px",fontWeight:700}}>{wsel?"✓":""}</div>
             <span style={S.wbadge(w.workType||"SQM")}>{w.workType||"SQM"}</span>
             <div style={{flex:1,fontSize:"12px",fontWeight:500}}>{w.place}</div>
