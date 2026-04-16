@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 // ── FIREBASE REST API ─────────────────────────────────
 const FB_PROJECT = "vinodhan-coating";
-const FB_API_KEY = "AIzaSyAz13tZTrb-qRfIui_6Q_X0U4NNm0mxtfE";
+const FB_API_KEY = import.meta.env.VITE_FB_API_KEY;
 const FB_BASE    = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents/vinodhan`;
 
 async function fbGet(docId, fallback) {
@@ -22,23 +22,6 @@ async function fbSet(docId, data) {
       body: JSON.stringify({ fields: { data: { stringValue: JSON.stringify(data) } } })
     });
   } catch(e) { console.error("fbSet error", e); }
-}
-
-// Poll for real-time updates every 5 seconds
-function fbPoll(docId, callback, interval=5000) {
-  let last = null;
-  const poll = async () => {
-    try {
-      const res = await fetch(`${FB_BASE}/${docId}?key=${FB_API_KEY}`);
-      if(!res.ok) return;
-      const json = await res.json();
-      const val = json.fields?.data?.stringValue;
-      if(val && val !== last) { last = val; callback(JSON.parse(val)); }
-    } catch {}
-  };
-  poll();
-  const id = setInterval(poll, interval);
-  return () => clearInterval(id);
 }
 
 // ── PRINT ─────────────────────────────────────────────
@@ -92,10 +75,17 @@ const CAT_COLOR = {
   "Semi-Applicator": { bg:"#ede9fe", color:"#5b21b6" },
   "Helper":          { bg:"#dcfce7", color:"#166534" },
 };
+const WORK_TYPES = ["SQM","RMT","Manpower"];
+const WORK_TYPE_COLOR = {
+  "SQM":      { bg:"#dbeafe", color:"#1e40af" },
+  "RMT":      { bg:"#ede9fe", color:"#5b21b6" },
+  "Manpower": { bg:"#fef3c7", color:"#d97706" },
+};
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const today = new Date().toISOString().split("T")[0];
 const getDaysInMonth = (m,y) => new Date(y,m+1,0).getDate();
 const fmtDate = d => { if(!d)return"—"; const [y,m,dy]=d.split("-"); return `${dy}/${m}/${y}`; };
+const RECYCLE_PASSWORD = "ARUN9312";
 
 const EMPTY_WORKER = { id:0, name:"", category:"Applicator", phone:"", aadhaar:"", doj:"", dob:"", photo:"" };
 const EMPTY_EXEC = { name:"Vinoth Kumar. N", phone:"", aadhaar:"", doj:"", dob:"", photo:"" };
@@ -103,14 +93,6 @@ const INIT_WORKERS = Array.from({length:12},(_,i)=>({ id:i+1, name:`Worker ${i+1
 const INIT_COMPANY = { name:"VinoDhan Coating", address:"Chennai, Tamil Nadu", phone:"+91 XXXXX XXXXX", gstin:"XX-XXXXXXXXX", udyam:"UDYAM-TN-XX-XXXXXXX" };
 const INIT_CLIENT  = { name:"Swathi Engineering Agency", sendTo:"", place:"Chennai", pincode:"600037", phone:"", measureNo:"" };
 const INIT_BANK    = { accName:"VinoDhan Coating", bank:"Indian Bank", accNo:"XXXXXXXXXXXX", ifsc:"IDIB000XXXX", upi:"vinodhan@upi" };
-const NAV = [
-  { id:"dashboard",  label:"Dashboard",    icon:"📊" },
-  { id:"sites",      label:"Sites",        icon:"🏗️" },
-  { id:"workers",    label:"Workers",      icon:"👷" },
-  { id:"attendance", label:"Attendance",   icon:"✅" },
-  { id:"permit",     label:"Entry Permit", icon:"🪪" },
-  { id:"invoice",    label:"Invoice",      icon:"🧾" },
-];
 
 const S = {
   btn:(bg="#1e50a0",color="#fff")=>({background:bg,color,border:"none",borderRadius:"8px",padding:"9px 18px",fontWeight:600,fontSize:"13px",cursor:"pointer"}),
@@ -118,9 +100,9 @@ const S = {
   inp:{ width:"100%",padding:"9px 12px",borderRadius:"8px",border:"1.5px solid #bfdbfe",fontSize:"13px",outline:"none",boxSizing:"border-box",color:"#1a2b4a" },
   lbl:{ fontSize:"12px",fontWeight:600,color:"#6b84a3",display:"block",marginBottom:"4px" },
   badge:cat=>({...CAT_COLOR[cat],fontSize:"11px",fontWeight:600,borderRadius:"20px",padding:"2px 10px",display:"inline-block"}),
+  wbadge:type=>({...WORK_TYPE_COLOR[type],fontSize:"10px",fontWeight:700,borderRadius:"20px",padding:"2px 8px",display:"inline-block"}),
 };
 
-// ── STORAGE ───────────────────────────────────────────
 function loadS(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback;}catch{return fallback;}}
 function saveS(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch{}}
 
@@ -151,6 +133,7 @@ function LogoHex({size=48}){
 }
 
 function ErrBox({msg}){return <div style={{color:"#dc2626",fontSize:"12px",marginBottom:"12px",padding:"8px 12px",background:"#fee2e2",borderRadius:"8px"}}>{msg}</div>;}
+function SuccessBox({msg}){return <div style={{color:"#166534",fontSize:"12px",marginBottom:"12px",padding:"8px 12px",background:"#dcfce7",borderRadius:"8px"}}>✅ {msg}</div>;}
 
 function EditField({value,onChange,style={},placeholder="Click to edit"}){
   const [editing,setEditing]=useState(false);
@@ -180,6 +163,17 @@ function PhotoUpload({value,onChange}){
   );
 }
 
+// ── WORK AMOUNT HELPER ────────────────────────────────
+function calcWork(w){
+  if(w.workType==="Manpower") return (Number(w.labour)||0)*(Number(w.rate)||0);
+  return (Number(w.area)||0)*(Number(w.rate)||0);
+}
+function workUnitLabel(w){
+  if(w.workType==="RMT") return `${w.area}rmt × ₹${w.rate}`;
+  if(w.workType==="Manpower") return `${w.labour} Labour × ₹${w.rate}/day`;
+  return `${w.area}m² × ₹${w.rate}`;
+}
+
 // ── ROOT ──────────────────────────────────────────────
 export default function App(){
   const [user,setUser]           = useState(null);
@@ -187,61 +181,59 @@ export default function App(){
   const [landscape,setLandscape] = useState(true);
   const [showWarning,setShowWarning] = useState(false);
   const [countdown,setCountdown] = useState(30);
-  
-const [ready, setReady]           = useState(false);
-const [workers,setWorkers]         = useState(INIT_WORKERS);
-const [execProfile,setExecProfile] = useState(EMPTY_EXEC);
-const [sites,setSites]             = useState([{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}]);
-const [attendance,setAttendance]   = useState({});
-const [assignments,setAssignments] = useState({1:{1:"Applicator",2:"Applicator",3:"Semi-Applicator",4:"Helper",5:"Helper",6:"Helper"}});
-const [invoices,setInvoices]       = useState([]);
-const [company,setCompany]         = useState(INIT_COMPANY);
-const [client,setClient]           = useState(INIT_CLIENT);
-const [bank,setBank]               = useState(INIT_BANK);
-const [passwords,setPasswords]     = useState({"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"});
+  const [ready,setReady]         = useState(false);
+  const [workers,setWorkers]     = useState(INIT_WORKERS);
+  const [execProfile,setExecProfile] = useState(EMPTY_EXEC);
+  const [sites,setSites]         = useState([{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}]);
+  const [attendance,setAttendance] = useState({});
+  const [assignments,setAssignments] = useState({});
+  const [invoices,setInvoices]   = useState([]);
+  const [company,setCompany]     = useState(INIT_COMPANY);
+  const [client,setClient]       = useState(INIT_CLIENT);
+  const [bank,setBank]           = useState(INIT_BANK);
+  const [passwords,setPasswords] = useState({"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"});
+  const [recycleBin,setRecycleBin] = useState({sites:[],invoices:[]});
 
-// ── LOAD FROM FIREBASE ON STARTUP ──
-useEffect(()=>{
-  async function loadAll(){
-    const [w,e,s,a,as,inv,co,cl,b,pw] = await Promise.all([
-      fbGet("workers",     INIT_WORKERS),
-      fbGet("exec",        EMPTY_EXEC),
-      fbGet("sites",       [{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}]),
-      fbGet("attendance",  {}),
-      fbGet("assignments", {}),
-      fbGet("invoices",    []),
-      fbGet("company",     INIT_COMPANY),
-      fbGet("client",      INIT_CLIENT),
-      fbGet("bank",        INIT_BANK),
-      fbGet("passwords",   {"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"}),
-    ]);
-    setWorkers(w); setExecProfile(e); setSites(s);
-    setAttendance(a); setAssignments(as); setInvoices(inv);
-    setCompany(co); setClient(cl); setBank(b); setPasswords(pw);
-    setReady(true);
-  }
-  loadAll();
-},[]);
+  useEffect(()=>{
+    async function loadAll(){
+      const [w,e,s,a,as,inv,co,cl,b,pw,rb] = await Promise.all([
+        fbGet("workers",     INIT_WORKERS),
+        fbGet("exec",        EMPTY_EXEC),
+        fbGet("sites",       [{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}]),
+        fbGet("attendance",  {}),
+        fbGet("assignments", {}),
+        fbGet("invoices",    []),
+        fbGet("company",     INIT_COMPANY),
+        fbGet("client",      INIT_CLIENT),
+        fbGet("bank",        INIT_BANK),
+        fbGet("passwords",   {"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"}),
+        fbGet("recycleBin",  {sites:[],invoices:[]}),
+      ]);
+      setWorkers(w); setExecProfile(e); setSites(s);
+      setAttendance(a); setAssignments(as); setInvoices(inv);
+      setCompany(co); setClient(cl); setBank(b); setPasswords(pw);
+      setRecycleBin(rb);
+      setReady(true);
+    }
+    loadAll();
+  },[]);
 
-// ── SAVE TO FIREBASE + LOCALSTORAGE ON CHANGE ──
-useEffect(()=>{ if(!ready) return; saveS("vd_workers",workers);    fbSet("workers",workers);     },[workers,ready]);
-useEffect(()=>{ if(!ready) return; saveS("vd_exec",execProfile);   fbSet("exec",execProfile);    },[execProfile,ready]);
-useEffect(()=>{ if(!ready) return; saveS("vd_sites",sites);        fbSet("sites",sites);         },[sites,ready]);
-useEffect(()=>{ if(!ready) return; saveS("vd_attendance",attendance); fbSet("attendance",attendance); },[attendance,ready]);
-useEffect(()=>{ if(!ready) return; saveS("vd_assignments",assignments); fbSet("assignments",assignments); },[assignments,ready]);
-useEffect(()=>{ if(!ready) return; saveS("vd_invoices",invoices);  fbSet("invoices",invoices);   },[invoices,ready]);
-useEffect(()=>{ if(!ready) return; saveS("vd_company",company);    fbSet("company",company);     },[company,ready]);
-useEffect(()=>{ if(!ready) return; saveS("vd_client",client);      fbSet("client",client);       },[client,ready]);
-useEffect(()=>{ if(!ready) return; saveS("vd_bank",bank);          fbSet("bank",bank);           },[bank,ready]);
-useEffect(()=>{ if(!ready) return; saveS("vd_passwords",passwords); fbSet("passwords",passwords); },[passwords,ready]);
-  
+  useEffect(()=>{ if(!ready)return; saveS("vd_workers",workers);       fbSet("workers",workers);           },[workers,ready]);
+  useEffect(()=>{ if(!ready)return; saveS("vd_exec",execProfile);      fbSet("exec",execProfile);          },[execProfile,ready]);
+  useEffect(()=>{ if(!ready)return; saveS("vd_sites",sites);           fbSet("sites",sites);               },[sites,ready]);
+  useEffect(()=>{ if(!ready)return; saveS("vd_attendance",attendance); fbSet("attendance",attendance);     },[attendance,ready]);
+  useEffect(()=>{ if(!ready)return; saveS("vd_assignments",assignments);fbSet("assignments",assignments);  },[assignments,ready]);
+  useEffect(()=>{ if(!ready)return; saveS("vd_invoices",invoices);     fbSet("invoices",invoices);         },[invoices,ready]);
+  useEffect(()=>{ if(!ready)return; saveS("vd_company",company);       fbSet("company",company);           },[company,ready]);
+  useEffect(()=>{ if(!ready)return; saveS("vd_client",client);         fbSet("client",client);             },[client,ready]);
+  useEffect(()=>{ if(!ready)return; saveS("vd_bank",bank);             fbSet("bank",bank);                 },[bank,ready]);
+  useEffect(()=>{ if(!ready)return; saveS("vd_passwords",passwords);   fbSet("passwords",passwords);       },[passwords,ready]);
+  useEffect(()=>{ if(!ready)return; saveS("vd_recyclebin",recycleBin); fbSet("recycleBin",recycleBin);     },[recycleBin,ready]);
 
   const logoutTimer=useRef(null);
   const warningTimer=useRef(null);
   const countdownRef=useRef(null);
-
   const doLogout=useCallback(()=>{setShowWarning(false);setUser(null);setPage("dashboard");},[]);
-
   const resetTimer=useCallback(()=>{
     if(!user)return;
     clearTimeout(logoutTimer.current);clearTimeout(warningTimer.current);clearInterval(countdownRef.current);
@@ -261,20 +253,20 @@ useEffect(()=>{ if(!ready) return; saveS("vd_passwords",passwords); fbSet("passw
     return()=>{events.forEach(e=>window.removeEventListener(e,resetTimer,true));clearTimeout(logoutTimer.current);clearTimeout(warningTimer.current);clearInterval(countdownRef.current);};
   },[user,resetTimer]);
 
-  if(!ready) return (
-  <div style={{minHeight:"100vh",background:"#0f3172",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI',sans-serif"}}>
-    <div style={{marginBottom:"20px"}}><LogoHex size={80}/></div>
-    <div style={{color:"#fff",fontSize:"16px",fontWeight:700,marginBottom:"8px"}}>VinoDhan Coating</div>
-    <div style={{color:"#f59e0b",fontSize:"12px"}}>Loading your data...</div>
-  </div>
-);
-if(!user) return <LoginPage onLogin={setUser} passwords={passwords} setPasswords={setPasswords}/>;
+  if(!ready) return(
+    <div style={{minHeight:"100vh",background:"#0f3172",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI',sans-serif"}}>
+      <div style={{marginBottom:"20px"}}><LogoHex size={80}/></div>
+      <div style={{color:"#fff",fontSize:"16px",fontWeight:700,marginBottom:"8px"}}>VinoDhan Coating</div>
+      <div style={{color:"#f59e0b",fontSize:"12px"}}>Loading your data...</div>
+    </div>
+  );
+  if(!user) return <LoginPage onLogin={setUser} passwords={passwords} setPasswords={setPasswords}/>;
 
-  const ctx={user,workers,setWorkers,execProfile,setExecProfile,sites,setSites,attendance,setAttendance,assignments,setAssignments,invoices,setInvoices,company,setCompany,client,setClient,bank,setBank};
+  const ctx={user,workers,setWorkers,execProfile,setExecProfile,sites,setSites,attendance,setAttendance,assignments,setAssignments,invoices,setInvoices,company,setCompany,client,setClient,bank,setBank,recycleBin,setRecycleBin};
 
   return(
     <div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'Segoe UI',sans-serif",background:"#f0f4f9",color:"#1a2b4a",overflow:"hidden"}}>
-      <TopBar user={user} page={page} setPage={setPage} landscape={landscape} setLandscape={setLandscape} setUser={setUser}/>
+      <TopBar user={user} page={page} setPage={setPage} landscape={landscape} setLandscape={setLandscape} setUser={setUser} recycleBin={recycleBin} setRecycleBin={setRecycleBin} sites={sites} setSites={setSites} invoices={invoices} setInvoices={setInvoices}/>
       <div style={{flex:1,overflowY:"auto",padding:landscape?"24px 28px":"16px 14px",paddingBottom:"80px"}}>
         {page==="dashboard"  && <Dashboard {...ctx} landscape={landscape}/>}
         {page==="sites"      && <Sites {...ctx}/>}
@@ -298,23 +290,38 @@ if(!user) return <LoginPage onLogin={setUser} passwords={passwords} setPasswords
   );
 }
 
-// ── TOP BAR + HAMBURGER + BOTTOM NAV ─────────────────
-function TopBar({user,page,setPage,landscape,setLandscape,setUser}){
+// ── TOP BAR ───────────────────────────────────────────
+function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,setRecycleBin,sites,setSites,invoices,setInvoices}){
   const [drawerOpen,setDrawerOpen]=useState(false);
+  const [showBin,setShowBin]=useState(false);
+  const [pwInput,setPwInput]=useState("");
+  const [pwTarget,setPwTarget]=useState(null);
+  const [pwErr,setPwErr]=useState("");
+  const binCount=(recycleBin.sites||[]).length+(recycleBin.invoices||[]).length;
+
   const bottomNav=[
-    {id:"dashboard", label:"Dash",    icon:"📊"},
-    {id:"sites",     label:"Sites",   icon:"🏗️"},
-    {id:"workers",   label:"Workers", icon:"👷"},
-    {id:"attendance",label:"Attend",  icon:"✅"},
-    {id:"permit",    label:"Permit",  icon:"🪪"},
-    {id:"invoice",   label:"Invoice", icon:"🧾"},
+    {id:"dashboard",label:"Dash",    icon:"📊"},
+    {id:"sites",    label:"Sites",   icon:"🏗️"},
+    {id:"workers",  label:"Workers", icon:"👷"},
+    {id:"attendance",label:"Attend", icon:"✅"},
+    {id:"permit",   label:"Permit",  icon:"🪪"},
+    {id:"invoice",  label:"Invoice", icon:"🧾"},
   ];
+
+  const restoreSite=s=>{setSites(p=>[...p,s]);setRecycleBin(p=>({...p,sites:(p.sites||[]).filter(x=>x.id!==s.id)}));};
+  const restoreInv=inv=>{setInvoices(p=>[...p,inv]);setRecycleBin(p=>({...p,invoices:(p.invoices||[]).filter(x=>x.id!==inv.id)}));};
+  const confirmDelete=(type,id)=>{setPwTarget({type,id});setPwInput("");setPwErr("");};
+  const doDelete=()=>{
+    if(pwInput!==RECYCLE_PASSWORD){setPwErr("❌ Incorrect password.");return;}
+    if(pwTarget.type==="site") setRecycleBin(p=>({...p,sites:(p.sites||[]).filter(x=>x.id!==pwTarget.id)}));
+    else setRecycleBin(p=>({...p,invoices:(p.invoices||[]).filter(x=>x.id!==pwTarget.id)}));
+    setPwTarget(null);setPwInput("");setPwErr("");
+  };
+
   return(
     <>
-      {/* ── SLIM TOP BAR ── */}
       <div style={{background:"#0f3172",boxShadow:"0 2px 12px rgba(0,0,0,0.2)",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px"}}>
-          {/* Left — Logo + Name */}
           <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
             <LogoHex size={32}/>
             <div>
@@ -322,7 +329,6 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser}){
               <div style={{fontSize:"9px",color:"#f59e0b",letterSpacing:"2px"}}>COATING</div>
             </div>
           </div>
-          {/* Right — Avatar + Hamburger */}
           <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
             <div style={{width:"30px",height:"30px",borderRadius:"50%",background:"#1e50a0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"13px",color:"#fff",fontWeight:700}}>{user.name[0]}</div>
             <button onClick={()=>setDrawerOpen(true)} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"8px",padding:"7px 10px",cursor:"pointer",color:"#fff",fontSize:"18px",lineHeight:1}}>☰</button>
@@ -330,24 +336,17 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser}){
         </div>
       </div>
 
-      {/* ── HAMBURGER DRAWER ── */}
+      {/* DRAWER */}
       {drawerOpen&&<>
-        {/* Backdrop */}
         <div onClick={()=>setDrawerOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000}}/>
-        {/* Drawer */}
         <div style={{position:"fixed",top:0,right:0,width:"260px",height:"100%",background:"#0f3172",zIndex:1001,display:"flex",flexDirection:"column",boxShadow:"-4px 0 20px rgba(0,0,0,0.3)"}}>
-          {/* Header */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"20px 16px",borderBottom:"1px solid rgba(255,255,255,0.1)"}}>
             <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
               <div style={{width:"40px",height:"40px",borderRadius:"50%",background:"#1e50a0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"16px",color:"#fff",fontWeight:700}}>{user.name[0]}</div>
-              <div>
-                <div style={{fontSize:"14px",fontWeight:700,color:"#fff"}}>{user.name}</div>
-                <div style={{fontSize:"11px",color:"#90afd4"}}>{user.role}</div>
-              </div>
+              <div><div style={{fontSize:"14px",fontWeight:700,color:"#fff"}}>{user.name}</div><div style={{fontSize:"11px",color:"#90afd4"}}>{user.role}</div></div>
             </div>
             <button onClick={()=>setDrawerOpen(false)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:"8px",padding:"6px 10px",cursor:"pointer",color:"#fff",fontSize:"16px"}}>✕</button>
           </div>
-          {/* Orientation Toggle */}
           <div style={{padding:"16px"}}>
             <div style={{fontSize:"11px",fontWeight:600,color:"#90afd4",marginBottom:"10px",letterSpacing:"1px"}}>DISPLAY MODE</div>
             <div style={{display:"flex",gap:"8px"}}>
@@ -355,9 +354,13 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser}){
               <button onClick={()=>{setLandscape(false);setDrawerOpen(false);}} style={{flex:1,padding:"10px",borderRadius:"8px",border:"none",cursor:"pointer",background:!landscape?"#1e50a0":"rgba(255,255,255,0.1)",color:"#fff",fontSize:"12px",fontWeight:600}}>📱 Tall</button>
             </div>
           </div>
-          {/* Spacer */}
+          {/* Recycle Bin Button */}
+          <div style={{padding:"0 16px"}}>
+            <button onClick={()=>{setShowBin(true);setDrawerOpen(false);}} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",fontSize:"13px",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"}}>
+              🗑️ Recycle Bin {binCount>0&&<span style={{background:"#dc2626",color:"#fff",borderRadius:"20px",padding:"1px 8px",fontSize:"11px",fontWeight:800}}>{binCount}</span>}
+            </button>
+          </div>
           <div style={{flex:1}}/>
-          {/* Logout */}
           <div style={{padding:"16px",borderTop:"1px solid rgba(255,255,255,0.1)"}}>
             <button onClick={()=>{setDrawerOpen(false);setUser(null);}} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"#fee2e2",color:"#991b1b",fontSize:"14px",fontWeight:700}}>
               🚪 Logout
@@ -366,7 +369,64 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser}){
         </div>
       </>}
 
-      {/* ── FIXED BOTTOM TAB BAR ── */}
+      {/* RECYCLE BIN PAGE */}
+      {showBin&&(
+        <div style={{position:"fixed",inset:0,background:"#f0f4f9",zIndex:2000,overflowY:"auto",fontFamily:"'Segoe UI',sans-serif"}}>
+          <div style={{background:"#0f3172",padding:"14px 16px",display:"flex",alignItems:"center",gap:"12px"}}>
+            <button onClick={()=>setShowBin(false)} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"8px",padding:"7px 14px",color:"#fff",fontSize:"13px",fontWeight:600,cursor:"pointer"}}>← Back</button>
+            <div style={{fontSize:"15px",fontWeight:700,color:"#fff"}}>🗑️ Recycle Bin</div>
+          </div>
+          <div style={{padding:"20px"}}>
+            {/* Sites */}
+            <div style={{marginBottom:"20px"}}>
+              <h3 style={{margin:"0 0 10px",fontSize:"13px",fontWeight:700,color:"#6b84a3",textTransform:"uppercase",letterSpacing:"1px"}}>🏗️ Sites ({(recycleBin.sites||[]).length})</h3>
+              {(recycleBin.sites||[]).length===0?<div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"24px"}}>No deleted sites</div>
+              :(recycleBin.sites||[]).map(s=>(
+                <div key={s.id} style={{...S.card,marginBottom:"10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div><div style={{fontWeight:600,fontSize:"14px"}}>{s.name}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{s.client}</div></div>
+                  <div style={{display:"flex",gap:"7px"}}>
+                    <button onClick={()=>restoreSite(s)} style={{...S.btn("#dcfce7","#166534"),padding:"5px 11px",fontSize:"12px"}}>↩️ Restore</button>
+                    <button onClick={()=>confirmDelete("site",s.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Invoices */}
+            <div>
+              <h3 style={{margin:"0 0 10px",fontSize:"13px",fontWeight:700,color:"#6b84a3",textTransform:"uppercase",letterSpacing:"1px"}}>🧾 Invoices ({(recycleBin.invoices||[]).length})</h3>
+              {(recycleBin.invoices||[]).length===0?<div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"24px"}}>No deleted invoices</div>
+              :(recycleBin.invoices||[]).map(inv=>(
+                <div key={inv.id} style={{...S.card,marginBottom:"10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div><div style={{fontWeight:600,fontSize:"14px"}}>{inv.number}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtDate(inv.date)} — ₹{inv.total?.toLocaleString()}</div></div>
+                  <div style={{display:"flex",gap:"7px"}}>
+                    <button onClick={()=>restoreInv(inv)} style={{...S.btn("#dcfce7","#166534"),padding:"5px 11px",fontSize:"12px"}}>↩️ Restore</button>
+                    <button onClick={()=>confirmDelete("invoice",inv.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PASSWORD MODAL */}
+      {pwTarget&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
+          <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"300px",textAlign:"center"}}>
+            <div style={{fontSize:"32px",marginBottom:"8px"}}>🔐</div>
+            <h3 style={{margin:"0 0 7px"}}>Confirm Permanent Delete</h3>
+            <p style={{fontSize:"12px",color:"#6b84a3",margin:"0 0 16px"}}>This cannot be undone. Enter password to confirm.</p>
+            <input type="password" value={pwInput} onChange={e=>setPwInput(e.target.value)} placeholder="Enter password" onKeyDown={e=>e.key==="Enter"&&doDelete()} style={{...S.inp,marginBottom:"10px",textAlign:"center"}}/>
+            {pwErr&&<ErrBox msg={pwErr}/>}
+            <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
+              <button onClick={doDelete} style={S.btn("#dc2626")}>Delete Forever</button>
+              <button onClick={()=>{setPwTarget(null);setPwErr("");}} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BOTTOM NAV */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0f3172",borderTop:"1px solid rgba(255,255,255,0.1)",display:"flex",zIndex:900,boxShadow:"0 -2px 12px rgba(0,0,0,0.2)"}}>
         {bottomNav.map(item=>{
           const active=page===item.id;
@@ -385,138 +445,61 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser}){
 
 // ── LOGIN ─────────────────────────────────────────────
 function LoginPage({onLogin,passwords,setPasswords}){
-  const [mode,setMode]     = useState("login");
-  const [id,setId]         = useState("");
-  const [pw,setPw]         = useState("");
-  const [err,setErr]       = useState("");
-  const [showPw,setShowPw] = useState(false);
-  const [fStep,setFStep]   = useState(1);
-  const [fUser,setFUser]   = useState("");
-  const [genOtp,setGenOtp] = useState("");
-  const [entOtp,setEntOtp] = useState("");
-  const [newPw,setNewPw]   = useState("");
-  const [cnfPw,setCnfPw]   = useState("");
-  const [fErr,setFErr]     = useState("");
-  const [fMsg,setFMsg]     = useState("");
-  const [showNewPw,setShowNewPw] = useState(false);
-  const [showCnfPw,setShowCnfPw] = useState(false);
+  const [mode,setMode]=useState("login");
+  const [id,setId]=useState("");
+  const [pw,setPw]=useState("");
+  const [err,setErr]=useState("");
+  const [showPw,setShowPw]=useState(false);
+  const [fStep,setFStep]=useState(1);
+  const [fUser,setFUser]=useState("");
+  const [genOtp,setGenOtp]=useState("");
+  const [entOtp,setEntOtp]=useState("");
+  const [newPw,setNewPw]=useState("");
+  const [cnfPw,setCnfPw]=useState("");
+  const [fErr,setFErr]=useState("");
+  const [fMsg,setFMsg]=useState("");
+  const [showNewPw,setShowNewPw]=useState(false);
+  const [showCnfPw,setShowCnfPw]=useState(false);
 
   const login=()=>{
-  if(!id){setErr("Please select a User ID.");return;}
-  if(!pw){setErr("Please enter your password.");return;}
-  const u=USERS.find(u=>u.id===id&&passwords[id]===pw);
-  u?onLogin(u):setErr("Invalid User ID or Password. Password is case sensitive.");
-};
+    if(!id){setErr("Please select a User ID.");return;}
+    if(!pw){setErr("Please enter your password.");return;}
+    const u=USERS.find(u=>u.id===id&&passwords[id]===pw);
+    u?onLogin(u):setErr("Invalid User ID or Password. Password is case sensitive.");
+  };
   const sendOtp=()=>{if(!fUser){setFErr("Please select a user.");return;}const otp=String(Math.floor(100000+Math.random()*900000));setGenOtp(otp);setFStep(2);setFErr("");setFMsg(`OTP sent to ${USER_PHONES[fUser]} — Demo OTP: ${otp}`);};
   const verifyOtp=()=>{entOtp===genOtp?(setFStep(3),setFErr(""),setFMsg("")):setFErr("Incorrect OTP. Try again.");};
   const resetPw=()=>{if(!newPw||newPw.length<6){setFErr("Min 6 characters.");return;}if(newPw!==cnfPw){setFErr("Passwords do not match.");return;}setPasswords(p=>({...p,[fUser]:newPw}));setMode("login");setFStep(1);setFUser("");setEntOtp("");setNewPw("");setCnfPw("");setGenOtp("");setFErr("");setFMsg("");alert("✅ Password reset! Please log in with your new password.");};
   const resetForgot=()=>{setMode("login");setFStep(1);setFUser("");setEntOtp("");setNewPw("");setCnfPw("");setGenOtp("");setFErr("");setFMsg("");};
-
   const inpDark={...S.inp,background:"rgba(255,255,255,0.08)",color:"#fff",border:"1.5px solid rgba(255,255,255,0.2)"};
 
   return(
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628 0%,#1e3a5f 50%,#0f2040 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI',sans-serif",padding:"20px",position:"relative",overflow:"hidden"}}>
       <svg style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.06}} viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
-        {Array.from({length:8},(_,row)=>Array.from({length:6},(_,col)=>{
-          const x=col*70+(row%2)*35,y=row*60;
-          const pts=Array.from({length:6},(_,i)=>{const a=Math.PI/180*(60*i-30);return `${x+28*Math.cos(a)},${y+28*Math.sin(a)}`;}).join(" ");
-          return <polygon key={`${row}-${col}`} points={pts} fill="none" stroke="#fff" strokeWidth="0.5"/>;
-        })).flat()}
+        {Array.from({length:8},(_,row)=>Array.from({length:6},(_,col)=>{const x=col*70+(row%2)*35,y=row*60;const pts=Array.from({length:6},(_,i)=>{const a=Math.PI/180*(60*i-30);return `${x+28*Math.cos(a)},${y+28*Math.sin(a)}`;}).join(" ");return <polygon key={`${row}-${col}`} points={pts} fill="none" stroke="#fff" strokeWidth="0.5"/>;}).flat()}
       </svg>
-      <div style={{position:"absolute",top:"35%",left:"50%",transform:"translate(-50%,-50%)",width:"300px",height:"300px",background:"radial-gradient(circle,rgba(217,119,6,0.12) 0%,transparent 70%)",pointerEvents:"none"}}/>
-
-      {/* Logo splash */}
       <div style={{textAlign:"center",marginBottom:"28px",zIndex:1}}>
         <div style={{display:"flex",justifyContent:"center",marginBottom:"14px"}}><LogoHex size={100}/></div>
         <h1 style={{margin:"0 0 4px",fontSize:"28px",fontWeight:800,color:"#fff",letterSpacing:"2px"}}>VinoDhan</h1>
         <div style={{fontSize:"12px",fontWeight:600,color:"#f59e0b",letterSpacing:"6px",marginBottom:"8px"}}>COATING</div>
         <div style={{width:"160px",height:"1px",background:"linear-gradient(90deg,transparent,#f59e0b,transparent)",margin:"0 auto 8px"}}/>
         <p style={{margin:0,fontSize:"11px",color:"#93c5fd",letterSpacing:"1px"}}>Specialised Epoxy Coating Services</p>
-        <div style={{display:"flex",justifyContent:"center",gap:"14px",marginTop:"6px"}}>
-          {["Anti-Shock","Anti-Skid","Slip Resistant"].map(t=><span key={t} style={{fontSize:"9px",color:"#64748b",letterSpacing:"1px"}}>{t}</span>)}
-        </div>
       </div>
-
-      {/* Card */}
       <div style={{background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",borderRadius:"20px",padding:"28px",width:"100%",maxWidth:"360px",border:"1px solid rgba(255,255,255,0.12)",zIndex:1}}>
         {mode==="login"&&<>
-          <div style={{textAlign:"center",marginBottom:"20px"}}>
-            <h2 style={{margin:0,fontSize:"16px",fontWeight:700,color:"#fff"}}>Welcome Back</h2>
-            <p style={{margin:"4px 0 0",fontSize:"11px",color:"#93c5fd"}}>Sign in to continue</p>
-          </div>
-          <div style={{marginBottom:"12px"}}>
-            <label style={{...S.lbl,color:"#93c5fd"}}>USER ID</label>
-            <select value={id} onChange={e=>setId(e.target.value)} style={inpDark}>
-              <option value="" style={{background:"#1e3a5f"}}>Select User ID...</option>
-              <option value="DHANS1416" style={{background:"#1e3a5f"}}>DHANS1416</option>
-              <option value="Site Executive" style={{background:"#1e3a5f"}}>Site Executive</option>
-            </select>
-          </div>
-          <div style={{marginBottom:"8px"}}>
-            <label style={{...S.lbl,color:"#93c5fd"}}>PASSWORD</label>
-            <div style={{position:"relative"}}>
-              <input type={showPw?"text":"password"} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()} placeholder="Enter password" style={{...inpDark,paddingRight:"42px"}}/>
-              <span onClick={()=>setShowPw(p=>!p)} style={{position:"absolute",right:"12px",top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:"16px",userSelect:"none"}}>{showPw?"🙈":"👁️"}</span>
-            </div>
-          </div>
-          <div style={{textAlign:"right",marginBottom:"16px"}}>
-            <span onClick={()=>setMode("forgot")} style={{fontSize:"12px",color:"#f59e0b",cursor:"pointer",fontWeight:700,textDecoration:"underline",textUnderlineOffset:"3px"}}>Forgot Password / ID?</span>
-          </div>
+          <div style={{textAlign:"center",marginBottom:"20px"}}><h2 style={{margin:0,fontSize:"16px",fontWeight:700,color:"#fff"}}>Welcome Back</h2><p style={{margin:"4px 0 0",fontSize:"11px",color:"#93c5fd"}}>Sign in to continue</p></div>
+          <div style={{marginBottom:"12px"}}><label style={{...S.lbl,color:"#93c5fd"}}>USER ID</label><select value={id} onChange={e=>setId(e.target.value)} style={inpDark}><option value="" style={{background:"#1e3a5f"}}>Select User ID...</option><option value="DHANS1416" style={{background:"#1e3a5f"}}>DHANS1416</option><option value="Site Executive" style={{background:"#1e3a5f"}}>Site Executive</option></select></div>
+          <div style={{marginBottom:"8px"}}><label style={{...S.lbl,color:"#93c5fd"}}>PASSWORD</label><div style={{position:"relative"}}><input type={showPw?"text":"password"} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()} placeholder="Enter password" style={{...inpDark,paddingRight:"42px"}}/><span onClick={()=>setShowPw(p=>!p)} style={{position:"absolute",right:"12px",top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:"16px",userSelect:"none"}}>{showPw?"🙈":"👁️"}</span></div></div>
+          <div style={{textAlign:"right",marginBottom:"16px"}}><span onClick={()=>setMode("forgot")} style={{fontSize:"12px",color:"#f59e0b",cursor:"pointer",fontWeight:700,textDecoration:"underline",textUnderlineOffset:"3px"}}>Forgot Password / ID?</span></div>
           {err&&<ErrBox msg={err}/>}
           <button onClick={login} style={{...S.btn("#f59e0b","#1a1a1a"),width:"100%",padding:"12px",fontSize:"14px",fontWeight:800}}>Login →</button>
         </>}
-
         {mode==="forgot"&&<>
-          <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"18px"}}>
-            <span onClick={resetForgot} style={{cursor:"pointer",fontSize:"18px",color:"#93c5fd"}}>←</span>
-            <h3 style={{margin:0,fontSize:"15px",fontWeight:700,color:"#fff"}}>{fStep===1?"Forgot Password":fStep===2?"Enter OTP":"Reset Password"}</h3>
-          </div>
-          <div style={{display:"flex",justifyContent:"center",gap:"7px",marginBottom:"20px"}}>
-            {[1,2,3].map(n=><div key={n} style={{width:"26px",height:"5px",borderRadius:"3px",background:fStep>=n?"#f59e0b":"rgba(255,255,255,0.2)"}}/>)}
-          </div>
-          {fStep===1&&<>
-            <p style={{fontSize:"13px",color:"#93c5fd",margin:"0 0 14px"}}>Select your User ID to receive an OTP on your registered mobile.</p>
-            <div style={{marginBottom:"14px"}}>
-              <label style={{...S.lbl,color:"#93c5fd"}}>SELECT USER ID</label>
-              <select value={fUser} onChange={e=>setFUser(e.target.value)} style={inpDark}>
-                <option value="" style={{background:"#1e3a5f"}}>Select User ID...</option>
-                <option value="DHANS1416" style={{background:"#1e3a5f"}}>DHANS1416</option>
-                <option value="Site Executive" style={{background:"#1e3a5f"}}>Site Executive</option>
-              </select>
-            </div>
-            {fUser&&<div style={{padding:"9px 13px",background:"rgba(245,158,11,0.15)",borderRadius:"8px",fontSize:"12px",color:"#f59e0b",marginBottom:"13px",border:"1px solid rgba(245,158,11,0.3)"}}>📱 OTP will be sent to: <strong>{USER_PHONES[fUser]}</strong></div>}
-            {fErr&&<ErrBox msg={fErr}/>}
-            <button onClick={sendOtp} style={{...S.btn("#f59e0b","#1a1a1a"),width:"100%",padding:"11px",fontWeight:800}}>Send OTP →</button>
-          </>}
-          {fStep===2&&<>
-            {fMsg&&<div style={{padding:"9px 13px",background:"rgba(74,222,128,0.1)",borderRadius:"8px",fontSize:"12px",color:"#4ade80",marginBottom:"14px",border:"1px solid rgba(74,222,128,0.2)",lineHeight:"1.6"}}>{fMsg}</div>}
-            <div style={{marginBottom:"14px"}}>
-              <label style={{...S.lbl,color:"#93c5fd"}}>ENTER 6-DIGIT OTP</label>
-              <input value={entOtp} onChange={e=>setEntOtp(e.target.value)} placeholder="······" maxLength={6} style={{...inpDark,fontSize:"22px",letterSpacing:"8px",textAlign:"center",fontWeight:700}}/>
-            </div>
-            {fErr&&<ErrBox msg={fErr}/>}
-            <button onClick={verifyOtp} style={{...S.btn("#f59e0b","#1a1a1a"),width:"100%",padding:"11px",marginBottom:"9px",fontWeight:800}}>Verify OTP →</button>
-            <div style={{textAlign:"center"}}><span onClick={sendOtp} style={{fontSize:"12px",color:"#f59e0b",cursor:"pointer",textDecoration:"underline"}}>Resend OTP</span></div>
-          </>}
-          {fStep===3&&<>
-            <div style={{padding:"9px 13px",background:"rgba(74,222,128,0.1)",borderRadius:"8px",fontSize:"12px",color:"#4ade80",marginBottom:"14px",border:"1px solid rgba(74,222,128,0.2)"}}>✅ OTP verified!</div>
-            <div style={{marginBottom:"11px"}}>
-              <label style={{...S.lbl,color:"#93c5fd"}}>NEW PASSWORD</label>
-              <div style={{position:"relative"}}>
-                <input type={showNewPw?"text":"password"} value={newPw} onChange={e=>setNewPw(e.target.value)} placeholder="Min 6 characters" style={{...inpDark,paddingRight:"42px"}}/>
-                <span onClick={()=>setShowNewPw(p=>!p)} style={{position:"absolute",right:"12px",top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:"16px"}}>{showNewPw?"🙈":"👁️"}</span>
-              </div>
-            </div>
-            <div style={{marginBottom:"14px"}}>
-              <label style={{...S.lbl,color:"#93c5fd"}}>CONFIRM PASSWORD</label>
-              <div style={{position:"relative"}}>
-                <input type={showCnfPw?"text":"password"} value={cnfPw} onChange={e=>setCnfPw(e.target.value)} placeholder="Re-enter password" style={{...inpDark,paddingRight:"42px"}} onKeyDown={e=>e.key==="Enter"&&resetPw()}/>
-                <span onClick={()=>setShowCnfPw(p=>!p)} style={{position:"absolute",right:"12px",top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:"16px"}}>{showCnfPw?"🙈":"👁️"}</span>
-              </div>
-            </div>
-            {fErr&&<ErrBox msg={fErr}/>}
-            <button onClick={resetPw} style={{...S.btn("#f59e0b","#1a1a1a"),width:"100%",padding:"11px",fontWeight:800}}>Reset Password ✓</button>
-          </>}
+          <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"18px"}}><span onClick={resetForgot} style={{cursor:"pointer",fontSize:"18px",color:"#93c5fd"}}>←</span><h3 style={{margin:0,fontSize:"15px",fontWeight:700,color:"#fff"}}>{fStep===1?"Forgot Password":fStep===2?"Enter OTP":"Reset Password"}</h3></div>
+          <div style={{display:"flex",justifyContent:"center",gap:"7px",marginBottom:"20px"}}>{[1,2,3].map(n=><div key={n} style={{width:"26px",height:"5px",borderRadius:"3px",background:fStep>=n?"#f59e0b":"rgba(255,255,255,0.2)"}}/>)}</div>
+          {fStep===1&&<><p style={{fontSize:"13px",color:"#93c5fd",margin:"0 0 14px"}}>Select your User ID to receive an OTP.</p><div style={{marginBottom:"14px"}}><label style={{...S.lbl,color:"#93c5fd"}}>SELECT USER ID</label><select value={fUser} onChange={e=>setFUser(e.target.value)} style={inpDark}><option value="" style={{background:"#1e3a5f"}}>Select...</option><option value="DHANS1416" style={{background:"#1e3a5f"}}>DHANS1416</option><option value="Site Executive" style={{background:"#1e3a5f"}}>Site Executive</option></select></div>{fUser&&<div style={{padding:"9px 13px",background:"rgba(245,158,11,0.15)",borderRadius:"8px",fontSize:"12px",color:"#f59e0b",marginBottom:"13px",border:"1px solid rgba(245,158,11,0.3)"}}>📱 OTP to: <strong>{USER_PHONES[fUser]}</strong></div>}{fErr&&<ErrBox msg={fErr}/>}<button onClick={sendOtp} style={{...S.btn("#f59e0b","#1a1a1a"),width:"100%",padding:"11px",fontWeight:800}}>Send OTP →</button></>}
+          {fStep===2&&<>{fMsg&&<div style={{padding:"9px 13px",background:"rgba(74,222,128,0.1)",borderRadius:"8px",fontSize:"12px",color:"#4ade80",marginBottom:"14px",border:"1px solid rgba(74,222,128,0.2)",lineHeight:"1.6"}}>{fMsg}</div>}<div style={{marginBottom:"14px"}}><label style={{...S.lbl,color:"#93c5fd"}}>6-DIGIT OTP</label><input value={entOtp} onChange={e=>setEntOtp(e.target.value)} placeholder="······" maxLength={6} style={{...inpDark,fontSize:"22px",letterSpacing:"8px",textAlign:"center",fontWeight:700}}/></div>{fErr&&<ErrBox msg={fErr}/>}<button onClick={verifyOtp} style={{...S.btn("#f59e0b","#1a1a1a"),width:"100%",padding:"11px",marginBottom:"9px",fontWeight:800}}>Verify OTP →</button><div style={{textAlign:"center"}}><span onClick={sendOtp} style={{fontSize:"12px",color:"#f59e0b",cursor:"pointer",textDecoration:"underline"}}>Resend OTP</span></div></>}
+          {fStep===3&&<><div style={{padding:"9px 13px",background:"rgba(74,222,128,0.1)",borderRadius:"8px",fontSize:"12px",color:"#4ade80",marginBottom:"14px",border:"1px solid rgba(74,222,128,0.2)"}}>✅ OTP verified!</div><div style={{marginBottom:"11px"}}><label style={{...S.lbl,color:"#93c5fd"}}>NEW PASSWORD</label><div style={{position:"relative"}}><input type={showNewPw?"text":"password"} value={newPw} onChange={e=>setNewPw(e.target.value)} placeholder="Min 6 characters" style={{...inpDark,paddingRight:"42px"}}/><span onClick={()=>setShowNewPw(p=>!p)} style={{position:"absolute",right:"12px",top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:"16px"}}>{showNewPw?"🙈":"👁️"}</span></div></div><div style={{marginBottom:"14px"}}><label style={{...S.lbl,color:"#93c5fd"}}>CONFIRM PASSWORD</label><div style={{position:"relative"}}><input type={showCnfPw?"text":"password"} value={cnfPw} onChange={e=>setCnfPw(e.target.value)} placeholder="Re-enter" style={{...inpDark,paddingRight:"42px"}} onKeyDown={e=>e.key==="Enter"&&resetPw()}/><span onClick={()=>setShowCnfPw(p=>!p)} style={{position:"absolute",right:"12px",top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:"16px"}}>{showCnfPw?"🙈":"👁️"}</span></div></div>{fErr&&<ErrBox msg={fErr}/>}<button onClick={resetPw} style={{...S.btn("#f59e0b","#1a1a1a"),width:"100%",padding:"11px",fontWeight:800}}>Reset Password ✓</button></>}
         </>}
       </div>
     </div>
@@ -526,25 +509,29 @@ function LoginPage({onLogin,passwords,setPasswords}){
 // ── DASHBOARD ─────────────────────────────────────────
 function Dashboard({user,workers,sites,attendance,assignments,landscape}){
   const activeSites=sites.filter(s=>s.status==="Active").length;
-  const totalSqm=sites.reduce((sum,s)=>(s.works||[]).reduce((a,w)=>a+(w.area||0),sum),0);
-  const totalRev=sites.reduce((sum,s)=>(s.works||[]).reduce((a,w)=>a+(w.area||0)*(w.rate||0),sum),0);
-  const todayAtt=Object.entries(attendance).filter(([k,v])=>k.startsWith(today)&&v==="Present").length;
+  const totalSqm=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="SQM"||!w.workType).reduce((a,w)=>a+(Number(w.area)||0),sum),0);
+  const totalRmt=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="RMT").reduce((a,w)=>a+(Number(w.area)||0),sum),0);
+  const totalMp=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="Manpower").reduce((a,w)=>a+calcWork(w),sum),0);
+  const totalRev=sites.reduce((sum,s)=>(s.works||[]).reduce((a,w)=>a+calcWork(w),sum),0);
+
   const stats=[
-    {label:"Total Workers",value:workers.length,icon:"👷",color:"#dbeafe"},
-    {label:"Active Sites",value:activeSites,icon:"🏗️",color:"#dcfce7"},
-    {label:"Present Today",value:todayAtt,icon:"✅",color:"#fef9c3"},
-    {label:"Total Sq.m",value:`${totalSqm}m²`,icon:"📐",color:"#ede9fe"},
-    {label:"Revenue",value:`₹${totalRev.toLocaleString()}`,icon:"💰",color:"#fef3c7"},
+    {label:"Total Workers",  value:workers.length,              icon:"👷", color:"#dbeafe"},
+    {label:"Active Sites",   value:activeSites,                 icon:"🏗️", color:"#dcfce7"},
+    {label:"Total SQM",      value:`${totalSqm}m²`,             icon:"📐", color:"#ede9fe"},
+    {label:"Total RMT",      value:`${totalRmt}rmt`,            icon:"📏", color:"#fce7f3"},
+    {label:"Other Charges",  value:`₹${totalMp.toLocaleString()}`, icon:"👨‍🔧", color:"#fef9c3"},
+    {label:"Revenue",        value:`₹${totalRev.toLocaleString()}`, icon:"💰", color:"#fef3c7"},
   ];
+
   return(
     <div>
       <h2 style={{margin:"0 0 4px",fontSize:"20px",fontWeight:800}}>Good day, {user.name}! 👋</h2>
       <p style={{margin:"0 0 20px",color:"#6b84a3",fontSize:"12px"}}>{today}</p>
-      <div style={{display:"grid",gridTemplateColumns:landscape?"repeat(5,1fr)":"repeat(2,1fr)",gap:"12px",marginBottom:"20px"}}>
+      <div style={{display:"grid",gridTemplateColumns:landscape?"repeat(6,1fr)":"repeat(2,1fr)",gap:"12px",marginBottom:"20px"}}>
         {stats.map(st=>(
           <div key={st.label} style={{...S.card,background:st.color,boxShadow:"none",padding:"16px"}}>
             <div style={{fontSize:"24px",marginBottom:"6px"}}>{st.icon}</div>
-            <div style={{fontSize:"20px",fontWeight:800,color:"#0f3172"}}>{st.value}</div>
+            <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>{st.value}</div>
             <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>{st.label}</div>
           </div>
         ))}
@@ -552,18 +539,24 @@ function Dashboard({user,workers,sites,attendance,assignments,landscape}){
       <div style={S.card}>
         <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>🏗️ Sites Overview</h3>
         {sites.map(site=>{
-          const sa=assignments[site.id]||{};
-          const byDesig=CATEGORIES.reduce((acc,c)=>({...acc,[c]:Object.values(sa).filter(d=>d===c).length}),{});
-          const rev=(site.works||[]).reduce((a,w)=>a+(w.area||0)*(w.rate||0),0);
+          const rev=(site.works||[]).reduce((a,w)=>a+calcWork(w),0);
           return(
             <div key={site.id} style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"10px",marginBottom:"8px"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
                 <div><div style={{fontWeight:600,fontSize:"14px"}}>{site.name}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div></div>
                 <div style={{textAlign:"right"}}><div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{rev.toLocaleString()}</div><span style={{background:site.status==="Active"?"#dcfce7":"#fee2e2",color:site.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{site.status}</span></div>
               </div>
-              <div style={{display:"flex",gap:"5px",flexWrap:"wrap"}}>
-                {Object.keys(sa).length===0?<span style={{fontSize:"11px",color:"#9db3cc"}}>No workers assigned</span>:CATEGORIES.map(c=>byDesig[c]>0&&<span key={c} style={S.badge(c)}>{byDesig[c]} {c}</span>)}
-              </div>
+              {(site.works||[]).length>0&&<div style={{borderTop:"1px solid #e0eaff",paddingTop:"8px",display:"flex",flexDirection:"column",gap:"4px"}}>
+                {(site.works||[]).map(w=>(
+                  <div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"12px"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+                      <span style={S.wbadge(w.workType||"SQM")}>{w.workType||"SQM"}</span>
+                      <span style={{color:"#1a2b4a"}}>{w.place}</span>
+                    </div>
+                    <span style={{fontWeight:600,color:"#166534"}}>₹{calcWork(w).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>}
             </div>
           );
         })}
@@ -573,22 +566,40 @@ function Dashboard({user,workers,sites,attendance,assignments,landscape}){
 }
 
 // ── SITES ─────────────────────────────────────────────
-function Sites({sites,setSites,workers,assignments,setAssignments}){
+function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,setRecycleBin}){
   const [showAdd,setShowAdd]=useState(false);
   const [siteForm,setSiteForm]=useState({name:"",client:"Swathi Engineering Agency",status:"Active"});
   const [expandSite,setExpandSite]=useState(null);
   const [siteTab,setSiteTab]=useState({});
-  const [workForm,setWorkForm]=useState({place:"",workersList:"",fromDate:"",toDate:"",area:"",rate:""});
+  const EMPTY_WORK={place:"",workersList:"",fromDate:"",toDate:"",area:"",rate:"",labour:"",workType:"SQM"};
+  const [workForm,setWorkForm]=useState(EMPTY_WORK);
   const [editWorkId,setEditWorkId]=useState(null);
   const [addingWork,setAddingWork]=useState(null);
-  const getTab=id=>siteTab[id]||"assign";
+  const [saveMsg,setSaveMsg]=useState({});
+
+  const getTab=id=>siteTab[id]||"works";
   const addSite=()=>{if(!siteForm.name.trim())return;const ns={id:Date.now(),...siteForm,works:[]};setSites(p=>[...p,ns]);setAssignments(p=>({...p,[ns.id]:{}}));setSiteForm({name:"",client:"Swathi Engineering Agency",status:"Active"});setShowAdd(false);};
-  const deleteSite=id=>setSites(p=>p.filter(s=>s.id!==id));
+  const deleteSite=id=>{const s=sites.find(x=>x.id===id);if(s){setRecycleBin(p=>({...p,sites:[...(p.sites||[]),s]}));setSites(p=>p.filter(x=>x.id!==id));}};
   const toggleWorker=(siteId,w)=>setAssignments(p=>{const c={...(p[siteId]||{})};if(c[w.id])delete c[w.id];else c[w.id]=w.category;return{...p,[siteId]:c};});
   const changeDesig=(siteId,wid,desig)=>setAssignments(p=>({...p,[siteId]:{...(p[siteId]||{}),[wid]:desig}}));
-  const saveWork=siteId=>{if(!workForm.place||!workForm.area||!workForm.rate)return;setSites(p=>p.map(s=>{if(s.id!==siteId)return s;if(editWorkId)return{...s,works:(s.works||[]).map(w=>w.id===editWorkId?{...w,...workForm,area:Number(workForm.area),rate:Number(workForm.rate)}:w)};return{...s,works:[...(s.works||[]),{id:Date.now(),...workForm,area:Number(workForm.area),rate:Number(workForm.rate)}]};}));setWorkForm({place:"",workersList:"",fromDate:"",toDate:"",area:"",rate:""});setAddingWork(null);setEditWorkId(null);};
+
+  const saveWork=siteId=>{
+    if(!workForm.place)return;
+    if(workForm.workType==="Manpower"&&(!workForm.labour||!workForm.rate))return;
+    if(workForm.workType!=="Manpower"&&(!workForm.area||!workForm.rate))return;
+    setSites(p=>p.map(s=>{
+      if(s.id!==siteId)return s;
+      if(editWorkId)return{...s,works:(s.works||[]).map(w=>w.id===editWorkId?{...w,...workForm,area:Number(workForm.area),rate:Number(workForm.rate),labour:Number(workForm.labour)}:w)};
+      return{...s,works:[...(s.works||[]),{id:Date.now(),...workForm,area:Number(workForm.area),rate:Number(workForm.rate),labour:Number(workForm.labour)}]};
+    }));
+    setWorkForm(EMPTY_WORK);setAddingWork(null);setEditWorkId(null);
+    setSaveMsg(p=>({...p,[siteId]:true}));
+    setTimeout(()=>setSaveMsg(p=>({...p,[siteId]:false})),2500);
+  };
+
   const deleteWork=(siteId,wid)=>setSites(p=>p.map(s=>s.id===siteId?{...s,works:(s.works||[]).filter(w=>w.id!==wid)}:s));
-  const startEdit=(siteId,w)=>{setAddingWork(siteId);setEditWorkId(w.id);setWorkForm({place:w.place,workersList:w.workersList||"",fromDate:w.fromDate||"",toDate:w.toDate||"",area:String(w.area),rate:String(w.rate)});};
+  const startEdit=(siteId,w)=>{setAddingWork(siteId);setEditWorkId(w.id);setWorkForm({place:w.place,workersList:w.workersList||"",fromDate:w.fromDate||"",toDate:w.toDate||"",area:String(w.area||""),rate:String(w.rate||""),labour:String(w.labour||""),workType:w.workType||"SQM"});};
+
   return(
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"18px"}}>
@@ -603,65 +614,106 @@ function Sites({sites,setSites,workers,assignments,setAssignments}){
         <div style={{marginBottom:"12px"}}><label style={S.lbl}>Status</label><select value={siteForm.status} onChange={e=>setSiteForm(p=>({...p,status:e.target.value}))} style={S.inp}><option>Active</option><option>Completed</option><option>On Hold</option></select></div>
         <div style={{display:"flex",gap:"9px"}}><button onClick={addSite} style={S.btn()}>Save</button><button onClick={()=>setShowAdd(false)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button></div>
       </div>}
+
       {sites.map(site=>{
         const sa=assignments[site.id]||{};const isExp=expandSite===site.id;const tab=getTab(site.id);
-        const rev=(site.works||[]).reduce((a,w)=>a+(w.area||0)*(w.rate||0),0);
+        const rev=(site.works||[]).reduce((a,w)=>a+calcWork(w),0);
         return(
           <div key={site.id} style={{...S.card,marginBottom:"12px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"9px"}}>
-              <div><h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>{site.name}</h3><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div><div style={{fontSize:"13px",fontWeight:700,color:"#166534",marginTop:"3px"}}>₹{rev.toLocaleString()}</div></div>
+              <div>
+                <h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>{site.name}</h3>
+                <div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div>
+                <div style={{fontSize:"13px",fontWeight:700,color:"#166534",marginTop:"3px"}}>₹{rev.toLocaleString()}</div>
+              </div>
               <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
                 <span style={{background:site.status==="Active"?"#dcfce7":"#fee2e2",color:site.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 10px"}}>{site.status}</span>
                 <button onClick={()=>deleteSite(site.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"4px 9px",fontSize:"12px"}}>🗑️</button>
               </div>
             </div>
+
+            {/* Works always visible */}
+            {(site.works||[]).length>0&&<div style={{marginBottom:"10px",background:"#f8faff",borderRadius:"10px",padding:"10px"}}>
+              {(site.works||[]).map(w=>(
+                <div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #e8f0ff"}}>
+                  <div>
+                    <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"2px"}}>
+                      <span style={S.wbadge(w.workType||"SQM")}>{w.workType||"SQM"}</span>
+                      <span style={{fontWeight:600,fontSize:"12px"}}>{w.place}</span>
+                    </div>
+                    {w.fromDate&&<div style={{fontSize:"10px",color:"#6b84a3"}}>{w.fromDate} → {w.toDate||"ongoing"}</div>}
+                    <div style={{fontSize:"10px",color:"#6b84a3"}}>{workUnitLabel(w)}</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontWeight:700,fontSize:"13px",color:"#166534"}}>₹{calcWork(w).toLocaleString()}</div>
+                    {isExp&&tab==="works"&&<div style={{display:"flex",gap:"4px",marginTop:"4px"}}>
+                      <button onClick={()=>startEdit(site.id,w)} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"3px 7px",fontSize:"11px"}}>✏️</button>
+                      <button onClick={()=>deleteWork(site.id,w.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"3px 7px",fontSize:"11px"}}>🗑️</button>
+                    </div>}
+                  </div>
+                </div>
+              ))}
+            </div>}
+
             <button onClick={()=>setExpandSite(isExp?null:site.id)} style={S.btn("#f0f6ff","#1e50a0")}>{isExp?"Close ▲":"Manage ▼"}</button>
+
             {isExp&&<div style={{marginTop:"12px"}}>
               <div style={{display:"flex",gap:"7px",marginBottom:"12px"}}>
-                {[["assign","⚙️ Workers"],["works","📐 Works"]].map(([t,lbl])=>(
+                {[["works","📐 Works"],["assign","⚙️ Workers"]].map(([t,lbl])=>(
                   <button key={t} onClick={()=>setSiteTab(p=>({...p,[site.id]:t}))} style={S.btn(tab===t?"#1e50a0":"#e5e7eb",tab===t?"#fff":"#374151")}>{lbl}</button>
                 ))}
               </div>
+
+              {tab==="works"&&<div>
+                {saveMsg[site.id]&&<SuccessBox msg="Work entry saved successfully!"/>}
+                <button onClick={()=>{setAddingWork(addingWork===site.id?null:site.id);setEditWorkId(null);setWorkForm(EMPTY_WORK);}} style={{...S.btn(),marginBottom:"10px",fontSize:"12px",padding:"7px 13px"}}>+ Add Work Entry</button>
+                {addingWork===site.id&&<div style={{...S.card,marginBottom:"10px",border:"1.5px solid #bfdbfe",padding:"14px"}}>
+                  <h4 style={{margin:"0 0 10px"}}>{editWorkId?"Edit":"New"} Work Entry</h4>
+                  {/* Work Type Selector */}
+                  <div style={{marginBottom:"10px"}}>
+                    <label style={S.lbl}>Work Type</label>
+                    <div style={{display:"flex",gap:"8px"}}>
+                      {WORK_TYPES.map(t=>(
+                        <button key={t} onClick={()=>setWorkForm(p=>({...p,workType:t}))} style={{...S.btn(workForm.workType===t?WORK_TYPE_COLOR[t].color:"#e5e7eb",workForm.workType===t?"#fff":"#374151"),padding:"6px 14px",fontSize:"12px"}}>{t}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"9px"}}>
+                    <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Place / Description</label><input value={workForm.place} onChange={e=>setWorkForm(p=>({...p,place:e.target.value}))} style={S.inp}/></div>
+                    <div><label style={S.lbl}>From Date</label><input type="date" value={workForm.fromDate} onChange={e=>setWorkForm(p=>({...p,fromDate:e.target.value}))} style={S.inp}/></div>
+                    <div><label style={S.lbl}>To Date</label><input type="date" value={workForm.toDate} onChange={e=>setWorkForm(p=>({...p,toDate:e.target.value}))} style={S.inp}/></div>
+                    {workForm.workType==="Manpower"
+                      ?<><div><label style={S.lbl}>No. of Labour</label><input type="number" value={workForm.labour} onChange={e=>setWorkForm(p=>({...p,labour:e.target.value}))} style={S.inp}/></div>
+                        <div><label style={S.lbl}>Rate per Day (₹)</label><input type="number" value={workForm.rate} onChange={e=>setWorkForm(p=>({...p,rate:e.target.value}))} style={S.inp}/></div></>
+                      ?<><div><label style={S.lbl}>{workForm.workType==="RMT"?"Length (rmt)":"Area (m²)"}</label><input type="number" value={workForm.area} onChange={e=>setWorkForm(p=>({...p,area:e.target.value}))} style={S.inp}/></div>
+                        <div><label style={S.lbl}>Rate (₹/{workForm.workType==="RMT"?"rmt":"m²"})</label><input type="number" value={workForm.rate} onChange={e=>setWorkForm(p=>({...p,rate:e.target.value}))} style={S.inp}/></div></>
+                    }
+                  </div>
+                  {/* Live Amount Preview */}
+                  {((workForm.workType==="Manpower"&&workForm.labour&&workForm.rate)||(workForm.workType!=="Manpower"&&workForm.area&&workForm.rate))&&
+                    <div style={{marginTop:"8px",padding:"7px 11px",background:"#dcfce7",borderRadius:"7px",fontSize:"13px",fontWeight:600,color:"#166534"}}>
+                      💰 ₹{workForm.workType==="Manpower"?(Number(workForm.labour)*Number(workForm.rate)).toLocaleString():(Number(workForm.area)*Number(workForm.rate)).toLocaleString()}
+                    </div>}
+                  <div style={{display:"flex",gap:"7px",marginTop:"11px"}}>
+                    <button onClick={()=>saveWork(site.id)} style={{...S.btn(),fontSize:"12px",padding:"7px 13px"}}>💾 Save</button>
+                    <button onClick={()=>{setAddingWork(null);setEditWorkId(null);}} style={{...S.btn("#f0f4f9","#1a2b4a"),fontSize:"12px",padding:"7px 13px"}}>Cancel</button>
+                  </div>
+                </div>}
+              </div>}
+
               {tab==="assign"&&<div style={{background:"#f8faff",borderRadius:"10px",padding:"12px"}}>
-                <p style={{margin:"0 0 10px",fontSize:"11px",color:"#6b84a3",fontWeight:600}}>Click to assign/remove. Set site role for assigned workers.</p>
+                <p style={{margin:"0 0 10px",fontSize:"11px",color:"#6b84a3",fontWeight:600}}>Click to assign/remove workers.</p>
                 <div style={{display:"flex",flexDirection:"column",gap:"6px"}}>
                   {workers.map(w=>{const isA=!!sa[w.id];const desig=sa[w.id]||w.category;return(
                     <div key={w.id} style={{display:"flex",alignItems:"center",gap:"9px",padding:"8px 12px",borderRadius:"9px",background:isA?"#fff":"#f0f4f9",border:isA?`1.5px solid ${CAT_COLOR[desig].color}`:"1.5px solid transparent"}}>
                       <div onClick={()=>toggleWorker(site.id,w)} style={{width:"20px",height:"20px",borderRadius:"5px",flexShrink:0,background:isA?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:"12px",fontWeight:700}}>{isA?"✓":""}</div>
                       <div style={{flex:1}}><div style={{fontSize:"13px",fontWeight:600}}>{w.name}</div><div style={{fontSize:"10px",color:"#6b84a3"}}>Profile: <span style={{color:CAT_COLOR[w.category].color,fontWeight:600}}>{w.category}</span></div></div>
-                      {isA&&<div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"2px"}}>
-                        <label style={{fontSize:"10px",color:"#6b84a3",fontWeight:600}}>SITE ROLE</label>
-                        <select value={desig} onChange={e=>changeDesig(site.id,w.id,e.target.value)} onClick={e=>e.stopPropagation()} style={{padding:"3px 6px",borderRadius:"6px",border:`1.5px solid ${CAT_COLOR[desig].color}`,fontSize:"11px",fontWeight:600,color:CAT_COLOR[desig].color,background:CAT_COLOR[desig].bg,outline:"none"}}>
-                          {CATEGORIES.map(c=><option key={c}>{c}</option>)}
-                        </select>
-                        {desig!==w.category&&<div style={{fontSize:"10px",color:"#d97706"}}>⚠ Differs</div>}
-                      </div>}
+                      {isA&&<select value={desig} onChange={e=>changeDesig(site.id,w.id,e.target.value)} onClick={e=>e.stopPropagation()} style={{padding:"3px 6px",borderRadius:"6px",border:`1.5px solid ${CAT_COLOR[desig].color}`,fontSize:"11px",fontWeight:600,color:CAT_COLOR[desig].color,background:CAT_COLOR[desig].bg,outline:"none"}}>
+                        {CATEGORIES.map(c=><option key={c}>{c}</option>)}
+                      </select>}
                     </div>
                   );})}
                 </div>
-              </div>}
-              {tab==="works"&&<div>
-                <button onClick={()=>{setAddingWork(addingWork===site.id?null:site.id);setEditWorkId(null);setWorkForm({place:"",workersList:"",fromDate:"",toDate:"",area:"",rate:""});}} style={{...S.btn(),marginBottom:"10px",fontSize:"12px",padding:"7px 13px"}}>+ Add Work Entry</button>
-                {addingWork===site.id&&<div style={{...S.card,marginBottom:"10px",border:"1.5px solid #bfdbfe",padding:"14px"}}>
-                  <h4 style={{margin:"0 0 10px"}}>{editWorkId?"Edit":"New"} Work Entry</h4>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"9px"}}>
-                    <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Place / Description</label><input value={workForm.place} onChange={e=>setWorkForm(p=>({...p,place:e.target.value}))} style={S.inp}/></div>
-                    <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Workers (notes)</label><input value={workForm.workersList} onChange={e=>setWorkForm(p=>({...p,workersList:e.target.value}))} style={S.inp}/></div>
-                    <div><label style={S.lbl}>From Date</label><input type="date" value={workForm.fromDate} onChange={e=>setWorkForm(p=>({...p,fromDate:e.target.value}))} style={S.inp}/></div>
-                    <div><label style={S.lbl}>To Date</label><input type="date" value={workForm.toDate} onChange={e=>setWorkForm(p=>({...p,toDate:e.target.value}))} style={S.inp}/></div>
-                    <div><label style={S.lbl}>Area (sq.m)</label><input type="number" value={workForm.area} onChange={e=>setWorkForm(p=>({...p,area:e.target.value}))} style={S.inp}/></div>
-                    <div><label style={S.lbl}>Rate (₹/sq.m)</label><input type="number" value={workForm.rate} onChange={e=>setWorkForm(p=>({...p,rate:e.target.value}))} style={S.inp}/></div>
-                  </div>
-                  {workForm.area&&workForm.rate&&<div style={{marginTop:"8px",padding:"7px 11px",background:"#dcfce7",borderRadius:"7px",fontSize:"13px",fontWeight:600,color:"#166534"}}>💰 ₹{(Number(workForm.area)*Number(workForm.rate)).toLocaleString()}</div>}
-                  <div style={{display:"flex",gap:"7px",marginTop:"11px"}}><button onClick={()=>saveWork(site.id)} style={{...S.btn(),fontSize:"12px",padding:"7px 13px"}}>💾 Save</button><button onClick={()=>{setAddingWork(null);setEditWorkId(null);}} style={{...S.btn("#f0f4f9","#1a2b4a"),fontSize:"12px",padding:"7px 13px"}}>Cancel</button></div>
-                </div>}
-                {(site.works||[]).length===0?<div style={{color:"#9db3cc",fontSize:"13px",textAlign:"center",padding:"18px"}}>No work entries yet.</div>
-                :(site.works||[]).map(w=>(
-                  <div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
-                    <div><div style={{fontWeight:600,fontSize:"13px"}}>{w.place}</div>{w.fromDate&&<div style={{fontSize:"11px",color:"#6b84a3"}}>{w.fromDate} → {w.toDate||"ongoing"}</div>}<div style={{fontSize:"11px",color:"#6b84a3"}}>{w.area}m² × ₹{w.rate}</div></div>
-                    <div style={{textAlign:"right"}}><div style={{fontWeight:700,fontSize:"14px",color:"#166534"}}>₹{(w.area*w.rate).toLocaleString()}</div><div style={{display:"flex",gap:"5px",marginTop:"5px"}}><button onClick={()=>startEdit(site.id,w)} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"4px 8px",fontSize:"12px"}}>✏️</button><button onClick={()=>deleteWork(site.id,w.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"4px 8px",fontSize:"12px"}}>🗑️</button></div></div>
-                  </div>
-                ))}
               </div>}
             </div>}
           </div>
@@ -702,21 +754,18 @@ function Workers({workers,setWorkers,execProfile,setExecProfile}){
       </div>}
       {view==="exec"&&<div style={{...S.card,maxWidth:"500px"}}>
         <div style={{display:"flex",alignItems:"center",gap:"13px",marginBottom:"16px"}}>
-          {execProfile.photo?<img src={execProfile.photo} style={{width:"48px",height:"48px",borderRadius:"50%",objectFit:"cover"}}/>
-          :<div style={{width:"48px",height:"48px",borderRadius:"50%",background:"#1e50a0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"17px",color:"#fff",fontWeight:700}}>V</div>}
+          {execProfile.photo?<img src={execProfile.photo} style={{width:"48px",height:"48px",borderRadius:"50%",objectFit:"cover"}}/>:<div style={{width:"48px",height:"48px",borderRadius:"50%",background:"#1e50a0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"17px",color:"#fff",fontWeight:700}}>V</div>}
           <div><div style={{fontSize:"15px",fontWeight:700}}>Vinoth Kumar. N</div><div style={{fontSize:"11px",color:"#6b84a3"}}>Site Executive</div></div>
         </div>
         {editId==="exec"
           ?<><EForm form={form} setF={setF}/><div style={{display:"flex",gap:"8px"}}><button onClick={()=>{setExecProfile({...execProfile,...form});setEditId(null);}} style={S.btn()}>💾 Save</button><button onClick={()=>setEditId(null)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button></div></>
-          :<>
-            {execProfile.photo&&<img src={execProfile.photo} style={{width:"80px",height:"80px",borderRadius:"8px",objectFit:"cover",marginBottom:"12px"}}/>}
+          :<>{execProfile.photo&&<img src={execProfile.photo} style={{width:"80px",height:"80px",borderRadius:"8px",objectFit:"cover",marginBottom:"12px"}}/>}
             <PRow label="Phone" value={execProfile.phone||"—"}/>
             <PRow label="Aadhaar" value={showAadhaar["exec"]?(execProfile.aadhaar||"—"):mask(execProfile.aadhaar)} toggle={()=>setShowAadhaar(p=>({...p,exec:!p["exec"]}))}/>
             <PRow label="Date of Birth" value={execProfile.dob||"—"}/>
             <PRow label="Date of Joining" value={execProfile.doj||"—"}/>
             <button onClick={()=>{setForm({...EMPTY_WORKER,...execProfile});setEditId("exec");}} style={{...S.btn(),marginTop:"12px"}}>✏️ Edit Profile</button>
-          </>
-        }
+          </>}
       </div>}
       {view==="list"&&<>
         <div style={{fontSize:"11px",color:"#6b84a3",marginBottom:"12px"}}>{workers.length}/20 workers</div>
@@ -751,8 +800,7 @@ function WCard({w,isEditing,form,setF,onEdit,onSave,onCancel,onDelete,showAadhaa
   return(
     <div style={{...S.card,padding:"13px"}}>
       <div onClick={()=>!isEditing&&setExp(p=>!p)} style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:exp||isEditing?"11px":"0",cursor:"pointer"}}>
-        {w.photo?<img src={w.photo} style={{width:"38px",height:"38px",borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
-        :<div style={{width:"38px",height:"38px",borderRadius:"50%",background:CAT_COLOR[w.category].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px",fontWeight:700,color:CAT_COLOR[w.category].color,flexShrink:0}}>{w.name[0]}</div>}
+        {w.photo?<img src={w.photo} style={{width:"38px",height:"38px",borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>:<div style={{width:"38px",height:"38px",borderRadius:"50%",background:CAT_COLOR[w.category].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px",fontWeight:700,color:CAT_COLOR[w.category].color,flexShrink:0}}>{w.name[0]}</div>}
         <div style={{flex:1,minWidth:0}}><div style={{fontWeight:600,fontSize:"13px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{w.name}</div><span style={S.badge(w.category)}>{w.category}</span></div>
         <div style={{fontSize:"12px",color:"#90afd4"}}>{exp||isEditing?"▲":"▼"}</div>
       </div>
@@ -799,7 +847,6 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
   const [repNameOfWork,setRepNameOfWork]=useState("");
   const [repFromDate,setRepFromDate]=useState(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}-01`);
   const [repToDate,setRepToDate]=useState(today);
-
   const mark=(wid,status)=>setAttendance(p=>({...p,[`${selDate}_${selSite}_${wid}`]:status}));
   const getStatus=wid=>attendance[`${selDate}_${selSite}_${wid}`]||null;
   const sa=selSite?(assignments[selSite]||{}):{};
@@ -814,9 +861,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
   const repWorkers=workers.filter(w=>repAssign[w.id]);
   const getAttVal=(wid,day)=>{const dd=String(day).padStart(2,"0");const mm=String(repMonth+1).padStart(2,"0");return attendance[`${repYear}-${mm}-${dd}_${repSite}_${wid}`]||"";};
   const getTotalDays=wid=>days.reduce((acc,d)=>{const v=getAttVal(wid,d);if(v==="Present")return acc+1;if(v==="Half")return acc+0.5;return acc;},0);
-  const fromDate=fmtDate(repFromDate);
-  const toDate=fmtDate(repToDate);
-
+  const fromDate=fmtDate(repFromDate);const toDate=fmtDate(repToDate);
   return(
     <div>
       <h2 style={{margin:"0 0 16px",fontSize:"20px",fontWeight:800}}>✅ Attendance</h2>
@@ -843,8 +888,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
             return(
               <div key={wid} style={{...S.card,padding:"13px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}}>
-                  {w.photo?<img src={w.photo} style={{width:"36px",height:"36px",borderRadius:"50%",objectFit:"cover"}}/>
-                  :<div style={{width:"36px",height:"36px",borderRadius:"50%",background:CAT_COLOR[w.category].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"13px",fontWeight:700,color:CAT_COLOR[w.category].color}}>{w.name[0]}</div>}
+                  {w.photo?<img src={w.photo} style={{width:"36px",height:"36px",borderRadius:"50%",objectFit:"cover"}}/>:<div style={{width:"36px",height:"36px",borderRadius:"50%",background:CAT_COLOR[w.category].bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"13px",fontWeight:700,color:CAT_COLOR[w.category].color}}>{w.name[0]}</div>}
                   <div><div style={{fontWeight:600,fontSize:"13px"}}>{w.name}</div><span style={S.badge(desig)}>{desig}</span></div>
                 </div>
                 <div style={{display:"flex",gap:"5px"}}>
@@ -879,13 +923,10 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 20px",marginBottom:"20px",fontSize:"13px"}}>
             {[["Client",repClient],["Site Name",repSiteObj?.name||"—"],["Name of Work",repNameOfWork||"—"],["Place",repPlace],["Duration",`${fromDate} to ${toDate}`]].map(([lbl,val])=>(
-              <div key={lbl} style={{display:"flex",gap:"8px",padding:"4px 0",borderBottom:"1px solid #f0f4f9"}}>
-                <span style={{fontWeight:600,color:"#6b84a3",minWidth:"90px"}}>{lbl}</span>
-                <span style={{color:"#1a2b4a"}}>: {val}</span>
-              </div>
+              <div key={lbl} style={{display:"flex",gap:"8px",padding:"4px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:600,color:"#6b84a3",minWidth:"90px"}}>{lbl}</span><span style={{color:"#1a2b4a"}}>: {val}</span></div>
             ))}
           </div>
-          {repWorkers.length===0?<div style={{textAlign:"center",color:"#9db3cc",padding:"30px"}}>No workers assigned to this site.</div>
+          {repWorkers.length===0?<div style={{textAlign:"center",color:"#9db3cc",padding:"30px"}}>No workers assigned.</div>
           :<div style={{overflowX:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:"11px"}}>
               <thead><tr style={{background:"#0f3172",color:"#fff"}}>
@@ -899,12 +940,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
                   return(
                     <tr key={w.id} style={{background:idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #f0f4f9"}}>
                       <td style={{padding:"7px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{w.name}</td>
-                      {days.map(d=>{
-                        const v=getAttVal(w.id,d);
-                        const bg=v==="Present"?"#dcfce7":v==="Half"?"#fef9c3":v==="Absent"?"#fee2e2":"transparent";
-                        const col=v==="Present"?"#166534":v==="Half"?"#d97706":v==="Absent"?"#991b1b":"#d1d5db";
-                        return <td key={d} style={{padding:"4px 2px",textAlign:"center",background:bg,color:col,fontWeight:600,fontSize:"10px"}}>{v==="Present"?"P":v==="Half"?"H":v==="Absent"?"A":""}</td>;
-                      })}
+                      {days.map(d=>{const v=getAttVal(w.id,d);const bg=v==="Present"?"#dcfce7":v==="Half"?"#fef9c3":v==="Absent"?"#fee2e2":"transparent";const col=v==="Present"?"#166534":v==="Half"?"#d97706":v==="Absent"?"#991b1b":"#d1d5db";return <td key={d} style={{padding:"4px 2px",textAlign:"center",background:bg,color:col,fontWeight:600,fontSize:"10px"}}>{v==="Present"?"P":v==="Half"?"H":v==="Absent"?"A":""}</td>;})}
                       <td style={{padding:"7px 10px",textAlign:"center",fontWeight:800,color:"#1e50a0"}}>{total}</td>
                     </tr>
                   );
@@ -914,10 +950,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
           </div>}
           <div style={{display:"flex",gap:"16px",marginTop:"14px",fontSize:"11px"}}>
             {[["P","Present","#dcfce7","#166534"],["H","Half Day","#fef9c3","#d97706"],["A","Absent","#fee2e2","#991b1b"]].map(([sym,lbl,bg,col])=>(
-              <div key={sym} style={{display:"flex",alignItems:"center",gap:"5px"}}>
-                <span style={{background:bg,color:col,fontWeight:700,padding:"2px 6px",borderRadius:"4px",fontSize:"10px"}}>{sym}</span>
-                <span style={{color:"#6b84a3"}}>{lbl}</span>
-              </div>
+              <div key={sym} style={{display:"flex",alignItems:"center",gap:"5px"}}><span style={{background:bg,color:col,fontWeight:700,padding:"2px 6px",borderRadius:"4px",fontSize:"10px"}}>{sym}</span><span style={{color:"#6b84a3"}}>{lbl}</span></div>
             ))}
           </div>
         </div>
@@ -958,7 +991,7 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
         </div>
         <div style={{marginBottom:"14px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
-            <label style={S.lbl}>Select Workers & Upload Photos ({selectedWorkers.length} selected)</label>
+            <label style={S.lbl}>Select Workers ({selectedWorkers.length} selected)</label>
             <div style={{display:"flex",gap:"7px"}}>
               <button onClick={selectAll} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"5px 10px",fontSize:"11px"}}>Select All</button>
               <button onClick={clearAll} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 10px",fontSize:"11px"}}>Clear</button>
@@ -972,12 +1005,8 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
                 <div key={w.id} style={{borderRadius:"10px",border:sel?`1.5px solid ${CAT_COLOR[desig].color}`:"1.5px solid #e5e7eb",overflow:"hidden",background:sel?CAT_COLOR[desig].bg:"#f8faff"}}>
                   <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px"}}>
                     <div onClick={()=>toggleWorker(w.id)} style={{width:"22px",height:"22px",borderRadius:"5px",flexShrink:0,background:sel?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:"13px",fontWeight:700}}>{sel?"✓":""}</div>
-                    {w.photo?<img src={w.photo} style={{width:"36px",height:"36px",borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>
-                    :<div style={{width:"36px",height:"36px",borderRadius:"50%",background:"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px",fontWeight:700,color:"#9ca3af",flexShrink:0}}>{w.name[0]}</div>}
-                    <div style={{flex:1}}>
-                      <div style={{fontWeight:600,fontSize:"13px",color:sel?CAT_COLOR[desig].color:"#1a2b4a"}}>{w.name}</div>
-                      <span style={S.badge(desig)}>{desig}</span>
-                    </div>
+                    {w.photo?<img src={w.photo} style={{width:"36px",height:"36px",borderRadius:"50%",objectFit:"cover",flexShrink:0}}/>:<div style={{width:"36px",height:"36px",borderRadius:"50%",background:"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px",fontWeight:700,color:"#9ca3af",flexShrink:0}}>{w.name[0]}</div>}
+                    <div style={{flex:1}}><div style={{fontWeight:600,fontSize:"13px",color:sel?CAT_COLOR[desig].color:"#1a2b4a"}}>{w.name}</div><span style={S.badge(desig)}>{desig}</span></div>
                     <div onClick={e=>e.stopPropagation()}>
                       <label style={{...S.btn("#fff","#1e50a0"),padding:"5px 10px",fontSize:"11px",cursor:"pointer",border:"1.5px solid #bfdbfe",display:"inline-block"}}>
                         📷 {w.photo?"Change":"Add"} Photo
@@ -990,65 +1019,45 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
             })}
           </div>}
         </div>
-        <button onClick={()=>printSection("entry-permit")} style={{...S.btn(),opacity:selectedWorkers.length===0?0.5:1}} disabled={selectedWorkers.length===0}>
-          🖨️ Print Entry Permit ({selectedWorkers.length} workers)
-        </button>
+        <button onClick={()=>printSection("entry-permit")} style={{...S.btn(),opacity:selectedWorkers.length===0?0.5:1}} disabled={selectedWorkers.length===0}>🖨️ Print Entry Permit ({selectedWorkers.length} workers)</button>
       </div>
       {permitWorkers.length>0?(
         <div id="entry-permit" style={{background:"#fff",padding:"28px",borderRadius:"12px",boxShadow:"0 2px 16px rgba(30,80,160,0.08)"}}>
-          <div style={{textAlign:"center",marginBottom:"20px",paddingBottom:"14px",borderBottom:"2px solid #0f3172"}}>
-            <div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",letterSpacing:"2px"}}>ENTRY PERMIT</div>
-          </div>
+          <div style={{textAlign:"center",marginBottom:"20px",paddingBottom:"14px",borderBottom:"2px solid #0f3172"}}><div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",letterSpacing:"2px"}}>ENTRY PERMIT</div></div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 30px",marginBottom:"24px",fontSize:"13px"}}>
             {[["Client",permitClient],["Contractor","VinoDhan Coating"],["Site Name",permitSiteName||siteObj?.name||"—"],["Place",permitPlace],["Valid From",fmtDate(fromDate)],["Valid To",fmtDate(toDate)]].map(([lbl,val])=>(
-              <div key={lbl} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}>
-                <span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>{lbl}</span>
-                <span style={{color:"#1a2b4a",fontWeight:600}}>: {val}</span>
-              </div>
+              <div key={lbl} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>{lbl}</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {val}</span></div>
             ))}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px"}}>
             {permitWorkers.map(w=>(
               <div key={w.id} style={{border:"1.5px solid #e5e7eb",borderRadius:"10px",overflow:"hidden",display:"flex",minHeight:"130px"}}>
                 <div style={{width:"100px",flexShrink:0,background:"#f0f4f9",display:"flex",alignItems:"center",justifyContent:"center",borderRight:"1px solid #e5e7eb"}}>
-                  {w.photo?<img src={w.photo} style={{width:"100px",height:"130px",objectFit:"cover"}}/>
-                  :<div style={{textAlign:"center",padding:"10px"}}><div style={{fontSize:"32px"}}>👤</div><div style={{fontSize:"9px",color:"#9db3cc",marginTop:"4px"}}>No Photo</div></div>}
+                  {w.photo?<img src={w.photo} style={{width:"100px",height:"130px",objectFit:"cover"}}/>:<div style={{textAlign:"center",padding:"10px"}}><div style={{fontSize:"32px"}}>👤</div><div style={{fontSize:"9px",color:"#9db3cc",marginTop:"4px"}}>No Photo</div></div>}
                 </div>
                 <div style={{flex:1,padding:"12px 14px",fontSize:"12px"}}>
                   <div style={{fontWeight:800,fontSize:"14px",color:"#0f3172",marginBottom:"8px"}}>{w.name}</div>
                   {[["Category",sa[w.id]||w.category],["Aadhaar",w.aadhaar||"—"],["Phone",w.phone||"—"],["DOB",w.dob?fmtDate(w.dob):"—"]].map(([lbl,val])=>(
-                    <div key={lbl} style={{display:"flex",gap:"6px",marginBottom:"5px"}}>
-                      <span style={{color:"#6b84a3",fontWeight:600,minWidth:"65px"}}>{lbl}</span>
-                      <span style={{color:"#1a2b4a"}}>: {val}</span>
-                    </div>
+                    <div key={lbl} style={{display:"flex",gap:"6px",marginBottom:"5px"}}><span style={{color:"#6b84a3",fontWeight:600,minWidth:"65px"}}>{lbl}</span><span style={{color:"#1a2b4a"}}>: {val}</span></div>
                   ))}
                 </div>
               </div>
             ))}
           </div>
           <div style={{marginTop:"40px",display:"flex",justifyContent:"flex-end"}}>
-            <div style={{textAlign:"center"}}>
-              <div style={{width:"200px",borderBottom:"1px solid #1a2b4a",marginBottom:"6px",height:"40px"}}></div>
-              <div style={{fontSize:"12px",fontWeight:700,color:"#1a2b4a"}}>Vinoth Kumar. N</div>
-              <div style={{fontSize:"11px",color:"#6b84a3"}}>Site Executive — VinoDhan Coating</div>
-            </div>
+            <div style={{textAlign:"center"}}><div style={{width:"200px",borderBottom:"1px solid #1a2b4a",marginBottom:"6px",height:"40px"}}></div><div style={{fontSize:"12px",fontWeight:700,color:"#1a2b4a"}}>Vinoth Kumar. N</div><div style={{fontSize:"11px",color:"#6b84a3"}}>Site Executive — VinoDhan Coating</div></div>
           </div>
         </div>
       ):(
-        <div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"40px"}}>
-          <div style={{fontSize:"32px",marginBottom:"10px"}}>🪪</div>
-          <div>Select workers above to preview the entry permit</div>
-        </div>
+        <div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"40px"}}><div style={{fontSize:"32px",marginBottom:"10px"}}>🪪</div><div>Select workers above to preview the entry permit</div></div>
       )}
     </div>
   );
 }
 
 // ── INVOICE ───────────────────────────────────────────
-function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setCompany,client,setClient,bank,setBank}){
-  const [fromDate,setFromDate]=useState(today);
-  const [toDate,setToDate]=useState(today);
-  const [selSite,setSelSite]=useState("all");
+function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient,bank,setBank,recycleBin,setRecycleBin}){
+  const [selSites,setSelSites]=useState([]);
   const [viewInv,setViewInv]=useState(null);
   const [tab,setTab]=useState("new");
   const [invNum,setInvNum]=useState(`INV-${new Date().getFullYear()}-001`);
@@ -1058,15 +1067,41 @@ function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setC
   const [sigImage,setSigImage]=useState(null);
   const [sigDrawing,setSigDrawing]=useState(false);
   const lastPt=useRef(null);
+
+  // Get all invoiced work IDs
+  const invoicedWorkIds=new Set(invoices.flatMap(inv=>(inv.works||[]).map(w=>w.id)));
+
+  // Toggle site selection
+  const toggleSite=id=>setSelSites(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
+
+  // Get uninvoiced works from selected sites, sorted by date
+  const allWorks=sites
+    .filter(s=>selSites.includes(s.id))
+    .flatMap(s=>(s.works||[])
+      .filter(w=>!invoicedWorkIds.has(w.id))
+      .map(w=>({...w,siteId:s.id,siteName:s.name,amount:calcWork(w)}))
+    )
+    .sort((a,b)=>(a.fromDate||"").localeCompare(b.fromDate||""));
+
+  const total=allWorks.reduce((a,w)=>a+w.amount,0);
+
   const startDraw=e=>{setSigDrawing(true);const r=sigCanvas.current.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;lastPt.current={x,y};};
   const draw=e=>{if(!sigDrawing||!sigCanvas.current||!lastPt.current)return;e.preventDefault();const r=sigCanvas.current.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;const ctx=sigCanvas.current.getContext("2d");ctx.strokeStyle="#1a2b4a";ctx.lineWidth=2;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(lastPt.current.x,lastPt.current.y);ctx.lineTo(x,y);ctx.stroke();lastPt.current={x,y};};
   const endDraw=()=>{setSigDrawing(false);if(sigCanvas.current)setSigImage(sigCanvas.current.toDataURL());};
   const clearSig=()=>{sigCanvas.current?.getContext("2d")?.clearRect(0,0,180,90);setSigImage(null);};
   const uploadSig=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{if(ev.target?.result)setSigImage(ev.target.result);};r.readAsDataURL(f);};
-  const filtSites=selSite==="all"?sites:sites.filter(s=>s.id===Number(selSite));
-  const allWorks=filtSites.flatMap(s=>(s.works||[]).map(w=>({...w,siteId:s.id,siteName:s.name,amount:(w.area||0)*(w.rate||0)})));
-  const total=allWorks.reduce((a,w)=>a+w.amount,0);
-  const saveInv=()=>{setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks,fromDate,toDate}]);setTab("history");};
+
+  const saveInv=()=>{
+    if(allWorks.length===0)return;
+    setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks}]);
+    setSelSites([]);setTab("history");
+  };
+
+  const deleteInv=inv=>{
+    setRecycleBin(p=>({...p,invoices:[...(p.invoices||[]),inv]}));
+    setInvoices(p=>p.filter(i=>i.id!==inv.id));
+  };
+
   const upC=(k,v)=>setCompany(p=>({...p,[k]:v}));
   const upCl=(k,v)=>setClient(p=>({...p,[k]:v}));
   const upB=(k,v)=>setBank(p=>({...p,[k]:v}));
@@ -1111,18 +1146,28 @@ function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setC
         </div>
         <div style={{overflowX:"auto",marginBottom:"16px"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
-            <thead><tr style={{background:"#0f3172",color:"#fff"}}>{["S.No","Description","Area (m²)","Rate (₹)","Amount (₹)"].map((h,i)=><th key={h} style={{padding:"8px 9px",textAlign:i>1?"right":"left",fontWeight:600,fontSize:"11px"}}>{h}</th>)}</tr></thead>
+            <thead><tr style={{background:"#0f3172",color:"#fff"}}>
+              {["S.No","Description","Unit","Rate (₹)","Amount (₹)"].map((h,i)=><th key={h} style={{padding:"8px 9px",textAlign:i>1?"right":"left",fontWeight:600,fontSize:"11px"}}>{h}</th>)}
+            </tr></thead>
             <tbody>
               {works.length===0&&<tr><td colSpan={5} style={{padding:"16px",textAlign:"center",color:"#9db3cc"}}>No work entries.</td></tr>}
-              {works.map((w,i)=>(
-                <tr key={w.id||i} style={{borderBottom:"1px solid #f0f4f9",background:i%2===0?"#fff":"#f8faff"}}>
-                  <td style={{padding:"8px 9px",color:"#6b84a3",textAlign:"center"}}>{i+1}</td>
-                  <td style={{padding:"8px 9px"}}>{w.siteName}{w.place?` — ${w.place}`:""}</td>
-                  <td style={{padding:"8px 9px",textAlign:"right"}}>{w.area} m²</td>
-                  <td style={{padding:"8px 9px",textAlign:"right"}}>₹{w.rate}</td>
-                  <td style={{padding:"8px 9px",fontWeight:700,textAlign:"right"}}>₹{w.amount.toLocaleString()}</td>
-                </tr>
-              ))}
+              {works.map((w,i)=>{
+                const type=w.workType||"SQM";
+                const unitStr=type==="Manpower"?`${w.labour} Labour`:type==="RMT"?`${w.area} rmt`:`${w.area} m²`;
+                return(
+                  <tr key={w.id||i} style={{borderBottom:"1px solid #f0f4f9",background:i%2===0?"#fff":"#f8faff"}}>
+                    <td style={{padding:"8px 9px",color:"#6b84a3",textAlign:"center"}}>{i+1}</td>
+                    <td style={{padding:"8px 9px"}}>
+                      <div>{w.siteName} — {w.place}</div>
+                      {w.fromDate&&<div style={{fontSize:"10px",color:"#6b84a3"}}>{fmtD(w.fromDate)}{w.toDate?` → ${fmtD(w.toDate)}`:""}</div>}
+                      <span style={S.wbadge(type)}>{type}</span>
+                    </td>
+                    <td style={{padding:"8px 9px",textAlign:"right"}}>{unitStr}</td>
+                    <td style={{padding:"8px 9px",textAlign:"right"}}>₹{w.rate}</td>
+                    <td style={{padding:"8px 9px",fontWeight:700,textAlign:"right"}}>₹{w.amount.toLocaleString()}</td>
+                  </tr>
+                );
+              })}
               <tr style={{background:"#0f3172",color:"#fff"}}><td colSpan={4} style={{padding:"10px 9px",fontWeight:700,textAlign:"right"}}>TOTAL</td><td style={{padding:"10px 9px",fontWeight:800,fontSize:"14px",textAlign:"right"}}>₹{tot.toLocaleString()}</td></tr>
             </tbody>
           </table>
@@ -1165,14 +1210,33 @@ function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setC
       {tab==="new"&&<>
         <div style={{...S.card,marginBottom:"16px"}}>
           <h3 style={{margin:"0 0 11px",fontSize:"13px",fontWeight:700}}>Invoice Settings</h3>
-          <div style={{display:"flex",gap:"10px",flexWrap:"wrap"}}>
-            <div style={{flex:1,minWidth:"120px"}}><label style={S.lbl}>From Date</label><input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)} style={S.inp}/></div>
-            <div style={{flex:1,minWidth:"120px"}}><label style={S.lbl}>To Date</label><input type="date" value={toDate} onChange={e=>setToDate(e.target.value)} style={S.inp}/></div>
-            <div style={{flex:1,minWidth:"150px"}}><label style={S.lbl}>Site</label><select value={selSite} onChange={e=>setSelSite(e.target.value)} style={S.inp}><option value="all">All Sites</option>{sites.map(st=><option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
+          <div style={{display:"flex",gap:"10px",flexWrap:"wrap",marginBottom:"12px"}}>
+            <div style={{flex:1,minWidth:"140px"}}><label style={S.lbl}>Invoice No</label><input value={invNum} onChange={e=>setInvNum(e.target.value)} style={S.inp}/></div>
+            <div style={{flex:1,minWidth:"140px"}}><label style={S.lbl}>Invoice Date</label><input type="date" value={invDate} onChange={e=>setInvDate(e.target.value)} style={S.inp}/></div>
           </div>
-          <div style={{display:"flex",gap:"9px",marginTop:"12px"}}>
-            <button onClick={()=>printSection("invoice-doc")} style={S.btn()}>🖨️ Print / PDF</button>
-            <button onClick={saveInv} style={S.btn("#166534")}>💾 Save Invoice</button>
+          {/* Site selector */}
+          <div style={{marginBottom:"12px"}}>
+            <label style={S.lbl}>Select Sites to Invoice</label>
+            <div style={{display:"flex",flexDirection:"column",gap:"6px",marginTop:"6px"}}>
+              {sites.map(s=>{
+                const sel=selSites.includes(s.id);
+                const uninvoicedCount=(s.works||[]).filter(w=>!invoicedWorkIds.has(w.id)).length;
+                return(
+                  <div key={s.id} onClick={()=>toggleSite(s.id)} style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px",borderRadius:"9px",border:sel?"1.5px solid #1e50a0":"1.5px solid #e5e7eb",background:sel?"#eff6ff":"#f8faff",cursor:"pointer"}}>
+                    <div style={{width:"20px",height:"20px",borderRadius:"5px",flexShrink:0,background:sel?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"12px",fontWeight:700}}>{sel?"✓":""}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:600,fontSize:"13px"}}>{s.name}</div>
+                      <div style={{fontSize:"11px",color:"#6b84a3"}}>{uninvoicedCount} uninvoiced work{uninvoicedCount!==1?"s":""}</div>
+                    </div>
+                    <span style={{background:s.status==="Active"?"#dcfce7":"#fee2e2",color:s.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{s.status}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{display:"flex",gap:"9px"}}>
+            <button onClick={()=>printSection("invoice-doc")} style={{...S.btn(),opacity:allWorks.length===0?0.5:1}} disabled={allWorks.length===0}>🖨️ Print / PDF</button>
+            <button onClick={saveInv} style={{...S.btn("#166534"),opacity:allWorks.length===0?0.5:1}} disabled={allWorks.length===0}>💾 Save Invoice</button>
           </div>
         </div>
         <div id="invoice-doc"><InvDoc inv={null}/></div>
@@ -1190,9 +1254,9 @@ function Invoice({sites,attendance,assignments,invoices,setInvoices,company,setC
             <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
               <div><div style={{fontWeight:600,fontSize:"13px"}}>{inv.number}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtD(inv.date)}</div></div>
               <div style={{display:"flex",gap:"7px",alignItems:"center"}}>
-                <div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{inv.total.toLocaleString()}</div>
+                <div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{inv.total?.toLocaleString()}</div>
                 <button onClick={()=>setViewInv(inv)} style={{...S.btn(),padding:"5px 11px",fontSize:"12px"}}>View</button>
-                <button onClick={()=>setInvoices(p=>p.filter(i=>i.id!==inv.id))} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️</button>
+                <button onClick={()=>deleteInv(inv)} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️</button>
               </div>
             </div>
           ))}
