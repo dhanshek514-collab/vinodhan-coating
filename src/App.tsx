@@ -476,7 +476,14 @@ function LoginPage({onLogin,passwords,setPasswords}){
   return(
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628 0%,#1e3a5f 50%,#0f2040 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI',sans-serif",padding:"20px",position:"relative",overflow:"hidden"}}>
       <svg style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.06}} viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
-        {Array.from({length:8},(_,row)=>Array.from({length:6},(_,col)=>{const x=col*70+(row%2)*35,y=row*60;const pts=Array.from({length:6},(_,i)=>{const a=Math.PI/180*(60*i-30);return `${x+28*Math.cos(a)},${y+28*Math.sin(a)}`;}).join(" ");return <polygon key={`${row}-${col}`} points={pts} fill="none" stroke="#fff" strokeWidth="0.5"/>;}).flat()}
+        {Array.from({length:8},(_,row)=>Array.from({length:6},(_,col)=>{
+  const x=col*70+(row%2)*35,y=row*60;
+  const pts=Array.from({length:6},(_,i)=>{
+    const a=Math.PI/180*(60*i-30);
+    return `${x+28*Math.cos(a)},${y+28*Math.sin(a)}`;
+  }).join(" ");
+  return <polygon key={`${row}-${col}`} points={pts} fill="none" stroke="#fff" strokeWidth="0.5"/>;
+}).flat())}
       </svg>
       <div style={{textAlign:"center",marginBottom:"28px",zIndex:1}}>
         <div style={{display:"flex",justifyContent:"center",marginBottom:"14px"}}><LogoHex size={100}/></div>
