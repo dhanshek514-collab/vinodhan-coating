@@ -1057,7 +1057,7 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
 
 // ── INVOICE ───────────────────────────────────────────
 function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient,bank,setBank,recycleBin,setRecycleBin}){
-  const [selSites,setSelSites]=useState([]);
+  const [selWorks,setSelWorks]=useState([]);
   const [viewInv,setViewInv]=useState(null);
   const [tab,setTab]=useState("new");
   const [invNum,setInvNum]=useState(`INV-${new Date().getFullYear()}-001`);
@@ -1071,14 +1071,10 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
   // Get all invoiced work IDs
   const invoicedWorkIds=new Set(invoices.flatMap(inv=>(inv.works||[]).map(w=>w.id)));
 
-  // Toggle site selection
-  const toggleSite=id=>setSelSites(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
-
   // Get uninvoiced works from selected sites, sorted by date
   const allWorks=sites
-    .filter(s=>selSites.includes(s.id))
     .flatMap(s=>(s.works||[])
-      .filter(w=>!invoicedWorkIds.has(w.id))
+      .filter(w=>selWorks.includes(w.id)&&!invoicedWorkIds.has(w.id))
       .map(w=>({...w,siteId:s.id,siteName:s.name,amount:calcWork(w)}))
     )
     .sort((a,b)=>(a.fromDate||"").localeCompare(b.fromDate||""));
@@ -1094,7 +1090,7 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
   const saveInv=()=>{
     if(allWorks.length===0)return;
     setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks}]);
-    setSelSites([]);setTab("history");
+    setSelWorks([]);setTab("history");
   };
 
   const deleteInv=inv=>{
@@ -1219,19 +1215,30 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
             <label style={S.lbl}>Select Sites to Invoice</label>
             <div style={{display:"flex",flexDirection:"column",gap:"6px",marginTop:"6px"}}>
               {sites.map(s=>{
-                const sel=selSites.includes(s.id);
-                const uninvoicedCount=(s.works||[]).filter(w=>!invoicedWorkIds.has(w.id)).length;
-                return(
-                  <div key={s.id} onClick={()=>toggleSite(s.id)} style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px",borderRadius:"9px",border:sel?"1.5px solid #1e50a0":"1.5px solid #e5e7eb",background:sel?"#eff6ff":"#f8faff",cursor:"pointer"}}>
-                    <div style={{width:"20px",height:"20px",borderRadius:"5px",flexShrink:0,background:sel?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"12px",fontWeight:700}}>{sel?"✓":""}</div>
-                    <div style={{flex:1}}>
-                      <div style={{fontWeight:600,fontSize:"13px"}}>{s.name}</div>
-                      <div style={{fontSize:"11px",color:"#6b84a3"}}>{uninvoicedCount} uninvoiced work{uninvoicedCount!==1?"s":""}</div>
-                    </div>
-                    <span style={{background:s.status==="Active"?"#dcfce7":"#fee2e2",color:s.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{s.status}</span>
-                  </div>
-                );
-              })}
+  const uninvoiced=(s.works||[]).filter(w=>!invoicedWorkIds.has(w.id));
+  if(uninvoiced.length===0) return null;
+  const selAll=uninvoiced.every(w=>selWorks.includes(w.id));
+  return(
+    <div key={s.id} style={{marginBottom:"8px",border:"1.5px solid #e5e7eb",borderRadius:"10px",overflow:"hidden"}}>
+      <div onClick={()=>{if(selAll)setSelWorks(p=>p.filter(id=>!uninvoiced.map(w=>w.id).includes(id)));else setSelWorks(p=>[...new Set([...p,...uninvoiced.map(w=>w.id)])]);}} style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px",background:selAll?"#eff6ff":"#f8faff",cursor:"pointer"}}>
+        <div style={{width:"20px",height:"20px",borderRadius:"5px",flexShrink:0,background:selAll?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"12px",fontWeight:700}}>{selAll?"✓":""}</div>
+        <div style={{flex:1}}><div style={{fontWeight:600,fontSize:"13px"}}>{s.name}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{uninvoiced.length} uninvoiced work{uninvoiced.length!==1?"s":""}</div></div>
+        <span style={{background:s.status==="Active"?"#dcfce7":"#fee2e2",color:s.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{s.status}</span>
+      </div>
+      {uninvoiced.map(w=>{
+        const wsel=selWorks.includes(w.id);
+        return(
+          <div key={w.id} onClick={()=>setSelWorks(p=>wsel?p.filter(id=>id!==w.id):[...p,w.id])} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px 8px 20px",background:wsel?"#f0f6ff":"#fff",borderTop:"1px solid #f0f4f9",cursor:"pointer"}}>
+            <div style={{width:"16px",height:"16px",borderRadius:"4px",flexShrink:0,background:wsel?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"10px",fontWeight:700}}>{wsel?"✓":""}</div>
+            <span style={S.wbadge(w.workType||"SQM")}>{w.workType||"SQM"}</span>
+            <div style={{flex:1,fontSize:"12px",fontWeight:500}}>{w.place}</div>
+            <div style={{fontSize:"12px",fontWeight:700,color:"#166534"}}>₹{calcWork(w).toLocaleString()}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+})}
             </div>
           </div>
           <div style={{display:"flex",gap:"9px"}}>
