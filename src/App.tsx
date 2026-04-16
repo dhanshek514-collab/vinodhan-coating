@@ -685,7 +685,7 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
                     {workForm.workType==="Manpower"
                       ?<><div><label style={S.lbl}>No. of Labour</label><input type="number" value={workForm.labour} onChange={e=>setWorkForm(p=>({...p,labour:e.target.value}))} style={S.inp}/></div>
                         <div><label style={S.lbl}>Rate per Day (₹)</label><input type="number" value={workForm.rate} onChange={e=>setWorkForm(p=>({...p,rate:e.target.value}))} style={S.inp}/></div></>
-                      ?<><div><label style={S.lbl}>{workForm.workType==="RMT"?"Length (rmt)":"Area (m²)"}</label><input type="number" value={workForm.area} onChange={e=>setWorkForm(p=>({...p,area:e.target.value}))} style={S.inp}/></div>
+                      :<><div><label style={S.lbl}>{workForm.workType==="RMT"?"Length (rmt)":"Area (m²)"}</label><input type="number" value={workForm.area} onChange={e=>setWorkForm(p=>({...p,area:e.target.value}))} style={S.inp}/></div>
                         <div><label style={S.lbl}>Rate (₹/{workForm.workType==="RMT"?"rmt":"m²"})</label><input type="number" value={workForm.rate} onChange={e=>setWorkForm(p=>({...p,rate:e.target.value}))} style={S.inp}/></div></>
                     }
                   </div>
