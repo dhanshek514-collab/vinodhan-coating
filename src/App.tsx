@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-// ── FIREBASE REST API ─────────────────────────────────
 const FB_PROJECT = "vinodhan-coating";
 const FB_API_KEY = import.meta.env.VITE_FB_API_KEY;
 const FB_BASE    = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents/vinodhan`;
@@ -13,7 +12,6 @@ async function fbGet(docId, fallback) {
     return JSON.parse(json.fields?.data?.stringValue ?? JSON.stringify(fallback));
   } catch { return fallback; }
 }
-
 async function fbSet(docId, data) {
   try {
     await fetch(`${FB_BASE}/${docId}?key=${FB_API_KEY}`, {
@@ -24,9 +22,7 @@ async function fbSet(docId, data) {
   } catch(e) { console.error("fbSet error", e); }
 }
 
-// ── PRINT ─────────────────────────────────────────────
 const printCSS = `@page{size:A4;margin:15mm;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:20px;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:6px 8px;}img{max-width:100%;object-fit:cover;}.no-print{display:none!important;}`;
-
 function printSection(id) {
   const el = document.getElementById(id);
   if(!el) return;
@@ -63,9 +59,8 @@ function printSection(id) {
   document.body.appendChild(overlay);
 }
 
-// ── CONSTANTS ─────────────────────────────────────────
 const USERS = [
-  { id:"DHANS1416",      name:"DS",              role:"Owner",          password:"Riseup1416" },
+  { id:"DHANS1416", name:"DS", role:"Owner", password:"Riseup1416" },
   { id:"Site Executive", name:"Vinoth Kumar. N", role:"Site Executive", password:"Vinoth1024" },
 ];
 const USER_PHONES = { "DHANS1416":"9488246119", "Site Executive":"9486971024" };
@@ -90,7 +85,7 @@ const RECYCLE_PASSWORD = "ARUN9312";
 const EMPTY_WORKER = { id:0, name:"", category:"Applicator", phone:"", aadhaar:"", doj:"", dob:"", photo:"" };
 const EMPTY_EXEC = { name:"Vinoth Kumar. N", phone:"", aadhaar:"", doj:"", dob:"", photo:"" };
 const INIT_WORKERS = Array.from({length:12},(_,i)=>({ id:i+1, name:`Worker ${i+1}`, category:i<4?"Applicator":i<8?"Semi-Applicator":"Helper", phone:"",aadhaar:"",doj:"",dob:"",photo:"" }));
-const INIT_COMPANY = { name:"VinoDhan Coating", address:"Chennai, Tamil Nadu", phone:"+91 XXXXX XXXXX", gstin:"XX-XXXXXXXXX", udyam:"UDYAM-TN-XX-XXXXXXX" };
+const INIT_COMPANY = { name:"VinoDhan Coating", address:"Chennai, Tamil Nadu", phone:"+91 XXXXX XXXXX", gstin:"XX-XXXXXXXXX" };
 const INIT_CLIENT  = { name:"Swathi Engineering Agency", sendTo:"", place:"Chennai", pincode:"600037", phone:"", measureNo:"" };
 const INIT_BANK    = { accName:"VinoDhan Coating", bank:"Indian Bank", accNo:"XXXXXXXXXXXX", ifsc:"IDIB000XXXX", upi:"vinodhan@upi" };
 
@@ -105,6 +100,16 @@ const S = {
 
 function loadS(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback;}catch{return fallback;}}
 function saveS(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch{}}
+
+function calcWork(w){
+  if(w.workType==="Manpower") return (Number(w.labour)||0)*(Number(w.rate)||0);
+  return (Number(w.area)||0)*(Number(w.rate)||0);
+}
+function workUnitLabel(w){
+  if(w.workType==="RMT") return `${w.area}rmt × ₹${w.rate}`;
+  if(w.workType==="Manpower") return `${w.labour} Labour × ₹${w.rate}/day`;
+  return `${w.area}m² × ₹${w.rate}`;
+}
 
 // ── LOGO ──────────────────────────────────────────────
 function LogoHex({size=48}){
@@ -163,15 +168,29 @@ function PhotoUpload({value,onChange}){
   );
 }
 
-// ── WORK AMOUNT HELPER ────────────────────────────────
-function calcWork(w){
-  if(w.workType==="Manpower") return (Number(w.labour)||0)*(Number(w.rate)||0);
-  return (Number(w.area)||0)*(Number(w.rate)||0);
-}
-function workUnitLabel(w){
-  if(w.workType==="RMT") return `${w.area}rmt × ₹${w.rate}`;
-  if(w.workType==="Manpower") return `${w.labour} Labour × ₹${w.rate}/day`;
-  return `${w.area}m² × ₹${w.rate}`;
+// ── PASSWORD MODAL ────────────────────────────────────
+function PwModal({title,onConfirm,onCancel}){
+  const [pw,setPw]=useState("");
+  const [err,setErr]=useState("");
+  const confirm=()=>{
+    if(pw!==RECYCLE_PASSWORD){setErr("❌ Incorrect password.");return;}
+    onConfirm();
+  };
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
+      <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"300px",textAlign:"center"}}>
+        <div style={{fontSize:"32px",marginBottom:"8px"}}>🔐</div>
+        <h3 style={{margin:"0 0 7px"}}>{title||"Confirm Action"}</h3>
+        <p style={{fontSize:"12px",color:"#6b84a3",margin:"0 0 16px"}}>Enter password to confirm.</p>
+        <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="Enter password" onKeyDown={e=>e.key==="Enter"&&confirm()} style={{...S.inp,marginBottom:"10px",textAlign:"center"}}/>
+        {err&&<ErrBox msg={err}/>}
+        <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
+          <button onClick={confirm} style={S.btn("#dc2626")}>Confirm</button>
+          <button onClick={onCancel} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── ROOT ──────────────────────────────────────────────
@@ -184,7 +203,7 @@ export default function App(){
   const [ready,setReady]         = useState(false);
   const [workers,setWorkers]     = useState(INIT_WORKERS);
   const [execProfile,setExecProfile] = useState(EMPTY_EXEC);
-  const [sites,setSites]         = useState([{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}]);
+  const [sites,setSites]         = useState([{id:1,name:"Site A",client:"Swathi Engineering Agency",status:"Active",works:[]}]);
   const [attendance,setAttendance] = useState({});
   const [assignments,setAssignments] = useState({});
   const [invoices,setInvoices]   = useState([]);
@@ -197,38 +216,37 @@ export default function App(){
   useEffect(()=>{
     async function loadAll(){
       const [w,e,s,a,as,inv,co,cl,b,pw,rb] = await Promise.all([
-        fbGet("workers",     INIT_WORKERS),
-        fbGet("exec",        EMPTY_EXEC),
-        fbGet("sites",       [{id:1,name:"Site A — Chennai North",client:"Swathi Engineering Agency",status:"Active",works:[]}]),
-        fbGet("attendance",  {}),
-        fbGet("assignments", {}),
-        fbGet("invoices",    []),
-        fbGet("company",     INIT_COMPANY),
-        fbGet("client",      INIT_CLIENT),
-        fbGet("bank",        INIT_BANK),
-        fbGet("passwords",   {"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"}),
-        fbGet("recycleBin",  {sites:[],invoices:[]}),
+        fbGet("workers",INIT_WORKERS),
+        fbGet("exec",EMPTY_EXEC),
+        fbGet("sites",[{id:1,name:"Site A",client:"Swathi Engineering Agency",status:"Active",works:[]}]),
+        fbGet("attendance",{}),
+        fbGet("assignments",{}),
+        fbGet("invoices",[]),
+        fbGet("company",INIT_COMPANY),
+        fbGet("client",INIT_CLIENT),
+        fbGet("bank",INIT_BANK),
+        fbGet("passwords",{"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"}),
+        fbGet("recycleBin",{sites:[],invoices:[]}),
       ]);
-      setWorkers(w); setExecProfile(e); setSites(s);
-      setAttendance(a); setAssignments(as); setInvoices(inv);
-      setCompany(co); setClient(cl); setBank(b); setPasswords(pw);
-      setRecycleBin(rb);
-      setReady(true);
+      setWorkers(w);setExecProfile(e);setSites(s);
+      setAttendance(a);setAssignments(as);setInvoices(inv);
+      setCompany(co);setClient(cl);setBank(b);setPasswords(pw);
+      setRecycleBin(rb);setReady(true);
     }
     loadAll();
   },[]);
 
-  useEffect(()=>{ if(!ready)return; saveS("vd_workers",workers);       fbSet("workers",workers);           },[workers,ready]);
-  useEffect(()=>{ if(!ready)return; saveS("vd_exec",execProfile);      fbSet("exec",execProfile);          },[execProfile,ready]);
-  useEffect(()=>{ if(!ready)return; saveS("vd_sites",sites);           fbSet("sites",sites);               },[sites,ready]);
-  useEffect(()=>{ if(!ready)return; saveS("vd_attendance",attendance); fbSet("attendance",attendance);     },[attendance,ready]);
-  useEffect(()=>{ if(!ready)return; saveS("vd_assignments",assignments);fbSet("assignments",assignments);  },[assignments,ready]);
-  useEffect(()=>{ if(!ready)return; saveS("vd_invoices",invoices);     fbSet("invoices",invoices);         },[invoices,ready]);
-  useEffect(()=>{ if(!ready)return; saveS("vd_company",company);       fbSet("company",company);           },[company,ready]);
-  useEffect(()=>{ if(!ready)return; saveS("vd_client",client);         fbSet("client",client);             },[client,ready]);
-  useEffect(()=>{ if(!ready)return; saveS("vd_bank",bank);             fbSet("bank",bank);                 },[bank,ready]);
-  useEffect(()=>{ if(!ready)return; saveS("vd_passwords",passwords);   fbSet("passwords",passwords);       },[passwords,ready]);
-  useEffect(()=>{ if(!ready)return; saveS("vd_recyclebin",recycleBin); fbSet("recycleBin",recycleBin);     },[recycleBin,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_workers",workers);fbSet("workers",workers);},[workers,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_exec",execProfile);fbSet("exec",execProfile);},[execProfile,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_sites",sites);fbSet("sites",sites);},[sites,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_attendance",attendance);fbSet("attendance",attendance);},[attendance,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_assignments",assignments);fbSet("assignments",assignments);},[assignments,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_invoices",invoices);fbSet("invoices",invoices);},[invoices,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_company",company);fbSet("company",company);},[company,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_client",client);fbSet("client",client);},[client,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_bank",bank);fbSet("bank",bank);},[bank,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_passwords",passwords);fbSet("passwords",passwords);},[passwords,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_recyclebin",recycleBin);fbSet("recycleBin",recycleBin);},[recycleBin,ready]);
 
   const logoutTimer=useRef(null);
   const warningTimer=useRef(null);
@@ -294,29 +312,20 @@ export default function App(){
 function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,setRecycleBin,sites,setSites,invoices,setInvoices}){
   const [drawerOpen,setDrawerOpen]=useState(false);
   const [showBin,setShowBin]=useState(false);
-  const [pwInput,setPwInput]=useState("");
-  const [pwTarget,setPwTarget]=useState(null);
-  const [pwErr,setPwErr]=useState("");
+  const [pwModal,setPwModal]=useState(null);
   const binCount=(recycleBin.sites||[]).length+(recycleBin.invoices||[]).length;
 
   const bottomNav=[
-    {id:"dashboard",label:"Dash",    icon:"📊"},
-    {id:"sites",    label:"Sites",   icon:"🏗️"},
-    {id:"workers",  label:"Workers", icon:"👷"},
-    {id:"attendance",label:"Attend", icon:"✅"},
-    {id:"permit",   label:"Permit",  icon:"🪪"},
-    {id:"invoice",  label:"Invoice", icon:"🧾"},
+    {id:"dashboard",label:"Dash",icon:"📊"},
+    {id:"sites",label:"Sites",icon:"🏗️"},
+    {id:"workers",label:"Workers",icon:"👷"},
+    {id:"attendance",label:"Attend",icon:"✅"},
+    {id:"permit",label:"Permit",icon:"🪪"},
+    {id:"invoice",label:"Invoice",icon:"🧾"},
   ];
 
   const restoreSite=s=>{setSites(p=>[...p,s]);setRecycleBin(p=>({...p,sites:(p.sites||[]).filter(x=>x.id!==s.id)}));};
   const restoreInv=inv=>{setInvoices(p=>[...p,inv]);setRecycleBin(p=>({...p,invoices:(p.invoices||[]).filter(x=>x.id!==inv.id)}));};
-  const confirmDelete=(type,id)=>{setPwTarget({type,id});setPwInput("");setPwErr("");};
-  const doDelete=()=>{
-    if(pwInput!==RECYCLE_PASSWORD){setPwErr("❌ Incorrect password.");return;}
-    if(pwTarget.type==="site") setRecycleBin(p=>({...p,sites:(p.sites||[]).filter(x=>x.id!==pwTarget.id)}));
-    else setRecycleBin(p=>({...p,invoices:(p.invoices||[]).filter(x=>x.id!==pwTarget.id)}));
-    setPwTarget(null);setPwInput("");setPwErr("");
-  };
 
   return(
     <>
@@ -336,7 +345,6 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
         </div>
       </div>
 
-      {/* DRAWER */}
       {drawerOpen&&<>
         <div onClick={()=>setDrawerOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000}}/>
         <div style={{position:"fixed",top:0,right:0,width:"260px",height:"100%",background:"#0f3172",zIndex:1001,display:"flex",flexDirection:"column",boxShadow:"-4px 0 20px rgba(0,0,0,0.3)"}}>
@@ -354,7 +362,6 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
               <button onClick={()=>{setLandscape(false);setDrawerOpen(false);}} style={{flex:1,padding:"10px",borderRadius:"8px",border:"none",cursor:"pointer",background:!landscape?"#1e50a0":"rgba(255,255,255,0.1)",color:"#fff",fontSize:"12px",fontWeight:600}}>📱 Tall</button>
             </div>
           </div>
-          {/* Recycle Bin Button */}
           <div style={{padding:"0 16px"}}>
             <button onClick={()=>{setShowBin(true);setDrawerOpen(false);}} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",fontSize:"13px",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"}}>
               🗑️ Recycle Bin {binCount>0&&<span style={{background:"#dc2626",color:"#fff",borderRadius:"20px",padding:"1px 8px",fontSize:"11px",fontWeight:800}}>{binCount}</span>}
@@ -362,14 +369,12 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
           </div>
           <div style={{flex:1}}/>
           <div style={{padding:"16px",borderTop:"1px solid rgba(255,255,255,0.1)"}}>
-            <button onClick={()=>{setDrawerOpen(false);setUser(null);}} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"#fee2e2",color:"#991b1b",fontSize:"14px",fontWeight:700}}>
-              🚪 Logout
-            </button>
+            <button onClick={()=>{setDrawerOpen(false);setUser(null);}} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"#fee2e2",color:"#991b1b",fontSize:"14px",fontWeight:700}}>🚪 Logout</button>
           </div>
         </div>
       </>}
 
-      {/* RECYCLE BIN PAGE */}
+      {/* RECYCLE BIN */}
       {showBin&&(
         <div style={{position:"fixed",inset:0,background:"#f0f4f9",zIndex:2000,overflowY:"auto",fontFamily:"'Segoe UI',sans-serif"}}>
           <div style={{background:"#0f3172",padding:"14px 16px",display:"flex",alignItems:"center",gap:"12px"}}>
@@ -377,7 +382,6 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
             <div style={{fontSize:"15px",fontWeight:700,color:"#fff"}}>🗑️ Recycle Bin</div>
           </div>
           <div style={{padding:"20px"}}>
-            {/* Sites */}
             <div style={{marginBottom:"20px"}}>
               <h3 style={{margin:"0 0 10px",fontSize:"13px",fontWeight:700,color:"#6b84a3",textTransform:"uppercase",letterSpacing:"1px"}}>🏗️ Sites ({(recycleBin.sites||[]).length})</h3>
               {(recycleBin.sites||[]).length===0?<div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"24px"}}>No deleted sites</div>
@@ -386,12 +390,11 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
                   <div><div style={{fontWeight:600,fontSize:"14px"}}>{s.name}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{s.client}</div></div>
                   <div style={{display:"flex",gap:"7px"}}>
                     <button onClick={()=>restoreSite(s)} style={{...S.btn("#dcfce7","#166534"),padding:"5px 11px",fontSize:"12px"}}>↩️ Restore</button>
-                    <button onClick={()=>confirmDelete("site",s.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete</button>
+                    <button onClick={()=>setPwModal({type:"site",id:s.id})} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete</button>
                   </div>
                 </div>
               ))}
             </div>
-            {/* Invoices */}
             <div>
               <h3 style={{margin:"0 0 10px",fontSize:"13px",fontWeight:700,color:"#6b84a3",textTransform:"uppercase",letterSpacing:"1px"}}>🧾 Invoices ({(recycleBin.invoices||[]).length})</h3>
               {(recycleBin.invoices||[]).length===0?<div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"24px"}}>No deleted invoices</div>
@@ -400,7 +403,7 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
                   <div><div style={{fontWeight:600,fontSize:"14px"}}>{inv.number}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtDate(inv.date)} — ₹{inv.total?.toLocaleString()}</div></div>
                   <div style={{display:"flex",gap:"7px"}}>
                     <button onClick={()=>restoreInv(inv)} style={{...S.btn("#dcfce7","#166534"),padding:"5px 11px",fontSize:"12px"}}>↩️ Restore</button>
-                    <button onClick={()=>confirmDelete("invoice",inv.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete</button>
+                    <button onClick={()=>setPwModal({type:"invoice",id:inv.id})} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete</button>
                   </div>
                 </div>
               ))}
@@ -409,24 +412,17 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
         </div>
       )}
 
-      {/* PASSWORD MODAL */}
-      {pwTarget&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
-          <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"300px",textAlign:"center"}}>
-            <div style={{fontSize:"32px",marginBottom:"8px"}}>🔐</div>
-            <h3 style={{margin:"0 0 7px"}}>Confirm Permanent Delete</h3>
-            <p style={{fontSize:"12px",color:"#6b84a3",margin:"0 0 16px"}}>This cannot be undone. Enter password to confirm.</p>
-            <input type="password" value={pwInput} onChange={e=>setPwInput(e.target.value)} placeholder="Enter password" onKeyDown={e=>e.key==="Enter"&&doDelete()} style={{...S.inp,marginBottom:"10px",textAlign:"center"}}/>
-            {pwErr&&<ErrBox msg={pwErr}/>}
-            <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
-              <button onClick={doDelete} style={S.btn("#dc2626")}>Delete Forever</button>
-              <button onClick={()=>{setPwTarget(null);setPwErr("");}} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* PASSWORD MODAL FOR RECYCLE BIN */}
+      {pwModal&&<PwModal
+        title="Permanent Delete"
+        onConfirm={()=>{
+          if(pwModal.type==="site") setRecycleBin(p=>({...p,sites:(p.sites||[]).filter(x=>x.id!==pwModal.id)}));
+          else setRecycleBin(p=>({...p,invoices:(p.invoices||[]).filter(x=>x.id!==pwModal.id)}));
+          setPwModal(null);
+        }}
+        onCancel={()=>setPwModal(null)}
+      />}
 
-      {/* BOTTOM NAV */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0f3172",borderTop:"1px solid rgba(255,255,255,0.1)",display:"flex",zIndex:900,boxShadow:"0 -2px 12px rgba(0,0,0,0.2)"}}>
         {bottomNav.map(item=>{
           const active=page===item.id;
@@ -528,22 +524,21 @@ function DashSiteWorks({works}){
     </div>
   );
 }
-function Dashboard({user,workers,sites,attendance,assignments,landscape}){
-  const activeSites=sites.filter(s=>s.status==="Active").length;
+
+function Dashboard({user,workers,sites,landscape}){
   const totalSqm=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="SQM"||!w.workType).reduce((a,w)=>a+(Number(w.area)||0),sum),0);
   const totalRmt=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="RMT").reduce((a,w)=>a+(Number(w.area)||0),sum),0);
   const totalMp=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="Manpower").reduce((a,w)=>a+calcWork(w),sum),0);
   const totalRev=sites.reduce((sum,s)=>(s.works||[]).reduce((a,w)=>a+calcWork(w),sum),0);
-
+  const activeSites=sites.filter(s=>s.status==="Active").length;
   const stats=[
-    {label:"Total Workers",  value:workers.length,              icon:"👷", color:"#dbeafe"},
-    {label:"Active Sites",   value:activeSites,                 icon:"🏗️", color:"#dcfce7"},
-    {label:"Total SQM",      value:`${totalSqm}m²`,             icon:"📐", color:"#ede9fe"},
-    {label:"Total RMT",      value:`${totalRmt}rmt`,            icon:"📏", color:"#fce7f3"},
-    {label:"Other Charges",  value:`₹${totalMp.toLocaleString()}`, icon:"👨‍🔧", color:"#fef9c3"},
-    {label:"Revenue",        value:`₹${totalRev.toLocaleString()}`, icon:"💰", color:"#fef3c7"},
+    {label:"Total Workers",value:workers.length,icon:"👷",color:"#dbeafe"},
+    {label:"Active Sites",value:activeSites,icon:"🏗️",color:"#dcfce7"},
+    {label:"Total SQM",value:`${totalSqm}m²`,icon:"📐",color:"#ede9fe"},
+    {label:"Total RMT",value:`${totalRmt}rmt`,icon:"📏",color:"#fce7f3"},
+    {label:"Other Charges",value:`₹${totalMp.toLocaleString()}`,icon:"👨‍🔧",color:"#fef9c3"},
+    {label:"Revenue",value:`₹${totalRev.toLocaleString()}`,icon:"💰",color:"#fef3c7"},
   ];
-
   return(
     <div>
       <h2 style={{margin:"0 0 4px",fontSize:"20px",fontWeight:800}}>Good day, {user.name}! 👋</h2>
@@ -563,7 +558,7 @@ function Dashboard({user,workers,sites,attendance,assignments,landscape}){
           const rev=(site.works||[]).reduce((a,w)=>a+calcWork(w),0);
           return(
             <div key={site.id} style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"10px",marginBottom:"8px"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div><div style={{fontWeight:600,fontSize:"14px"}}>{site.name}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div></div>
                 <div style={{textAlign:"right"}}><div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{rev.toLocaleString()}</div><span style={{background:site.status==="Active"?"#dcfce7":"#fee2e2",color:site.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{site.status}</span></div>
               </div>
@@ -576,17 +571,15 @@ function Dashboard({user,workers,sites,attendance,assignments,landscape}){
   );
 }
 
-// ── SITES ─────────────────────────────────────────────
+// ── SITE WORKS DROPDOWN ───────────────────────────────
 function SiteWorksDropdown({works,siteId,isExp,tab,startEdit,deleteWork}){
   const [open,setOpen]=useState(false);
   return(
     <div style={{marginBottom:"10px",borderRadius:"10px",overflow:"hidden",border:"1.5px solid #bfdbfe"}}>
-      {/* Header */}
       <div onClick={()=>setOpen(p=>!p)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",background:"#1e50a0",cursor:"pointer"}}>
         <span style={{fontSize:"12px",fontWeight:700,color:"#fff"}}>📐 {works.length} Work{works.length!==1?"s":""}</span>
         <span style={{color:"#fff",fontSize:"12px"}}>{open?"▲":"▼"}</span>
       </div>
-      {/* Works */}
       {open&&<div style={{background:"#f8faff",padding:"8px 10px"}}>
         {works.map(w=>(
           <div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #e8f0ff"}}>
@@ -611,6 +604,8 @@ function SiteWorksDropdown({works,siteId,isExp,tab,startEdit,deleteWork}){
     </div>
   );
 }
+
+// ── SITES ─────────────────────────────────────────────
 function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,setRecycleBin}){
   const [showAdd,setShowAdd]=useState(false);
   const [siteForm,setSiteForm]=useState({name:"",client:"Swathi Engineering Agency",status:"Active"});
@@ -627,7 +622,6 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
   const deleteSite=id=>{const s=sites.find(x=>x.id===id);if(s){setRecycleBin(p=>({...p,sites:[...(p.sites||[]),s]}));setSites(p=>p.filter(x=>x.id!==id));}};
   const toggleWorker=(siteId,w)=>setAssignments(p=>{const c={...(p[siteId]||{})};if(c[w.id])delete c[w.id];else c[w.id]=w.category;return{...p,[siteId]:c};});
   const changeDesig=(siteId,wid,desig)=>setAssignments(p=>({...p,[siteId]:{...(p[siteId]||{}),[wid]:desig}}));
-
   const saveWork=siteId=>{
     if(!workForm.place)return;
     if(workForm.workType==="Manpower"&&(!workForm.labour||!workForm.rate))return;
@@ -641,7 +635,6 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
     setSaveMsg(p=>({...p,[siteId]:true}));
     setTimeout(()=>setSaveMsg(p=>({...p,[siteId]:false})),2500);
   };
-
   const deleteWork=(siteId,wid)=>setSites(p=>p.map(s=>s.id===siteId?{...s,works:(s.works||[]).filter(w=>w.id!==wid)}:s));
   const startEdit=(siteId,w)=>{setAddingWork(siteId);setEditWorkId(w.id);setWorkForm({place:w.place,workersList:w.workersList||"",fromDate:w.fromDate||"",toDate:w.toDate||"",area:String(w.area||""),rate:String(w.rate||""),labour:String(w.labour||""),workType:w.workType||"SQM"});};
 
@@ -676,24 +669,19 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
                 <button onClick={()=>deleteSite(site.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"4px 9px",fontSize:"12px"}}>🗑️</button>
               </div>
             </div>
-
             {(site.works||[]).length>0&&<SiteWorksDropdown works={site.works} siteId={site.id} isExp={isExp} tab={tab} startEdit={startEdit} deleteWork={deleteWork}/>}
-
             <button onClick={()=>setExpandSite(isExp?null:site.id)} style={S.btn("#f0f6ff","#1e50a0")}>{isExp?"Close ▲":"Manage ▼"}</button>
-
             {isExp&&<div style={{marginTop:"12px"}}>
               <div style={{display:"flex",gap:"7px",marginBottom:"12px"}}>
                 {[["works","📐 Works"],["assign","⚙️ Workers"]].map(([t,lbl])=>(
                   <button key={t} onClick={()=>setSiteTab(p=>({...p,[site.id]:t}))} style={S.btn(tab===t?"#1e50a0":"#e5e7eb",tab===t?"#fff":"#374151")}>{lbl}</button>
                 ))}
               </div>
-
               {tab==="works"&&<div>
                 {saveMsg[site.id]&&<SuccessBox msg="Work entry saved successfully!"/>}
                 <button onClick={()=>{setAddingWork(addingWork===site.id?null:site.id);setEditWorkId(null);setWorkForm(EMPTY_WORK);}} style={{...S.btn(),marginBottom:"10px",fontSize:"12px",padding:"7px 13px"}}>+ Add Work Entry</button>
                 {addingWork===site.id&&<div style={{...S.card,marginBottom:"10px",border:"1.5px solid #bfdbfe",padding:"14px"}}>
                   <h4 style={{margin:"0 0 10px"}}>{editWorkId?"Edit":"New"} Work Entry</h4>
-                  {/* Work Type Selector */}
                   <div style={{marginBottom:"10px"}}>
                     <label style={S.lbl}>Work Type</label>
                     <div style={{display:"flex",gap:"8px"}}>
@@ -713,7 +701,6 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
                         <div><label style={S.lbl}>Rate (₹/{workForm.workType==="RMT"?"rmt":"m²"})</label><input type="number" value={workForm.rate} onChange={e=>setWorkForm(p=>({...p,rate:e.target.value}))} style={S.inp}/></div></>
                     }
                   </div>
-                  {/* Live Amount Preview */}
                   {((workForm.workType==="Manpower"&&workForm.labour&&workForm.rate)||(workForm.workType!=="Manpower"&&workForm.area&&workForm.rate))&&
                     <div style={{marginTop:"8px",padding:"7px 11px",background:"#dcfce7",borderRadius:"7px",fontSize:"13px",fontWeight:600,color:"#166534"}}>
                       💰 ₹{workForm.workType==="Manpower"?(Number(workForm.labour)*Number(workForm.rate)).toLocaleString():(Number(workForm.area)*Number(workForm.rate)).toLocaleString()}
@@ -724,7 +711,6 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
                   </div>
                 </div>}
               </div>}
-
               {tab==="assign"&&<div style={{background:"#f8faff",borderRadius:"10px",padding:"12px"}}>
                 <p style={{margin:"0 0 10px",fontSize:"11px",color:"#6b84a3",fontWeight:600}}>Click to assign/remove workers.</p>
                 <div style={{display:"flex",flexDirection:"column",gap:"6px"}}>
@@ -985,31 +971,50 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
 
 // ── ENTRY PERMIT ──────────────────────────────────────
 function EntryPermit({workers,sites,assignments,setWorkers}){
+  const [siteMode,setSiteMode]=useState("existing");
   const [selSite,setSelSite]=useState(sites[0]?.id||0);
+  const [manualSiteName,setManualSiteName]=useState("");
+  const [manualClient,setManualClient]=useState("");
+  const [manualPlace,setManualPlace]=useState("");
   const [selectedWorkers,setSelectedWorkers]=useState([]);
   const [fromDate,setFromDate]=useState(today);
   const [toDate,setToDate]=useState(today);
-  const [permitClient,setPermitClient]=useState("Swathi Engineering Agency");
-  const [permitSiteName,setPermitSiteName]=useState("");
-  const [permitPlace,setPermitPlace]=useState("Chennai");
-  const sa=assignments[selSite]||{};
-  const assignedWorkers=workers.filter(w=>sa[w.id]);
+
+  const siteObj=sites.find(s=>s.id===selSite);
+  const permitSiteName=siteMode==="existing"?(siteObj?.name||"")    :manualSiteName;
+  const permitClient  =siteMode==="existing"?(siteObj?.client||"")  :manualClient;
+  const permitPlace   =siteMode==="existing"?"Chennai"              :manualPlace;
+
+  const sa=siteMode==="existing"?(assignments[selSite]||{}):{};
+  const assignedWorkers=siteMode==="existing"?workers.filter(w=>sa[w.id]):workers;
   const toggleWorker=wid=>setSelectedWorkers(p=>p.includes(wid)?p.filter(x=>x!==wid):[...p,wid]);
   const selectAll=()=>setSelectedWorkers(assignedWorkers.map(w=>w.id));
   const clearAll=()=>setSelectedWorkers([]);
   const permitWorkers=workers.filter(w=>selectedWorkers.includes(w.id));
-  const siteObj=sites.find(s=>s.id===selSite);
   const updateWorkerPhoto=(wid,photo)=>setWorkers(p=>p.map(w=>w.id===wid?{...w,photo}:w));
+
   return(
     <div>
       <h2 style={{margin:"0 0 16px",fontSize:"20px",fontWeight:800}}>🪪 Entry Permit</h2>
       <div style={{...S.card,marginBottom:"16px"}}>
         <h3 style={{margin:"0 0 14px",fontSize:"14px",fontWeight:700}}>Permit Settings</h3>
+        {/* Mode Toggle */}
+        <div style={{display:"flex",gap:"8px",marginBottom:"14px"}}>
+          <button onClick={()=>setSiteMode("existing")} style={{...S.btn(siteMode==="existing"?"#1e50a0":"#e5e7eb",siteMode==="existing"?"#fff":"#374151"),fontSize:"12px",padding:"7px 14px"}}>📋 Existing Site</button>
+          <button onClick={()=>setSiteMode("manual")} style={{...S.btn(siteMode==="manual"?"#1e50a0":"#e5e7eb",siteMode==="manual"?"#fff":"#374151"),fontSize:"12px",padding:"7px 14px"}}>✏️ Manual Entry</button>
+        </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:"10px",marginBottom:"14px"}}>
-          <div><label style={S.lbl}>Site</label><select value={selSite} onChange={e=>{setSelSite(Number(e.target.value));setSelectedWorkers([]);}} style={S.inp}>{sites.map(st=><option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
-          <div><label style={S.lbl}>Client</label><input value={permitClient} onChange={e=>setPermitClient(e.target.value)} style={S.inp}/></div>
-          <div><label style={S.lbl}>Site Name (on permit)</label><input value={permitSiteName||siteObj?.name||""} onChange={e=>setPermitSiteName(e.target.value)} style={S.inp}/></div>
-          <div><label style={S.lbl}>Place</label><input value={permitPlace} onChange={e=>setPermitPlace(e.target.value)} style={S.inp}/></div>
+          {siteMode==="existing"
+            ?<div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Select Site</label><select value={selSite} onChange={e=>{setSelSite(Number(e.target.value));setSelectedWorkers([]);}} style={S.inp}>{sites.map(st=><option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
+            :<><div><label style={S.lbl}>Site Name</label><input value={manualSiteName} onChange={e=>setManualSiteName(e.target.value)} placeholder="Enter site name" style={S.inp}/></div>
+               <div><label style={S.lbl}>Client</label><input value={manualClient} onChange={e=>setManualClient(e.target.value)} placeholder="Client name" style={S.inp}/></div>
+               <div><label style={S.lbl}>Place</label><input value={manualPlace} onChange={e=>setManualPlace(e.target.value)} placeholder="Location" style={S.inp}/></div></>
+          }
+          {siteMode==="existing"&&<>
+            <div><label style={S.lbl}>Site Name</label><input value={permitSiteName} readOnly style={{...S.inp,background:"#f0f4f9",color:"#6b84a3"}}/></div>
+            <div><label style={S.lbl}>Client</label><input value={permitClient} readOnly style={{...S.inp,background:"#f0f4f9",color:"#6b84a3"}}/></div>
+            <div><label style={S.lbl}>Place</label><input value={permitPlace} readOnly style={{...S.inp,background:"#f0f4f9",color:"#6b84a3"}}/></div>
+          </>}
           <div><label style={S.lbl}>Valid From</label><input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)} style={S.inp}/></div>
           <div><label style={S.lbl}>Valid To</label><input type="date" value={toDate} onChange={e=>setToDate(e.target.value)} style={S.inp}/></div>
         </div>
@@ -1049,7 +1054,7 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
         <div id="entry-permit" style={{background:"#fff",padding:"28px",borderRadius:"12px",boxShadow:"0 2px 16px rgba(30,80,160,0.08)"}}>
           <div style={{textAlign:"center",marginBottom:"20px",paddingBottom:"14px",borderBottom:"2px solid #0f3172"}}><div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",letterSpacing:"2px"}}>ENTRY PERMIT</div></div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 30px",marginBottom:"24px",fontSize:"13px"}}>
-            {[["Client",permitClient],["Contractor","VinoDhan Coating"],["Site Name",permitSiteName||siteObj?.name||"—"],["Place",permitPlace],["Valid From",fmtDate(fromDate)],["Valid To",fmtDate(toDate)]].map(([lbl,val])=>(
+            {[["Client",permitClient],["Contractor","VinoDhan Coating"],["Site Name",permitSiteName],["Place",permitPlace],["Valid From",fmtDate(fromDate)],["Valid To",fmtDate(toDate)]].map(([lbl,val])=>(
               <div key={lbl} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>{lbl}</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {val}</span></div>
             ))}
           </div>
@@ -1082,21 +1087,20 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
 // ── INVOICE ───────────────────────────────────────────
 function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient,bank,setBank,recycleBin,setRecycleBin}){
   const [selWorks,setSelWorks]=useState([]);
-const [openSites,setOpenSites]=useState([]);
+  const [openSites,setOpenSites]=useState([]);
   const [viewInv,setViewInv]=useState(null);
   const [tab,setTab]=useState("new");
   const [invNum,setInvNum]=useState(`INV-${new Date().getFullYear()}-001`);
   const [invDate,setInvDate]=useState(today);
+  const [pwModal,setPwModal]=useState(null);
   const sigCanvas=useRef(null);
   const [sigMode,setSigMode]=useState("none");
   const [sigImage,setSigImage]=useState(null);
   const [sigDrawing,setSigDrawing]=useState(false);
   const lastPt=useRef(null);
 
-  // Get all invoiced work IDs
   const invoicedWorkIds=new Set(invoices.flatMap(inv=>(inv.works||[]).map(w=>w.id)));
 
-  // Get uninvoiced works from selected sites, sorted by date
   const allWorks=sites
     .flatMap(s=>(s.works||[])
       .filter(w=>selWorks.includes(w.id)&&!invoicedWorkIds.has(w.id))
@@ -1118,26 +1122,32 @@ const [openSites,setOpenSites]=useState([]);
     setSelWorks([]);setTab("history");
   };
 
+  // Delete invoice → password → recycle bin
   const deleteInv=inv=>{
-    setRecycleBin(p=>({...p,invoices:[...(p.invoices||[]),inv]}));
-    setInvoices(p=>p.filter(i=>i.id!==inv.id));
+    setPwModal({action:()=>{
+      setRecycleBin(p=>({...p,invoices:[...(p.invoices||[]),inv]}));
+      setInvoices(p=>p.filter(i=>i.id!==inv.id));
+      setPwModal(null);
+    }});
   };
 
   const upC=(k,v)=>setCompany(p=>({...p,[k]:v}));
   const upCl=(k,v)=>setClient(p=>({...p,[k]:v}));
   const upB=(k,v)=>setBank(p=>({...p,[k]:v}));
-  const tip=<span style={{fontSize:"10px",color:"#60a5fa",marginLeft:"6px",fontStyle:"italic"}}>✎ tap to edit</span>;
   const fmtD=d=>{if(!d)return"—";const[y,m,dy]=d.split("-");return`${dy}/${m}/${y}`;};
 
   const InvDoc=({inv})=>{
-    const works=inv?inv.works:allWorks;const tot=inv?inv.total:total;
-    const num=inv?inv.number:invNum;const dt=inv?fmtD(inv.date):fmtD(invDate);
+    const works=inv?inv.works:allWorks;
+    const tot=inv?inv.total:total;
+    const num=inv?inv.number:invNum;
+    const dt=inv?fmtD(inv.date):fmtD(invDate);
     const editable=!inv;
     return(
-      <div style={{maxWidth:"750px",margin:"0 auto",background:"#fff",padding:"28px",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",paddingBottom:"16px",borderBottom:"2px solid #0f3172",marginBottom:"16px"}}>
-          <div>
-            <div style={{fontSize:"20px",fontWeight:800,color:"#0f3172",marginBottom:"4px"}}>{editable?<EditField value={company.name} onChange={v=>upC("name",v)} style={{fontSize:"20px",fontWeight:800,color:"#0f3172"}}/>:company.name}</div>
+      <div style={{maxWidth:"750px",margin:"0 auto",background:"#fff",padding:"20px",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px"}}>
+        {/* Header */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"12px",paddingBottom:"16px",borderBottom:"2px solid #0f3172",marginBottom:"16px"}}>
+          <div style={{flex:1,minWidth:"180px"}}>
+            <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172",marginBottom:"4px"}}>{editable?<EditField value={company.name} onChange={v=>upC("name",v)} style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}/>:company.name}</div>
             <div style={{fontSize:"11px",color:"#6b84a3",lineHeight:"1.9"}}>
               {editable?<EditField value={company.address} onChange={v=>upC("address",v)}/>:company.address}<br/>
               Ph: {editable?<EditField value={company.phone} onChange={v=>upC("phone",v)}/>:company.phone}<br/>
@@ -1145,26 +1155,30 @@ const [openSites,setOpenSites]=useState([]);
             </div>
           </div>
           <div style={{textAlign:"right"}}>
-            <div style={{fontSize:"24px",fontWeight:800,color:"#0f3172",marginBottom:"6px"}}>INVOICE</div>
+            <div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",marginBottom:"6px"}}>INVOICE</div>
             <div style={{fontSize:"11px",color:"#6b84a3",lineHeight:"2.2"}}>
-              <strong>No: </strong>{editable?<input value={invNum} onChange={e=>setInvNum(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"130px",color:"#1a2b4a",fontFamily:"inherit"}}/>:num}<br/>
-              <strong>Date: </strong>{editable?<input type="date" value={invDate} onChange={e=>setInvDate(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"140px",color:"#1a2b4a",fontFamily:"inherit"}}/>:dt}
+              <strong>No: </strong>{editable?<input value={invNum} onChange={e=>setInvNum(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"120px",color:"#1a2b4a",fontFamily:"inherit"}}/>:num}<br/>
+              <strong>Date: </strong>{editable?<input type="date" value={invDate} onChange={e=>setInvDate(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"130px",color:"#1a2b4a",fontFamily:"inherit"}}/>:dt}
             </div>
           </div>
         </div>
-        <div style={{padding:"13px 16px",background:"#f0f6ff",borderRadius:"9px",marginBottom:"16px"}}>
-          <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>BILL TO {editable&&tip}</div>
+
+        {/* Bill To */}
+        <div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",marginBottom:"16px"}}>
+          <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>BILL TO</div>
           <div style={{fontSize:"11px",lineHeight:"2.1"}}>
             <span style={{fontWeight:600,color:"#6b84a3"}}>To: </span>{editable?<EditField value={client.sendTo} onChange={v=>upCl("sendTo",v)} placeholder="Recipient"/>:client.sendTo}<br/>
             <span style={{fontWeight:600,color:"#6b84a3"}}>Company: </span>{editable?<EditField value={client.name} onChange={v=>upCl("name",v)} style={{fontWeight:700}}/>:<strong>{client.name}</strong>}<br/>
             <span style={{fontWeight:600,color:"#6b84a3"}}>Place: </span>{editable?<EditField value={client.place} onChange={v=>upCl("place",v)}/>:client.place}{" — "}{editable?<EditField value={client.pincode} onChange={v=>upCl("pincode",v)} style={{width:"70px"}}/>:client.pincode}<br/>
             <span style={{fontWeight:600,color:"#6b84a3"}}>Ph: </span>{editable?<EditField value={client.phone} onChange={v=>upCl("phone",v)} placeholder="Phone"/>:client.phone}
           </div>
-          <div style={{marginTop:"12px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe"}}>
+          <div style={{marginTop:"10px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe"}}>
             <span style={{fontWeight:600,color:"#6b84a3",fontSize:"11px"}}>Measurement Sheet No: </span>
             {editable?<EditField value={client.measureNo} onChange={v=>upCl("measureNo",v)} placeholder="Sheet no."/>:<strong>{client.measureNo||"—"}</strong>}
           </div>
         </div>
+
+        {/* Table */}
         <div style={{overflowX:"auto",marginBottom:"16px"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
             <thead><tr style={{background:"#0f3172",color:"#fff"}}>
@@ -1178,9 +1192,7 @@ const [openSites,setOpenSites]=useState([]);
                 return(
                   <tr key={w.id||i} style={{borderBottom:"1px solid #f0f4f9",background:i%2===0?"#fff":"#f8faff"}}>
                     <td style={{padding:"8px 9px",color:"#6b84a3",textAlign:"center"}}>{i+1}</td>
-                    <td style={{padding:"8px 9px"}}>
-  <div>{w.siteName} — {w.place}</div>
-</td>
+                    <td style={{padding:"8px 9px"}}>{w.siteName} — {w.place}</td>
                     <td style={{padding:"8px 9px",textAlign:"right"}}>{unitStr}</td>
                     <td style={{padding:"8px 9px",textAlign:"right"}}>₹{w.rate}</td>
                     <td style={{padding:"8px 9px",fontWeight:700,textAlign:"right"}}>₹{w.amount.toLocaleString()}</td>
@@ -1191,9 +1203,11 @@ const [openSites,setOpenSites]=useState([]);
             </tbody>
           </table>
         </div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginTop:"20px",flexWrap:"wrap",gap:"14px"}}>
-          <div style={{padding:"12px 14px",background:"#f8faff",borderRadius:"9px",fontSize:"11px",lineHeight:"2"}}>
-            <div style={{fontWeight:700,marginBottom:"3px"}}>Bank Details {editable&&tip}</div>
+
+        {/* Bank + Signature */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"14px",marginTop:"20px"}}>
+          <div style={{padding:"12px 14px",background:"#f8faff",borderRadius:"9px",fontSize:"11px",lineHeight:"2",flex:1,minWidth:"180px"}}>
+            <div style={{fontWeight:700,marginBottom:"3px"}}>Bank Details</div>
             Acc Name: {editable?<EditField value={bank.accName} onChange={v=>upB("accName",v)}/>:bank.accName}<br/>
             Bank: {editable?<EditField value={bank.bank} onChange={v=>upB("bank",v)}/>:bank.bank}<br/>
             A/C No: {editable?<EditField value={bank.accNo} onChange={v=>upB("accNo",v)}/>:bank.accNo}<br/>
@@ -1201,14 +1215,19 @@ const [openSites,setOpenSites]=useState([]);
             UPI: {editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:bank.upi}
           </div>
           <div style={{textAlign:"center"}}>
+            {/* Signature box */}
             <div style={{width:"180px",height:"90px",border:"1.5px dashed #bfdbfe",borderRadius:"8px",marginBottom:"6px",overflow:"hidden",background:"#fafcff",display:"flex",alignItems:"center",justifyContent:"center"}}>
               {sigImage?<img src={sigImage} style={{width:"100%",height:"100%",objectFit:"contain"}}/>
               :sigMode==="draw"?<canvas ref={sigCanvas} width={180} height={90} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw} onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} style={{cursor:"crosshair",touchAction:"none",display:"block"}}/>
-              :<span style={{fontSize:"11px",color:"#9db3cc"}}>Seal / Signature</span>}
+              :<span style={{fontSize:"11px",color:"#9db3cc"}}>{sigMode==="physical"?"Physical Sign":"Seal / Signature"}</span>}
             </div>
-            {editable&&<div style={{display:"flex",gap:"4px",justifyContent:"center",marginBottom:"6px",flexWrap:"wrap"}}>
-              <button onClick={()=>{setSigMode("draw");setSigImage(null);setTimeout(()=>sigCanvas.current?.getContext("2d")?.clearRect(0,0,180,90),50);}} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"4px 8px",fontSize:"10px"}}>✏️ Draw</button>
-              <label style={{...S.btn("#f0f6ff","#1e50a0"),padding:"4px 8px",fontSize:"10px",cursor:"pointer"}}>📁 Upload<input type="file" accept="image/*" onChange={uploadSig} style={{display:"none"}}/></label>
+            {/* Signature controls — hidden on print */}
+            {editable&&<div className="no-print" style={{display:"flex",gap:"4px",justifyContent:"center",marginBottom:"6px",flexWrap:"wrap"}}>
+              <button onClick={()=>{setSigMode("draw");setSigImage(null);setTimeout(()=>sigCanvas.current?.getContext("2d")?.clearRect(0,0,180,90),50);}} style={{...S.btn(sigMode==="draw"?"#1e50a0":"#f0f6ff",sigMode==="draw"?"#fff":"#1e50a0"),padding:"4px 8px",fontSize:"10px"}}>✏️ Draw</button>
+              <label style={{...S.btn(sigMode==="upload"?"#1e50a0":"#f0f6ff",sigMode==="upload"?"#fff":"#1e50a0"),padding:"4px 8px",fontSize:"10px",cursor:"pointer"}}>
+                📁 Upload<input type="file" accept="image/*" onChange={e=>{setSigMode("upload");uploadSig(e);}} style={{display:"none"}}/>
+              </label>
+              <button onClick={()=>{setSigMode("physical");setSigImage(null);clearSig();}} style={{...S.btn(sigMode==="physical"?"#1e50a0":"#f0f6ff",sigMode==="physical"?"#fff":"#1e50a0"),padding:"4px 8px",fontSize:"10px"}}>🖊️ Physical</button>
               {(sigImage||sigMode==="draw")&&<button onClick={()=>{clearSig();setSigMode("none");}} style={{...S.btn("#fee2e2","#991b1b"),padding:"4px 8px",fontSize:"10px"}}>✗</button>}
             </div>}
             <div style={{borderTop:"1px solid #1a2b4a",paddingTop:"5px",fontSize:"11px",color:"#6b84a3"}}>Authorised Signatory<br/><strong>{company.name}</strong></div>
@@ -1226,6 +1245,7 @@ const [openSites,setOpenSites]=useState([]);
           <button key={t} onClick={()=>setTab(t)} style={S.btn(tab===t?"#1e50a0":"#e5e7eb",tab===t?"#fff":"#374151")}>{lbl}</button>
         ))}
       </div>
+
       {tab==="new"&&<>
         <div style={{...S.card,marginBottom:"16px"}}>
           <h3 style={{margin:"0 0 11px",fontSize:"13px",fontWeight:700}}>Invoice Settings</h3>
@@ -1233,43 +1253,38 @@ const [openSites,setOpenSites]=useState([]);
             <div style={{flex:1,minWidth:"140px"}}><label style={S.lbl}>Invoice No</label><input value={invNum} onChange={e=>setInvNum(e.target.value)} style={S.inp}/></div>
             <div style={{flex:1,minWidth:"140px"}}><label style={S.lbl}>Invoice Date</label><input type="date" value={invDate} onChange={e=>setInvDate(e.target.value)} style={S.inp}/></div>
           </div>
-          {/* Site selector */}
-          <div style={{marginBottom:"12px"}}>
-            <label style={S.lbl}>Select Sites to Invoice</label>
-            <div style={{display:"flex",flexDirection:"column",gap:"6px",marginTop:"6px"}}>
-{sites.map(s=>{
-  const uninvoiced=(s.works||[]).filter(w=>!invoicedWorkIds.has(w.id));
-  if(uninvoiced.length===0) return null;
-  const selAll=uninvoiced.every(w=>selWorks.includes(w.id));
-  const siteOpen=openSites.includes(s.id);
-  return(
-    <div key={s.id} style={{marginBottom:"8px",border:"1.5px solid #bfdbfe",borderRadius:"10px",overflow:"hidden"}}>
-      {/* Site Header Row */}
-      <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px",background:"#1e50a0"}}>
-        <div onClick={()=>{if(selAll)setSelWorks(p=>p.filter(id=>!uninvoiced.map(w=>w.id).includes(id)));else setSelWorks(p=>[...new Set([...p,...uninvoiced.map(w=>w.id)])]);}} style={{width:"20px",height:"20px",borderRadius:"5px",flexShrink:0,background:selAll?"#f59e0b":"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"12px",fontWeight:700,cursor:"pointer"}}>{selAll?"✓":""}</div>
-        <div onClick={()=>setOpenSites(p=>siteOpen?p.filter(x=>x!==s.id):[...p,s.id])} style={{flex:1,cursor:"pointer"}}>
-          <div style={{fontWeight:700,fontSize:"13px",color:"#fff"}}>{s.name}</div>
-        </div>
-        <span style={{background:"rgba(255,255,255,0.15)",color:"#fff",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{uninvoiced.length} work{uninvoiced.length!==1?"s":""}</span>
-        <span style={{background:s.status==="Active"?"#dcfce7":"#fee2e2",color:s.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{s.status}</span>
-        <span onClick={()=>setOpenSites(p=>siteOpen?p.filter(x=>x!==s.id):[...p,s.id])} style={{color:"#fff",fontSize:"12px",cursor:"pointer"}}>{siteOpen?"▲":"▼"}</span>
-      </div>
-      {/* Works Dropdown */}
-      {siteOpen&&uninvoiced.map(w=>{
-        const wsel=selWorks.includes(w.id);
-        return(
-          <div key={w.id} onClick={()=>setSelWorks(p=>wsel?p.filter(id=>id!==w.id):[...p,w.id])} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px 8px 20px",background:wsel?"#eff6ff":"#fff",borderTop:"1px solid #e5e7eb",cursor:"pointer"}}>
-            <div style={{width:"16px",height:"16px",borderRadius:"4px",flexShrink:0,background:wsel?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"10px",fontWeight:700}}>{wsel?"✓":""}</div>
-            <span style={S.wbadge(w.workType||"SQM")}>{w.workType||"SQM"}</span>
-            <div style={{flex:1,fontSize:"12px",fontWeight:500}}>{w.place}</div>
-            <div style={{fontSize:"12px",fontWeight:700,color:"#166534"}}>₹{calcWork(w).toLocaleString()}</div>
-          </div>
-        );
-      })}
-    </div>
-  );
-})}
-            </div>
+          <label style={S.lbl}>Select Sites & Works to Invoice</label>
+          <div style={{display:"flex",flexDirection:"column",gap:"8px",marginTop:"6px",marginBottom:"12px"}}>
+            {sites.map(s=>{
+              const uninvoiced=(s.works||[]).filter(w=>!invoicedWorkIds.has(w.id));
+              if(uninvoiced.length===0) return null;
+              const selAll=uninvoiced.every(w=>selWorks.includes(w.id));
+              const siteOpen=openSites.includes(s.id);
+              return(
+                <div key={s.id} style={{border:"1.5px solid #bfdbfe",borderRadius:"10px",overflow:"hidden"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px",background:"#1e50a0"}}>
+                    <div onClick={()=>{if(selAll)setSelWorks(p=>p.filter(id=>!uninvoiced.map(w=>w.id).includes(id)));else setSelWorks(p=>[...new Set([...p,...uninvoiced.map(w=>w.id)])]);}} style={{width:"20px",height:"20px",borderRadius:"5px",flexShrink:0,background:selAll?"#f59e0b":"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"12px",fontWeight:700,cursor:"pointer"}}>{selAll?"✓":""}</div>
+                    <div onClick={()=>setOpenSites(p=>siteOpen?p.filter(x=>x!==s.id):[...p,s.id])} style={{flex:1,cursor:"pointer"}}>
+                      <div style={{fontWeight:700,fontSize:"13px",color:"#fff"}}>{s.name}</div>
+                    </div>
+                    <span style={{background:"rgba(255,255,255,0.15)",color:"#fff",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{uninvoiced.length} work{uninvoiced.length!==1?"s":""}</span>
+                    <span style={{background:s.status==="Active"?"#dcfce7":"#fee2e2",color:s.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{s.status}</span>
+                    <span onClick={()=>setOpenSites(p=>siteOpen?p.filter(x=>x!==s.id):[...p,s.id])} style={{color:"#fff",fontSize:"12px",cursor:"pointer"}}>{siteOpen?"▲":"▼"}</span>
+                  </div>
+                  {siteOpen&&uninvoiced.map(w=>{
+                    const wsel=selWorks.includes(w.id);
+                    return(
+                      <div key={w.id} onClick={()=>setSelWorks(p=>wsel?p.filter(id=>id!==w.id):[...p,w.id])} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px 8px 20px",background:wsel?"#eff6ff":"#fff",borderTop:"1px solid #e5e7eb",cursor:"pointer"}}>
+                        <div style={{width:"16px",height:"16px",borderRadius:"4px",flexShrink:0,background:wsel?"#1e50a0":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"10px",fontWeight:700}}>{wsel?"✓":""}</div>
+                        <span style={S.wbadge(w.workType||"SQM")}>{w.workType||"SQM"}</span>
+                        <div style={{flex:1,fontSize:"12px",fontWeight:500}}>{w.place}</div>
+                        <div style={{fontSize:"12px",fontWeight:700,color:"#166534"}}>₹{calcWork(w).toLocaleString()}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
           <div style={{display:"flex",gap:"9px"}}>
             <button onClick={()=>printSection("invoice-doc")} style={{...S.btn(),opacity:allWorks.length===0?0.5:1}} disabled={allWorks.length===0}>🖨️ Print / PDF</button>
@@ -1278,6 +1293,7 @@ const [openSites,setOpenSites]=useState([]);
         </div>
         <div id="invoice-doc"><InvDoc inv={null}/></div>
       </>}
+
       {tab==="history"&&(viewInv
         ?<><div style={{display:"flex",gap:"9px",marginBottom:"16px"}}>
             <button onClick={()=>setViewInv(null)} style={S.btn("#f0f4f9","#1a2b4a")}>← Back</button>
@@ -1285,7 +1301,8 @@ const [openSites,setOpenSites]=useState([]);
           </div>
           <div id="invoice-history-doc"><InvDoc inv={viewInv}/></div>
         </>
-        :<div style={S.card}><h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>Saved Invoices</h3>
+        :<div style={S.card}>
+          <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>Saved Invoices</h3>
           {invoices.length===0?<p style={{color:"#9db3cc",fontSize:"13px"}}>No invoices saved yet.</p>
           :invoices.map(inv=>(
             <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
@@ -1299,6 +1316,13 @@ const [openSites,setOpenSites]=useState([]);
           ))}
         </div>
       )}
+
+      {/* Password modal for invoice delete */}
+      {pwModal&&<PwModal
+        title="Move to Recycle Bin?"
+        onConfirm={pwModal.action}
+        onCancel={()=>setPwModal(null)}
+      />}
     </div>
   );
 }
