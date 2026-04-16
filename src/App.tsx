@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
+
 // ── FIREBASE REST API ─────────────────────────────────
 const FB_PROJECT = "vinodhan-coating";
 const FB_API_KEY = import.meta.env.VITE_FB_API_KEY;
