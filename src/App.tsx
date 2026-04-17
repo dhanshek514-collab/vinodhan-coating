@@ -21,7 +21,16 @@ async function fbSet(docId, data) {
     });
   } catch(e) { console.error("fbSet error", e); }
 }
-
+async function fbBackup(data) {
+  try {
+    const backupId = new Date().toISOString().split("T")[0]; // e.g. "2026-04-17"
+    await fetch(`${FB_BASE}/backup_${backupId}?key=${FB_API_KEY}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fields: { data: { stringValue: JSON.stringify(data) } } })
+    });
+  } catch(e) { console.error("backup error", e); }
+}
 const printCSS = `@page{size:A4;margin:15mm;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:20px;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:6px 8px;}img{max-width:100%;object-fit:cover;}.no-print{display:none!important;}`;
 function printSection(id) {
   const el = document.getElementById(id);
@@ -201,6 +210,7 @@ export default function App(){
   const [showWarning,setShowWarning] = useState(false);
   const [countdown,setCountdown] = useState(30);
   const [ready,setReady]         = useState(false);
+  const [lastBackup,setLastBackup] = useState(null);
   const [workers,setWorkers]     = useState(INIT_WORKERS);
   const [execProfile,setExecProfile] = useState(EMPTY_EXEC);
   const [sites,setSites]         = useState([{id:1,name:"Site A",client:"Swathi Engineering Agency",status:"Active",works:[]}]);
@@ -232,6 +242,11 @@ export default function App(){
       setAttendance(a);setAssignments(as);setInvoices(inv);
       setCompany(co);setClient(cl);setBank(b);setPasswords(pw);
       setRecycleBin(rb);setReady(true);
+const todayDate=new Date().toISOString().split("T")[0];
+const lastB=localStorage.getItem("vd_last_backup");
+if(lastB!==todayDate){
+  setLastBackup(todayDate);
+}
     }
     loadAll();
   },[]);
@@ -247,7 +262,15 @@ export default function App(){
   useEffect(()=>{if(!ready)return;saveS("vd_bank",bank);fbSet("bank",bank);},[bank,ready]);
   useEffect(()=>{if(!ready)return;saveS("vd_passwords",passwords);fbSet("passwords",passwords);},[passwords,ready]);
   useEffect(()=>{if(!ready)return;saveS("vd_recyclebin",recycleBin);fbSet("recycleBin",recycleBin);},[recycleBin,ready]);
-
+useEffect(()=>{
+  if(!ready||!lastBackup)return;
+  const todayDate=new Date().toISOString().split("T")[0];
+  const lastB=localStorage.getItem("vd_last_backup");
+  if(lastB===todayDate)return;
+  fbBackup({workers,execProfile,sites,attendance,assignments,invoices,company,client,bank,passwords,recycleBin});
+  localStorage.setItem("vd_last_backup",todayDate);
+},[lastBackup,ready]);
+  
   const logoutTimer=useRef(null);
   const warningTimer=useRef(null);
   const countdownRef=useRef(null);
@@ -284,7 +307,7 @@ export default function App(){
 
   return(
     <div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'Segoe UI',sans-serif",background:"#f0f4f9",color:"#1a2b4a",overflow:"hidden"}}>
-      <TopBar user={user} page={page} setPage={setPage} landscape={landscape} setLandscape={setLandscape} setUser={setUser} recycleBin={recycleBin} setRecycleBin={setRecycleBin} sites={sites} setSites={setSites} invoices={invoices} setInvoices={setInvoices}/>
+      <TopBar user={user} page={page} setPage={setPage} landscape={landscape} setLandscape={setLandscape} setUser={setUser} recycleBin={recycleBin} setRecycleBin={setRecycleBin} sites={sites} setSites={setSites} invoices={invoices} setInvoices={setInvoices} workers={workers} execProfile={execProfile} attendance={attendance} assignments={assignments} company={company} client={client} bank={bank}/>
       <div style={{flex:1,overflowY:"auto",padding:landscape?"24px 28px":"16px 14px",paddingBottom:"80px"}}>
         {page==="dashboard"  && <Dashboard {...ctx} landscape={landscape}/>}
         {page==="sites"      && <Sites {...ctx}/>}
@@ -309,7 +332,7 @@ export default function App(){
 }
 
 // ── TOP BAR ───────────────────────────────────────────
-function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,setRecycleBin,sites,setSites,invoices,setInvoices}){
+function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,setRecycleBin,sites,setSites,invoices,setInvoices,workers,execProfile,attendance,assignments,company,client,bank}){
   const [drawerOpen,setDrawerOpen]=useState(false);
   const [showBin,setShowBin]=useState(false);
   const [pwModal,setPwModal]=useState(null);
@@ -362,6 +385,21 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
               <button onClick={()=>{setLandscape(false);setDrawerOpen(false);}} style={{flex:1,padding:"10px",borderRadius:"8px",border:"none",cursor:"pointer",background:!landscape?"#1e50a0":"rgba(255,255,255,0.1)",color:"#fff",fontSize:"12px",fontWeight:600}}>📱 Tall</button>
             </div>
           </div>
+          <div style={{padding:"0 16px",marginBottom:"8px"}}>
+  <button onClick={()=>{
+    const data=JSON.stringify({workers,execProfile,sites,attendance,assignments,invoices,company,client,bank,recycleBin},null,2);
+    const blob=new Blob([data],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=`vinodhan-backup-${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setDrawerOpen(false);
+  }} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",fontSize:"13px",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"}}>
+    💾 Export Backup
+  </button>
+</div>
           <div style={{padding:"0 16px"}}>
             <button onClick={()=>{setShowBin(true);setDrawerOpen(false);}} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",fontSize:"13px",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"}}>
               🗑️ Recycle Bin {binCount>0&&<span style={{background:"#dc2626",color:"#fff",borderRadius:"20px",padding:"1px 8px",fontSize:"11px",fontWeight:800}}>{binCount}</span>}
