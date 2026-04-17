@@ -599,7 +599,7 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
           return(
             <div key={site.id} style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"10px",marginBottom:"8px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div><h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>{idx+1}. {site.name}</h3><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div></div>
+                <div><h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>{sites.length-idx}. {site.name}</h3><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div></div>
                 <div style={{textAlign:"right"}}><div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{rev.toLocaleString()}</div><span style={{background:site.status==="Active"?"#dcfce7":"#fee2e2",color:site.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{site.status}</span></div>
               </div>
               {(site.works||[]).length>0&&<DashSiteWorks works={site.works}/>}
@@ -710,7 +710,7 @@ const confirmDeleteSite=()=>{
           <div key={site.id} style={{...S.card,marginBottom:"12px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"9px"}}>
               <div>
-                <h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>{site.name}</h3>
+                <h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>{sites.length-idx}. {site.name}</h3>
                 <div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div>
                 <div style={{fontSize:"13px",fontWeight:700,color:"#166534",marginTop:"3px"}}>₹{rev.toLocaleString()}</div>
               </div>
@@ -1356,7 +1356,7 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
           {invoices.length===0?<p style={{color:"#9db3cc",fontSize:"13px"}}>No invoices saved yet.</p>
           :[...invoices].sort((a,b)=>b.id-a.id).map((inv,idx)=>(
             <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
-              <div><div style={{fontWeight:600,fontSize:"13px"}}>{[...invoices].sort((a,b)=>b.id-a.id).indexOf(inv)+1}. {inv.number}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtD(inv.date)}</div></div>
+              <div><div style={{fontWeight:600,fontSize:"13px"}}>{invoices.length-idx}. {inv.number}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtD(inv.date)}</div></div>
               <div style={{display:"flex",gap:"7px",alignItems:"center"}}>
                 <div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{inv.total?.toLocaleString()}</div>
                 <button onClick={()=>setViewInv(inv)} style={{...S.btn(),padding:"5px 11px",fontSize:"12px"}}>View</button>
