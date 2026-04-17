@@ -594,7 +594,12 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
 </div>
       <div style={S.card}>
         <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>🏗️ Sites Overview</h3>
-        {[...sites].sort((a,b)=>b.id-a.id).map((site,idx)=>{
+        {[...sites].sort((a,b)=>{
+  if(a.status==="Active"&&b.status!=="Active") return 1;
+  if(a.status!=="Active"&&b.status==="Active") return -1;
+  if(a.status==="Active") return b.id-a.id;
+  return a.id-b.id;
+}).map((site,idx)=>{
           const rev=(site.works||[]).reduce((a,w)=>a+calcWork(w),0);
           return(
             <div key={site.id} style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"10px",marginBottom:"8px"}}>
@@ -703,7 +708,12 @@ const confirmDeleteSite=()=>{
   onConfirm={confirmDeleteSite}
   onCancel={()=>setDelSiteModal(null)}
 />}
-      {[...sites].sort((a,b)=>b.id-a.id).map((site,idx)=>{
+      {[...sites].sort((a,b)=>{
+  if(a.status==="Active"&&b.status!=="Active") return 1;
+  if(a.status!=="Active"&&b.status==="Active") return -1;
+  if(a.status==="Active") return b.id-a.id;
+  return a.id-b.id;
+}).map((site,idx)=>{
         const sa=assignments[site.id]||{};const isExp=expandSite===site.id;const tab=getTab(site.id);
         const rev=(site.works||[]).reduce((a,w)=>a+calcWork(w),0);
         return(
