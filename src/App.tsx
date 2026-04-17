@@ -595,8 +595,8 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
       <div style={S.card}>
         <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>🏗️ Sites Overview</h3>
         {[...sites].sort((a,b)=>{
-  if(a.status==="Active"&&b.status!=="Active") return 1;
-  if(a.status!=="Active"&&b.status==="Active") return -1;
+  if(a.status==="Active"&&b.status!=="Active") return -1;
+  if(a.status!=="Active"&&b.status==="Active") return 1;
   if(a.status==="Active") return b.id-a.id;
   return a.id-b.id;
 }).map((site,idx)=>{
@@ -709,8 +709,8 @@ const confirmDeleteSite=()=>{
   onCancel={()=>setDelSiteModal(null)}
 />}
       {[...sites].sort((a,b)=>{
-  if(a.status==="Active"&&b.status!=="Active") return 1;
-  if(a.status!=="Active"&&b.status==="Active") return -1;
+  if(a.status==="Active"&&b.status!=="Active") return -1;
+  if(a.status!=="Active"&&b.status==="Active") return 1;
   if(a.status==="Active") return b.id-a.id;
   return a.id-b.id;
 }).map((site,idx)=>{
