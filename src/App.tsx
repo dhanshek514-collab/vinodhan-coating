@@ -594,12 +594,12 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
 </div>
       <div style={S.card}>
         <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>🏗️ Sites Overview</h3>
-        {sites.map(site=>{
+        {[...sites].sort((a,b)=>b.id-a.id).map((site,idx)=>{
           const rev=(site.works||[]).reduce((a,w)=>a+calcWork(w),0);
           return(
             <div key={site.id} style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"10px",marginBottom:"8px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div><div style={{fontWeight:600,fontSize:"14px"}}>{site.name}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div></div>
+                <div><h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>{idx+1}. {site.name}</h3><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div></div>
                 <div style={{textAlign:"right"}}><div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{rev.toLocaleString()}</div><span style={{background:site.status==="Active"?"#dcfce7":"#fee2e2",color:site.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{site.status}</span></div>
               </div>
               {(site.works||[]).length>0&&<DashSiteWorks works={site.works}/>}
@@ -703,7 +703,7 @@ const confirmDeleteSite=()=>{
   onConfirm={confirmDeleteSite}
   onCancel={()=>setDelSiteModal(null)}
 />}
-      {sites.map(site=>{
+      {[...sites].sort((a,b)=>b.id-a.id).map((site,idx)=>{
         const sa=assignments[site.id]||{};const isExp=expandSite===site.id;const tab=getTab(site.id);
         const rev=(site.works||[]).reduce((a,w)=>a+calcWork(w),0);
         return(
@@ -1354,9 +1354,9 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
         :<div style={S.card}>
           <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>Saved Invoices</h3>
           {invoices.length===0?<p style={{color:"#9db3cc",fontSize:"13px"}}>No invoices saved yet.</p>
-          :invoices.map(inv=>(
+          :[...invoices].sort((a,b)=>b.id-a.id).map((inv,idx)=>(
             <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
-              <div><div style={{fontWeight:600,fontSize:"13px"}}>{inv.number}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtD(inv.date)}</div></div>
+              <div><div style={{fontWeight:600,fontSize:"13px"}}>{[...invoices].sort((a,b)=>b.id-a.id).indexOf(inv)+1}. {inv.number}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtD(inv.date)}</div></div>
               <div style={{display:"flex",gap:"7px",alignItems:"center"}}>
                 <div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{inv.total?.toLocaleString()}</div>
                 <button onClick={()=>setViewInv(inv)} style={{...S.btn(),padding:"5px 11px",fontSize:"12px"}}>View</button>
