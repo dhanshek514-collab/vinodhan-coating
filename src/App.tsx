@@ -531,27 +531,67 @@ function Dashboard({user,workers,sites,landscape}){
   const totalMp=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="Manpower").reduce((a,w)=>a+calcWork(w),sum),0);
   const totalRev=sites.reduce((sum,s)=>(s.works||[]).reduce((a,w)=>a+calcWork(w),sum),0);
   const activeSites=sites.filter(s=>s.status==="Active").length;
-  const stats=[
-    {label:"Total Workers",value:workers.length,icon:"👷",color:"#dbeafe"},
-    {label:"Active Sites",value:activeSites,icon:"🏗️",color:"#dcfce7"},
-    {label:"Total SQM",value:`${totalSqm}m²`,icon:"📐",color:"#ede9fe"},
-    {label:"Total RMT",value:`${totalRmt}rmt`,icon:"📏",color:"#fce7f3"},
-    {label:"Other Charges",value:`₹${totalMp.toLocaleString()}`,icon:"👨‍🔧",color:"#fef9c3"},
-    {label:"Revenue",value:`₹${totalRev.toLocaleString()}`,icon:"💰",color:"#fef3c7"},
-  ];
+  const completedSites=sites.filter(s=>s.status==="Completed").length;
+const applicators=workers.filter(w=>w.category==="Applicator").length;
+const semiApplicators=workers.filter(w=>w.category==="Semi-Applicator").length;
+const helpers=workers.filter(w=>w.category==="Helper").length;
   return(
     <div>
       <h2 style={{margin:"0 0 4px",fontSize:"20px",fontWeight:800}}>Good day, {user.name}! 👋</h2>
       <p style={{margin:"0 0 20px",color:"#6b84a3",fontSize:"12px"}}>{today}</p>
-      <div style={{display:"grid",gridTemplateColumns:landscape?"repeat(6,1fr)":"repeat(2,1fr)",gap:"12px",marginBottom:"20px"}}>
-        {stats.map(st=>(
-          <div key={st.label} style={{...S.card,background:st.color,boxShadow:"none",padding:"16px"}}>
-            <div style={{fontSize:"24px",marginBottom:"6px"}}>{st.icon}</div>
-            <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>{st.value}</div>
-            <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>{st.label}</div>
-          </div>
-        ))}
+      <div style={{display:"flex",gap:"12px",marginBottom:"20px",overflowX:"auto",paddingBottom:"8px",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
+  {/* Workers Breakdown */}
+  <div style={{...S.card,background:"#dbeafe",boxShadow:"none",padding:"16px",minWidth:"160px",flexShrink:0}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>👷</div>
+    <div style={{fontSize:"11px",fontWeight:700,color:"#1e40af",marginBottom:"6px"}}>WORKERS</div>
+    <div style={{display:"flex",flexDirection:"column",gap:"3px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#1e40af"}}>Applicators</span><span style={{fontWeight:800,color:"#0f3172"}}>{applicators}</span></div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#5b21b6"}}>Semi-App</span><span style={{fontWeight:800,color:"#0f3172"}}>{semiApplicators}</span></div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#166534"}}>Helpers</span><span style={{fontWeight:800,color:"#0f3172"}}>{helpers}</span></div>
+      <div style={{borderTop:"1px solid #bfdbfe",marginTop:"3px",paddingTop:"3px",display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#6b84a3"}}>Total</span><span style={{fontWeight:800,color:"#0f3172"}}>{workers.length}</span></div>
+    </div>
+  </div>
+  {/* Sites Breakdown */}
+  <div style={{...S.card,background:"#dcfce7",boxShadow:"none",padding:"16px",minWidth:"150px",flexShrink:0}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>🏗️</div>
+    <div style={{fontSize:"11px",fontWeight:700,color:"#166534",marginBottom:"6px"}}>SITES</div>
+    <div style={{display:"flex",flexDirection:"column",gap:"3px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"12px"}}>
+        <span style={{display:"flex",alignItems:"center",gap:"4px"}}><span style={{width:"8px",height:"8px",borderRadius:"50%",background:"#16a34a",display:"inline-block"}}></span>Active</span>
+        <span style={{fontWeight:800,color:"#0f3172"}}>{activeSites}</span>
       </div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"12px"}}>
+        <span style={{display:"flex",alignItems:"center",gap:"4px"}}><span style={{width:"8px",height:"8px",borderRadius:"50%",background:"#2563eb",display:"inline-block"}}></span>Completed</span>
+        <span style={{fontWeight:800,color:"#0f3172"}}>{completedSites}</span>
+      </div>
+      <div style={{borderTop:"1px solid #bbf7d0",marginTop:"3px",paddingTop:"3px",display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#6b84a3"}}>Total</span><span style={{fontWeight:800,color:"#0f3172"}}>{sites.length}</span></div>
+    </div>
+  </div>
+  {/* SQM */}
+  <div style={{...S.card,background:"#ede9fe",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>📐</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>{totalSqm}m²</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Total SQM</div>
+  </div>
+  {/* RMT */}
+  <div style={{...S.card,background:"#fce7f3",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>📏</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>{totalRmt}rmt</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Total RMT</div>
+  </div>
+  {/* Other Charges */}
+  <div style={{...S.card,background:"#fef9c3",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>👨‍🔧</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalMp.toLocaleString()}</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Other Charges</div>
+  </div>
+  {/* Revenue */}
+  <div style={{...S.card,background:"#fef3c7",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>💰</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalRev.toLocaleString()}</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Revenue</div>
+  </div>
+</div>
       <div style={S.card}>
         <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>🏗️ Sites Overview</h3>
         {sites.map(site=>{
@@ -619,7 +659,13 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
 
   const getTab=id=>siteTab[id]||"works";
   const addSite=()=>{if(!siteForm.name.trim())return;const ns={id:Date.now(),...siteForm,works:[]};setSites(p=>[...p,ns]);setAssignments(p=>({...p,[ns.id]:{}}));setSiteForm({name:"",client:"Swathi Engineering Agency",status:"Active"});setShowAdd(false);};
-  const deleteSite=id=>{const s=sites.find(x=>x.id===id);if(s){setRecycleBin(p=>({...p,sites:[...(p.sites||[]),s]}));setSites(p=>p.filter(x=>x.id!==id));}};
+  const [delSiteModal,setDelSiteModal]=useState(null);
+const deleteSite=id=>{setDelSiteModal(id);};
+const confirmDeleteSite=()=>{
+  const s=sites.find(x=>x.id===delSiteModal);
+  if(s){setRecycleBin(p=>({...p,sites:[...(p.sites||[]),s]}));setSites(p=>p.filter(x=>x.id!==delSiteModal));}
+  setDelSiteModal(null);
+};
   const toggleWorker=(siteId,w)=>setAssignments(p=>{const c={...(p[siteId]||{})};if(c[w.id])delete c[w.id];else c[w.id]=w.category;return{...p,[siteId]:c};});
   const changeDesig=(siteId,wid,desig)=>setAssignments(p=>({...p,[siteId]:{...(p[siteId]||{}),[wid]:desig}}));
   const saveWork=siteId=>{
@@ -652,7 +698,11 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
         <div style={{marginBottom:"12px"}}><label style={S.lbl}>Status</label><select value={siteForm.status} onChange={e=>setSiteForm(p=>({...p,status:e.target.value}))} style={S.inp}><option>Active</option><option>Completed</option><option>On Hold</option></select></div>
         <div style={{display:"flex",gap:"9px"}}><button onClick={addSite} style={S.btn()}>Save</button><button onClick={()=>setShowAdd(false)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button></div>
       </div>}
-
+{delSiteModal&&<PwModal
+  title="Move Site to Recycle Bin?"
+  onConfirm={confirmDeleteSite}
+  onCancel={()=>setDelSiteModal(null)}
+/>}
       {sites.map(site=>{
         const sa=assignments[site.id]||{};const isExp=expandSite===site.id;const tab=getTab(site.id);
         const rev=(site.works||[]).reduce((a,w)=>a+calcWork(w),0);
