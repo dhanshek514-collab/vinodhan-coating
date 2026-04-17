@@ -525,7 +525,7 @@ function DashSiteWorks({works}){
   );
 }
 
-function Dashboard({user,workers,sites,landscape}){
+function Dashboard({user,workers,sites,invoices,landscape}){
   const totalSqm=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="SQM"||!w.workType).reduce((a,w)=>a+(Number(w.area)||0),sum),0);
   const totalRmt=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="RMT").reduce((a,w)=>a+(Number(w.area)||0),sum),0);
   const totalMp=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="Manpower").reduce((a,w)=>a+calcWork(w),sum),0);
@@ -584,6 +584,15 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
     <div style={{fontSize:"22px",marginBottom:"6px"}}>👨‍🔧</div>
     <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalMp.toLocaleString()}</div>
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Other Charges</div>
+  </div>
+        {/* Invoices */}
+  <div style={{...S.card,background:"#fce7f3",boxShadow:"none",padding:"16px",minWidth:"160px",flexShrink:0}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>🧾</div>
+    <div style={{fontSize:"11px",fontWeight:700,color:"#9d174d",marginBottom:"6px"}}>INVOICES</div>
+    <div style={{display:"flex",flexDirection:"column",gap:"3px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#9d174d"}}>Total Raised</span><span style={{fontWeight:800,color:"#0f3172"}}>{invoices.length}</span></div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#9d174d"}}>Total Billed</span><span style={{fontWeight:800,color:"#0f3172"}}>₹{invoices.reduce((a,inv)=>a+(inv.total||0),0).toLocaleString()}</span></div>
+    </div>
   </div>
   {/* Revenue */}
   <div style={{...S.card,background:"#fef3c7",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
@@ -1362,7 +1371,11 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
           <div id="invoice-history-doc"><InvDoc inv={viewInv}/></div>
         </>
         :<div style={S.card}>
-          <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>Saved Invoices</h3>
+  <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>Saved Invoices</h3>
+  <div style={{display:"flex",gap:"16px",marginBottom:"14px",padding:"12px 14px",background:"#f0f6ff",borderRadius:"10px",flexWrap:"wrap"}}>
+    <div><span style={{fontSize:"20px",fontWeight:800,color:"#0f3172"}}>{invoices.length}</span><div style={{fontSize:"11px",color:"#6b84a3"}}>Total Invoices</div></div>
+    <div><span style={{fontSize:"20px",fontWeight:800,color:"#166534"}}>₹{invoices.reduce((a,inv)=>a+(inv.total||0),0).toLocaleString()}</span><div style={{fontSize:"11px",color:"#6b84a3"}}>Total Billed</div></div>
+  </div>
           {invoices.length===0?<p style={{color:"#9db3cc",fontSize:"13px"}}>No invoices saved yet.</p>
           :[...invoices].sort((a,b)=>b.id-a.id).map((inv,idx)=>(
             <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
