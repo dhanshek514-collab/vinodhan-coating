@@ -734,7 +734,11 @@ const confirmDeleteSite=()=>{
                 <div style={{fontSize:"13px",fontWeight:700,color:"#166534",marginTop:"3px"}}>₹{rev.toLocaleString()}</div>
               </div>
               <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
-                <span style={{background:site.status==="Active"?"#dcfce7":"#fee2e2",color:site.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 10px"}}>{site.status}</span>
+                <select value={site.status} onChange={e=>setSites(p=>p.map(s=>s.id===site.id?{...s,status:e.target.value}:s))} style={{padding:"3px 8px",borderRadius:"20px",border:"none",fontSize:"11px",fontWeight:600,outline:"none",cursor:"pointer",background:site.status==="Active"?"#dcfce7":site.status==="On Hold"?"#fef9c3":"#fee2e2",color:site.status==="Active"?"#166534":site.status==="On Hold"?"#d97706":"#991b1b"}}>
+  <option value="Active">Active</option>
+  <option value="On Hold">On Hold</option>
+  <option value="Completed">Completed</option>
+</select>
                 <button onClick={()=>deleteSite(site.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"4px 9px",fontSize:"12px"}}>🗑️</button>
               </div>
             </div>
