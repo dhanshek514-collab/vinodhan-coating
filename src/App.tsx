@@ -673,7 +673,7 @@ function SiteWorksDropdown({works,siteId,isExp,tab,startEdit,deleteWork}){
         <span style={{color:"#fff",fontSize:"12px"}}>{open?"▲":"▼"}</span>
       </div>
       {open&&<div style={{background:"#f8faff",padding:"8px 10px"}}>
-        {works.map(w=>(
+        {[...works].sort((a,b)=>(b.fromDate||"").localeCompare(a.fromDate||"")).map(w=>(
           <div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #e8f0ff"}}>
             <div>
               <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"2px"}}>
@@ -712,6 +712,7 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
   const getTab=id=>siteTab[id]||"works";
   const addSite=()=>{if(!siteForm.name.trim())return;const ns={id:Date.now(),...siteForm,works:[]};setSites(p=>[...p,ns]);setAssignments(p=>({...p,[ns.id]:{}}));setSiteForm({name:"",client:"Swathi Engineering Agency",status:"Active"});setShowAdd(false);};
   const [delSiteModal,setDelSiteModal]=useState(null);
+  const [delWorkModal,setDelWorkModal]=useState(null);
 const deleteSite=id=>{setDelSiteModal(id);};
 const confirmDeleteSite=()=>{
   const s=sites.find(x=>x.id===delSiteModal);
@@ -733,7 +734,8 @@ const confirmDeleteSite=()=>{
     setSaveMsg(p=>({...p,[siteId]:true}));
     setTimeout(()=>setSaveMsg(p=>({...p,[siteId]:false})),2500);
   };
-  const deleteWork=(siteId,wid)=>setSites(p=>p.map(s=>s.id===siteId?{...s,works:(s.works||[]).filter(w=>w.id!==wid)}:s));
+  const deleteWork=(siteId,wid)=>setDelWorkModal({siteId,wid});
+const confirmDeleteWork=()=>{setSites(p=>p.map(s=>s.id===delWorkModal.siteId?{...s,works:(s.works||[]).filter(w=>w.id!==delWorkModal.wid)}:s));setDelWorkModal(null);};
   const startEdit=(siteId,w)=>{setAddingWork(siteId);setEditWorkId(w.id);setWorkForm({place:w.place,workersList:w.workersList||"",fromDate:w.fromDate||"",toDate:w.toDate||"",area:String(w.area||""),rate:String(w.rate||""),labour:String(w.labour||""),workType:w.workType||"SQM"});};
 
   return(
@@ -754,6 +756,11 @@ const confirmDeleteSite=()=>{
   title="Move Site to Recycle Bin?"
   onConfirm={confirmDeleteSite}
   onCancel={()=>setDelSiteModal(null)}
+/>}
+      {delWorkModal&&<PwModal
+  title="Delete Work Entry?"
+  onConfirm={confirmDeleteWork}
+  onCancel={()=>setDelWorkModal(null)}
 />}
       {[...sites].sort((a,b)=>{
   if(a.status==="Active"&&b.status!=="Active") return -1;
