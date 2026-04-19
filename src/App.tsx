@@ -204,7 +204,7 @@ function PwModal({title,onConfirm,onCancel}){
 
 // ── ROOT ──────────────────────────────────────────────
 export default function App(){
-const [user,setUser] = useState(()=>loadS("vd_user",null));
+const [user,setUser] = useState(()=>{const u=loadS("vd_user",null);return u&&u.id?u:null;});
   const [page,setPage]           = useState("dashboard");
   const [landscape,setLandscape] = useState(true);
   const [showWarning,setShowWarning] = useState(false);
@@ -274,7 +274,7 @@ useEffect(()=>{
   const logoutTimer=useRef(null);
   const warningTimer=useRef(null);
   const countdownRef=useRef(null);
-  const doLogout=useCallback(()=>{setShowWarning(false);setUser(null);setPage("dashboard");},[]);
+  const doLogout=useCallback(()=>{setShowWarning(false);saveS("vd_user",null);setUser(null);setPage("dashboard");},[]);
   const resetTimer=useCallback(()=>{
     if(!user)return;
     clearTimeout(logoutTimer.current);clearTimeout(warningTimer.current);clearInterval(countdownRef.current);
@@ -736,7 +736,16 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
   const [delSiteModal,setDelSiteModal]=useState(null);
   const [delWorkModal,setDelWorkModal]=useState(null);
   const [orphanWarning,setOrphanWarning]=useState(null);
-const deleteSite=id=>{setDelSiteModal(id);};
+const deleteSite=id=>{
+  const site=sites.find(s=>s.id===id);
+  const siteWorkIds=(site?.works||[]).map(w=>w.id);
+  const linked=invoices.filter(inv=>(inv.works||[]).some(w=>siteWorkIds.includes(w.id)));
+  if(linked.length>0){
+    setOrphanWarning({siteId:id,wid:null,isSite:true,invoices:linked});
+  } else {
+    setDelSiteModal(id);
+  }
+};
 const confirmDeleteSite=()=>{
   const s=sites.find(x=>x.id===delSiteModal);
   if(s){setRecycleBin(p=>({...p,sites:[...(p.sites||[]),s]}));setSites(p=>p.filter(x=>x.id!==delSiteModal));}
@@ -810,14 +819,18 @@ const confirmDeleteWork=()=>{setSites(p=>p.map(s=>s.id===delWorkModal.siteId?{..
       <p style={{fontSize:"12px",color:"#dc2626",margin:"0 0 16px"}}>Deleting will flag the invoice as incomplete!</p>
       <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
         <button onClick={()=>{
-          setInvoices(p=>p.map(inv=>
-            orphanWarning.invoices.some(oi=>oi.id===inv.id)
-            ?{...inv,flagged:true}
-            :inv
-          ));
-          setOrphanWarning(null);
-          setDelWorkModal({siteId:orphanWarning.siteId,wid:orphanWarning.wid});
-        }} style={S.btn("#dc2626")}>Proceed</button>
+  setInvoices(p=>p.map(inv=>
+    orphanWarning.invoices.some(oi=>oi.id===inv.id)
+    ?{...inv,flagged:true}
+    :inv
+  ));
+  setOrphanWarning(null);
+  if(orphanWarning.isSite){
+    setDelSiteModal(orphanWarning.siteId);
+  } else {
+    setDelWorkModal({siteId:orphanWarning.siteId,wid:orphanWarning.wid});
+  }
+}} style={S.btn("#dc2626")}>Proceed</button>
         <button onClick={()=>setOrphanWarning(null)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
       </div>
     </div>
