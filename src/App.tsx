@@ -280,10 +280,10 @@ useEffect(()=>{
     clearTimeout(logoutTimer.current);clearTimeout(warningTimer.current);clearInterval(countdownRef.current);
     setShowWarning(false);setCountdown(30);
     warningTimer.current=setTimeout(()=>{
-  setShowWarning(true);setCountdown(60);
+  setShowWarning(true);setCountdown(30);
   countdownRef.current=setInterval(()=>setCountdown(p=>{if(p<=1){clearInterval(countdownRef.current);return 0;}return p-1;}),1000);
-  logoutTimer.current=setTimeout(doLogout,60000);
-},60000);
+  logoutTimer.current=setTimeout(doLogout,30000);
+},120000);
   },[user,doLogout]);
 
   useEffect(()=>{
