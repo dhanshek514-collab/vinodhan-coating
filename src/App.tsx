@@ -1317,7 +1317,7 @@ useEffect(()=>{
 
   const saveInv=()=>{
   if(allWorks.length===0)return;
-  setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks,siteName:invSiteName}]);
+  setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks,siteName:invSiteName,measureNo:client.measureNo}]);
   setSelWorks([]);setTab("history");
 };
 
@@ -1342,6 +1342,7 @@ useEffect(()=>{
     const dt=inv?fmtD(inv.date):fmtD(invDate);
     const editable=!inv;
     const displaySiteName=inv?inv.siteName:invSiteName;
+    const displayMeasureNo=inv?inv.measureNo:client.measureNo;
     return(
       <div style={{maxWidth:"750px",margin:"0 auto",background:"#fff",padding:"20px",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px"}}>
         {/* Header */}
@@ -1375,7 +1376,7 @@ useEffect(()=>{
           </div>
           <div style={{marginTop:"10px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe"}}>
             <span style={{fontWeight:600,color:"#6b84a3",fontSize:"11px"}}>Measurement Sheet No: </span>
-            {editable?<EditField value={client.measureNo} onChange={v=>upCl("measureNo",v)} placeholder="Sheet no."/>:<strong>{client.measureNo||"—"}</strong>}
+            {editable?<EditField value={client.measureNo} onChange={v=>upCl("measureNo",v)} placeholder="Sheet no."/>:<strong>{displayMeasureNo||"—"}</strong>}
          </div>
 </div>
 <div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
