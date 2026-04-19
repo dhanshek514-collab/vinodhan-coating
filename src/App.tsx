@@ -1303,10 +1303,12 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
 
   const total=allWorks.reduce((a,w)=>a+w.amount,0);
 useEffect(()=>{
-  if(allWorks.length>0&&!invSiteName){
+  if(allWorks.length>0){
     setInvSiteName(allWorks[0].siteName||"");
+  } else {
+    setInvSiteName("");
   }
-},[allWorks]);
+},[allWorks.length]);
   const startDraw=e=>{setSigDrawing(true);const r=sigCanvas.current.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;lastPt.current={x,y};};
   const draw=e=>{if(!sigDrawing||!sigCanvas.current||!lastPt.current)return;e.preventDefault();const r=sigCanvas.current.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;const ctx=sigCanvas.current.getContext("2d");ctx.strokeStyle="#1a2b4a";ctx.lineWidth=2;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(lastPt.current.x,lastPt.current.y);ctx.lineTo(x,y);ctx.stroke();lastPt.current={x,y};};
   const endDraw=()=>{setSigDrawing(false);if(sigCanvas.current)setSigImage(sigCanvas.current.toDataURL());};
