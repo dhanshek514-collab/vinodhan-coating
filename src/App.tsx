@@ -844,7 +844,7 @@ const confirmDeleteWork=()=>{setSites(p=>p.map(s=>s.id===delWorkModal.siteId?{..
   if(a.status==="Active") return b.id-a.id;
 const aMax=(a.works||[]).map(w=>w.toDate||"").filter(Boolean).sort().pop()||"";
 const bMax=(b.works||[]).map(w=>w.toDate||"").filter(Boolean).sort().pop()||"";
-return aMax.localeCompare(bMax);
+return bMax.localeCompare(aMax);
 }).map((site,idx)=>{
         const sa=assignments[site.id]||{};const isExp=expandSite===site.id;const tab=getTab(site.id);
         const rev=(site.works||[]).reduce((a,w)=>a+calcWork(w),0);
