@@ -1356,7 +1356,7 @@ useEffect(()=>{
             <div style={{fontSize:"11px",color:"#6b84a3",lineHeight:"1.9"}}>
               {editable?<EditField value={company.address} onChange={v=>upC("address",v)}/>:company.address}<br/>
               Ph: {editable?<EditField value={company.phone} onChange={v=>upC("phone",v)}/>:company.phone}<br/>
-              GSTIN: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>:company.gstin}
+              Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>:company.gstin}
             </div>
           </div>
           <div style={{textAlign:"right"}}>
