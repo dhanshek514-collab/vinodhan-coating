@@ -758,6 +758,8 @@ const confirmDeleteSite=()=>{
     setTimeout(()=>setSaveMsg(p=>({...p,[siteId]:false})),2500);
   };
   const deleteWork=(siteId,wid)=>{
+  console.log("Deleting work ID:", wid);
+  console.log("Invoice work IDs:", invoices.map(inv=>(inv.works||[]).map(w=>w.id)));
   const linked=invoices.filter(inv=>(inv.works||[]).some(w=>w.id===wid));
   if(linked.length>0){
     setOrphanWarning({siteId,wid,invoices:linked});
