@@ -204,7 +204,7 @@ function PwModal({title,onConfirm,onCancel}){
 
 // ── ROOT ──────────────────────────────────────────────
 export default function App(){
-  const [user,setUser]           = useState(null);
+const [user,setUser] = useState(()=>loadS("vd_user",null));
   const [page,setPage]           = useState("dashboard");
   const [landscape,setLandscape] = useState(true);
   const [showWarning,setShowWarning] = useState(false);
@@ -280,10 +280,10 @@ useEffect(()=>{
     clearTimeout(logoutTimer.current);clearTimeout(warningTimer.current);clearInterval(countdownRef.current);
     setShowWarning(false);setCountdown(30);
     warningTimer.current=setTimeout(()=>{
-      setShowWarning(true);setCountdown(30);
-      countdownRef.current=setInterval(()=>setCountdown(p=>{if(p<=1){clearInterval(countdownRef.current);return 0;}return p-1;}),1000);
-      logoutTimer.current=setTimeout(doLogout,30000);
-    },30000);
+  setShowWarning(true);setCountdown(60);
+  countdownRef.current=setInterval(()=>setCountdown(p=>{if(p<=1){clearInterval(countdownRef.current);return 0;}return p-1;}),1000);
+  logoutTimer.current=setTimeout(doLogout,60000);
+},60000);
   },[user,doLogout]);
 
   useEffect(()=>{
@@ -409,7 +409,7 @@ const [selBinInvs,setSelBinInvs]=useState([]);
           </div>
           <div style={{flex:1}}/>
           <div style={{padding:"16px",borderTop:"1px solid rgba(255,255,255,0.1)"}}>
-            <button onClick={()=>{setDrawerOpen(false);setUser(null);}} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"#fee2e2",color:"#991b1b",fontSize:"14px",fontWeight:700}}>🚪 Logout</button>
+            <button onClick={()=>{setDrawerOpen(false);saveS("vd_user",null);setUser(null);}} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"#fee2e2",color:"#991b1b",fontSize:"14px",fontWeight:700}}>🚪 Logout</button>
           </div>
         </div>
       </>}
@@ -521,7 +521,7 @@ function LoginPage({onLogin,passwords,setPasswords}){
     if(!id){setErr("Please select a User ID.");return;}
     if(!pw){setErr("Please enter your password.");return;}
     const u=USERS.find(u=>u.id===id&&passwords[id]===pw);
-    u?onLogin(u):setErr("Invalid User ID or Password. Password is case sensitive.");
+    u?(saveS("vd_user",u),onLogin(u)):setErr("Invalid User ID or Password. Password is case sensitive.");
   };
   const sendOtp=()=>{if(!fUser){setFErr("Please select a user.");return;}const otp=String(Math.floor(100000+Math.random()*900000));setGenOtp(otp);setFStep(2);setFErr("");setFMsg(`OTP sent to ${USER_PHONES[fUser]} — Demo OTP: ${otp}`);};
   const verifyOtp=()=>{entOtp===genOtp?(setFStep(3),setFErr(""),setFMsg("")):setFErr("Incorrect OTP. Try again.");};
