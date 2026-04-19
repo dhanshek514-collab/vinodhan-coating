@@ -336,6 +336,8 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
   const [drawerOpen,setDrawerOpen]=useState(false);
   const [showBin,setShowBin]=useState(false);
   const [pwModal,setPwModal]=useState(null);
+  const [selBinSites,setSelBinSites]=useState([]);
+const [selBinInvs,setSelBinInvs]=useState([]);
   const binCount=(recycleBin.sites||[]).length+(recycleBin.invoices||[]).length;
 
   const bottomNav=[
@@ -421,30 +423,48 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
           </div>
           <div style={{padding:"20px"}}>
             <div style={{marginBottom:"20px"}}>
-              <h3 style={{margin:"0 0 10px",fontSize:"13px",fontWeight:700,color:"#6b84a3",textTransform:"uppercase",letterSpacing:"1px"}}>🏗️ Sites ({(recycleBin.sites||[]).length})</h3>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+  <h3 style={{margin:0,fontSize:"13px",fontWeight:700,color:"#6b84a3",textTransform:"uppercase",letterSpacing:"1px"}}>🏗️ Sites ({(recycleBin.sites||[]).length})</h3>
+  <div style={{display:"flex",gap:"7px"}}>
+    <button onClick={()=>setSelBinSites(selBinSites.length===(recycleBin.sites||[]).length?([]): (recycleBin.sites||[]).map(s=>s.id))} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"5px 11px",fontSize:"12px"}}>{selBinSites.length===(recycleBin.sites||[]).length?"Deselect All":"Select All"}</button>
+    {selBinSites.length>0&&<button onClick={()=>setPwModal({type:"bulkSite"})} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete Selected ({selBinSites.length})</button>}
+  </div>
+</div>
               {(recycleBin.sites||[]).length===0?<div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"24px"}}>No deleted sites</div>
               :(recycleBin.sites||[]).map(s=>(
-                <div key={s.id} style={{...S.card,marginBottom:"10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div><div style={{fontWeight:600,fontSize:"14px"}}>{s.name}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{s.client}</div></div>
-                  <div style={{display:"flex",gap:"7px"}}>
-                    <button onClick={()=>restoreSite(s)} style={{...S.btn("#dcfce7","#166534"),padding:"5px 11px",fontSize:"12px"}}>↩️ Restore</button>
-                    <button onClick={()=>setPwModal({type:"site",id:s.id})} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete</button>
-                  </div>
-                </div>
-              ))}
+  <div key={s.id} style={{...S.card,marginBottom:"10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+    <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+      <div onClick={()=>setSelBinSites(p=>p.includes(s.id)?p.filter(x=>x!==s.id):[...p,s.id])} style={{width:"20px",height:"20px",borderRadius:"5px",flexShrink:0,background:selBinSites.includes(s.id)?"#dc2626":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:"12px",fontWeight:700}}>{selBinSites.includes(s.id)?"✓":""}</div>
+      <div><div style={{fontWeight:600,fontSize:"14px"}}>{s.name}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{s.client}</div></div>
+    </div>
+    <div style={{display:"flex",gap:"7px"}}>
+      <button onClick={()=>restoreSite(s)} style={{...S.btn("#dcfce7","#166534"),padding:"5px 11px",fontSize:"12px"}}>↩️ Restore</button>
+      <button onClick={()=>setPwModal({type:"site",id:s.id})} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete</button>
+    </div>
+  </div>
+))}
             </div>
             <div>
-              <h3 style={{margin:"0 0 10px",fontSize:"13px",fontWeight:700,color:"#6b84a3",textTransform:"uppercase",letterSpacing:"1px"}}>🧾 Invoices ({(recycleBin.invoices||[]).length})</h3>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+  <h3 style={{margin:0,fontSize:"13px",fontWeight:700,color:"#6b84a3",textTransform:"uppercase",letterSpacing:"1px"}}>🧾 Invoices ({(recycleBin.invoices||[]).length})</h3>
+  <div style={{display:"flex",gap:"7px"}}>
+    <button onClick={()=>setSelBinInvs(selBinInvs.length===(recycleBin.invoices||[]).length?[]:(recycleBin.invoices||[]).map(i=>i.id))} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"5px 11px",fontSize:"12px"}}>{selBinInvs.length===(recycleBin.invoices||[]).length?"Deselect All":"Select All"}</button>
+    {selBinInvs.length>0&&<button onClick={()=>setPwModal({type:"bulkInv"})} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete Selected ({selBinInvs.length})</button>}
+  </div>
+</div>
               {(recycleBin.invoices||[]).length===0?<div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"24px"}}>No deleted invoices</div>
               :(recycleBin.invoices||[]).map(inv=>(
-                <div key={inv.id} style={{...S.card,marginBottom:"10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div><div style={{fontWeight:600,fontSize:"14px"}}>{inv.number}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtDate(inv.date)} — ₹{inv.total?.toLocaleString()}</div></div>
-                  <div style={{display:"flex",gap:"7px"}}>
-                    <button onClick={()=>restoreInv(inv)} style={{...S.btn("#dcfce7","#166534"),padding:"5px 11px",fontSize:"12px"}}>↩️ Restore</button>
-                    <button onClick={()=>setPwModal({type:"invoice",id:inv.id})} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete</button>
-                  </div>
-                </div>
-              ))}
+  <div key={inv.id} style={{...S.card,marginBottom:"10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+    <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+      <div onClick={()=>setSelBinInvs(p=>p.includes(inv.id)?p.filter(x=>x!==inv.id):[...p,inv.id])} style={{width:"20px",height:"20px",borderRadius:"5px",flexShrink:0,background:selBinInvs.includes(inv.id)?"#dc2626":"#e5e7eb",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:"12px",fontWeight:700}}>{selBinInvs.includes(inv.id)?"✓":""}</div>
+      <div><div style={{fontWeight:600,fontSize:"14px"}}>{inv.number}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtDate(inv.date)} — ₹{inv.total?.toLocaleString()}</div></div>
+    </div>
+    <div style={{display:"flex",gap:"7px"}}>
+      <button onClick={()=>restoreInv(inv)} style={{...S.btn("#dcfce7","#166534"),padding:"5px 11px",fontSize:"12px"}}>↩️ Restore</button>
+      <button onClick={()=>setPwModal({type:"invoice",id:inv.id})} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️ Delete</button>
+    </div>
+  </div>
+))}
             </div>
           </div>
         </div>
@@ -452,14 +472,16 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
 
       {/* PASSWORD MODAL FOR RECYCLE BIN */}
       {pwModal&&<PwModal
-        title="Permanent Delete"
-        onConfirm={()=>{
-          if(pwModal.type==="site") setRecycleBin(p=>({...p,sites:(p.sites||[]).filter(x=>x.id!==pwModal.id)}));
-          else setRecycleBin(p=>({...p,invoices:(p.invoices||[]).filter(x=>x.id!==pwModal.id)}));
-          setPwModal(null);
-        }}
-        onCancel={()=>setPwModal(null)}
-      />}
+  title="Permanent Delete"
+  onConfirm={()=>{
+    if(pwModal.type==="site") setRecycleBin(p=>({...p,sites:(p.sites||[]).filter(x=>x.id!==pwModal.id)}));
+    else if(pwModal.type==="invoice") setRecycleBin(p=>({...p,invoices:(p.invoices||[]).filter(x=>x.id!==pwModal.id)}));
+    else if(pwModal.type==="bulkSite"){setRecycleBin(p=>({...p,sites:(p.sites||[]).filter(x=>!selBinSites.includes(x.id))}));setSelBinSites([]);}
+    else if(pwModal.type==="bulkInv"){setRecycleBin(p=>({...p,invoices:(p.invoices||[]).filter(x=>!selBinInvs.includes(x.id))}));setSelBinInvs([]);}
+    setPwModal(null);
+  }}
+  onCancel={()=>setPwModal(null)}
+/>}
 
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0f3172",borderTop:"1px solid rgba(255,255,255,0.1)",display:"flex",zIndex:900,boxShadow:"0 -2px 12px rgba(0,0,0,0.2)"}}>
         {bottomNav.map(item=>{
