@@ -720,7 +720,7 @@ function SiteWorksDropdown({works,siteId,isExp,tab,startEdit,deleteWork}){
 }
 
 // ── SITES ─────────────────────────────────────────────
-function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,setRecycleBin}){
+function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,setRecycleBin,invoices,setInvoices}){
   const [showAdd,setShowAdd]=useState(false);
   const [siteForm,setSiteForm]=useState({name:"",client:"Swathi Engineering Agency",status:"Active"});
   const [expandSite,setExpandSite]=useState(null);
@@ -735,6 +735,7 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
   const addSite=()=>{if(!siteForm.name.trim())return;const ns={id:Date.now(),...siteForm,works:[]};setSites(p=>[...p,ns]);setAssignments(p=>({...p,[ns.id]:{}}));setSiteForm({name:"",client:"Swathi Engineering Agency",status:"Active"});setShowAdd(false);};
   const [delSiteModal,setDelSiteModal]=useState(null);
   const [delWorkModal,setDelWorkModal]=useState(null);
+  const [orphanWarning,setOrphanWarning]=useState(null);
 const deleteSite=id=>{setDelSiteModal(id);};
 const confirmDeleteSite=()=>{
   const s=sites.find(x=>x.id===delSiteModal);
@@ -750,13 +751,20 @@ const confirmDeleteSite=()=>{
     setSites(p=>p.map(s=>{
       if(s.id!==siteId)return s;
       if(editWorkId)return{...s,works:(s.works||[]).map(w=>w.id===editWorkId?{...w,...workForm,area:Number(workForm.area),rate:Number(workForm.rate),labour:Number(workForm.labour)}:w)};
-      return{...s,works:[...(s.works||[]),{id:Date.now(),...workForm,area:Number(workForm.area),rate:Number(workForm.rate),labour:Number(workForm.labour)}]};
+      return{...s,works:[...(s.works||[]),{id:crypto.randomUUID(),...workForm,area:Number(workForm.area),rate:Number(workForm.rate),labour:Number(workForm.labour)}]};
     }));
     setWorkForm(EMPTY_WORK);setAddingWork(null);setEditWorkId(null);
     setSaveMsg(p=>({...p,[siteId]:true}));
     setTimeout(()=>setSaveMsg(p=>({...p,[siteId]:false})),2500);
   };
-  const deleteWork=(siteId,wid)=>setDelWorkModal({siteId,wid});
+  const deleteWork=(siteId,wid)=>{
+  const linked=invoices.filter(inv=>(inv.works||[]).some(w=>w.id===wid));
+  if(linked.length>0){
+    setOrphanWarning({siteId,wid,invoices:linked});
+  } else {
+    setDelWorkModal({siteId,wid});
+  }
+};
 const confirmDeleteWork=()=>{setSites(p=>p.map(s=>s.id===delWorkModal.siteId?{...s,works:(s.works||[]).filter(w=>w.id!==delWorkModal.wid)}:s));setDelWorkModal(null);};
   const startEdit=(siteId,w)=>{setAddingWork(siteId);setEditWorkId(w.id);setWorkForm({place:w.place,workersList:w.workersList||"",fromDate:w.fromDate||"",toDate:w.toDate||"",area:String(w.area||""),rate:String(w.rate||""),labour:String(w.labour||""),workType:w.workType||"SQM"});};
 
@@ -779,11 +787,40 @@ const confirmDeleteWork=()=>{setSites(p=>p.map(s=>s.id===delWorkModal.siteId?{..
   onConfirm={confirmDeleteSite}
   onCancel={()=>setDelSiteModal(null)}
 />}
-      {delWorkModal&&<PwModal
+{delWorkModal&&<PwModal
   title="Delete Work Entry?"
   onConfirm={confirmDeleteWork}
   onCancel={()=>setDelWorkModal(null)}
 />}
+{orphanWarning&&(
+  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
+    <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"320px",textAlign:"center"}}>
+      <div style={{fontSize:"32px",marginBottom:"8px"}}>⚠️</div>
+      <h3 style={{margin:"0 0 7px",color:"#d97706"}}>Linked to Invoice!</h3>
+      <p style={{fontSize:"12px",color:"#6b84a3",margin:"0 0 10px"}}>This work is linked to the following invoice(s):</p>
+      <div style={{marginBottom:"14px"}}>
+        {orphanWarning.invoices.map(inv=>(
+          <div key={inv.id} style={{padding:"7px 12px",background:"#fef3c7",borderRadius:"8px",marginBottom:"6px",fontSize:"13px",fontWeight:600,color:"#d97706"}}>
+            🧾 {inv.number} — ₹{inv.total?.toLocaleString()}
+          </div>
+        ))}
+      </div>
+      <p style={{fontSize:"12px",color:"#dc2626",margin:"0 0 16px"}}>Deleting will flag the invoice as incomplete!</p>
+      <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
+        <button onClick={()=>{
+          setInvoices(p=>p.map(inv=>
+            orphanWarning.invoices.some(oi=>oi.id===inv.id)
+            ?{...inv,flagged:true}
+            :inv
+          ));
+          setOrphanWarning(null);
+          setDelWorkModal({siteId:orphanWarning.siteId,wid:orphanWarning.wid});
+        }} style={S.btn("#dc2626")}>Proceed</button>
+        <button onClick={()=>setOrphanWarning(null)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+      </div>
+    </div>
+  </div>
+)}
       {[...sites].sort((a,b)=>{
   if(a.status==="Active"&&b.status!=="Active") return -1;
   if(a.status!=="Active"&&b.status==="Active") return 1;
@@ -1450,7 +1487,7 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
           {invoices.length===0?<p style={{color:"#9db3cc",fontSize:"13px"}}>No invoices saved yet.</p>
           :[...invoices].sort((a,b)=>b.id-a.id).map((inv,idx)=>(
             <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
-              <div><div style={{fontWeight:600,fontSize:"13px"}}>{invoices.length-idx}. {inv.number}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtD(inv.date)}</div></div>
+             <div><div style={{fontWeight:600,fontSize:"13px"}}>{invoices.length-idx}. {inv.number} {inv.flagged&&<span style={{color:"#dc2626",fontSize:"11px"}}>⚠️ Incomplete</span>}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtD(inv.date)}</div></div>
               <div style={{display:"flex",gap:"7px",alignItems:"center"}}>
                 <div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{inv.total?.toLocaleString()}</div>
                 <button onClick={()=>setViewInv(inv)} style={{...S.btn(),padding:"5px 11px",fontSize:"12px"}}>View</button>
