@@ -669,7 +669,7 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
   if(a.status==="Active") return b.id-a.id;
 const aMax=(a.works||[]).map(w=>w.toDate||"").filter(Boolean).sort().pop()||"";
 const bMax=(b.works||[]).map(w=>w.toDate||"").filter(Boolean).sort().pop()||"";
-return aMax.localeCompare(bMax);
+return bMax.localeCompare(aMax);
 }).map((site,idx)=>{
           const rev=(site.works||[]).reduce((a,w)=>a+calcWork(w),0);
           return(
