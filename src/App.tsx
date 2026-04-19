@@ -1284,6 +1284,7 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
   const [tab,setTab]=useState("new");
   const [invNum,setInvNum]=useState(`INV-${new Date().getFullYear()}-001`);
   const [invDate,setInvDate]=useState(today);
+  const [invSiteName,setInvSiteName]=useState("");
   const [pwModal,setPwModal]=useState(null);
   const sigCanvas=useRef(null);
   const [sigMode,setSigMode]=useState("none");
@@ -1301,7 +1302,11 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
     .sort((a,b)=>(a.fromDate||"").localeCompare(b.fromDate||""));
 
   const total=allWorks.reduce((a,w)=>a+w.amount,0);
-
+useEffect(()=>{
+  if(allWorks.length>0&&!invSiteName){
+    setInvSiteName(allWorks[0].siteName||"");
+  }
+},[allWorks]);
   const startDraw=e=>{setSigDrawing(true);const r=sigCanvas.current.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;lastPt.current={x,y};};
   const draw=e=>{if(!sigDrawing||!sigCanvas.current||!lastPt.current)return;e.preventDefault();const r=sigCanvas.current.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;const ctx=sigCanvas.current.getContext("2d");ctx.strokeStyle="#1a2b4a";ctx.lineWidth=2;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(lastPt.current.x,lastPt.current.y);ctx.lineTo(x,y);ctx.stroke();lastPt.current={x,y};};
   const endDraw=()=>{setSigDrawing(false);if(sigCanvas.current)setSigImage(sigCanvas.current.toDataURL());};
@@ -1355,8 +1360,9 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
           </div>
         </div>
 
-        {/* Bill To */}
-        <div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",marginBottom:"16px"}}>
+        {/* Bill To + Site Name */}
+<div style={{display:"flex",gap:"12px",marginBottom:"16px",flexWrap:"wrap"}}>
+<div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
           <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>BILL TO</div>
           <div style={{fontSize:"11px",lineHeight:"2.1"}}>
             <span style={{fontWeight:600,color:"#6b84a3"}}>To: </span>{editable?<EditField value={client.sendTo} onChange={v=>upCl("sendTo",v)} placeholder="Recipient"/>:client.sendTo}<br/>
@@ -1367,8 +1373,16 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
           <div style={{marginTop:"10px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe"}}>
             <span style={{fontWeight:600,color:"#6b84a3",fontSize:"11px"}}>Measurement Sheet No: </span>
             {editable?<EditField value={client.measureNo} onChange={v=>upCl("measureNo",v)} placeholder="Sheet no."/>:<strong>{client.measureNo||"—"}</strong>}
-          </div>
-        </div>
+         </div>
+</div>
+<div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
+  <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>SITE DETAILS</div>
+  <div style={{fontSize:"11px",lineHeight:"2.1"}}>
+    <span style={{fontWeight:600,color:"#6b84a3"}}>Site Name: </span>
+    {editable?<EditField value={invSiteName} onChange={v=>setInvSiteName(v)} placeholder="Site name"/>:invSiteName||"—"}
+  </div>
+</div>
+</div>
 
         {/* Table */}
         <div style={{overflowX:"auto",marginBottom:"16px"}}>
