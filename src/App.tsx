@@ -1517,7 +1517,7 @@ useEffect(()=>{
     <div><span style={{fontSize:"20px",fontWeight:800,color:"#166534"}}>₹{invoices.reduce((a,inv)=>a+(inv.total||0),0).toLocaleString()}</span><div style={{fontSize:"11px",color:"#6b84a3"}}>Total Billed</div></div>
   </div>
           {invoices.length===0?<p style={{color:"#9db3cc",fontSize:"13px"}}>No invoices saved yet.</p>
-          :[...invoices].sort((a,b)=>b.number.localeCompare(a.number)).map((inv,idx)=>(
+          :[...invoices].sort((a,b)=>b.number.localeCompare(a.number,undefined,{numeric:true})).map((inv,idx)=>(
             <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
              <div><div style={{fontWeight:600,fontSize:"13px"}}>{invoices.length-idx}. {inv.number} {inv.flagged&&<span style={{color:"#dc2626",fontSize:"11px"}}>⚠️ Incomplete</span>}</div><div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtD(inv.date)}</div></div>
               <div style={{display:"flex",gap:"7px",alignItems:"center"}}>
