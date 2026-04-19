@@ -667,7 +667,9 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
   if(a.status==="Active"&&b.status!=="Active") return -1;
   if(a.status!=="Active"&&b.status==="Active") return 1;
   if(a.status==="Active") return b.id-a.id;
-  return a.id-b.id;
+const aDate=Math.max(...(a.works||[]).map(w=>new Date(w.toDate||0)));
+const bDate=Math.max(...(b.works||[]).map(w=>new Date(w.toDate||0)));
+return aDate-bDate;
 }).map((site,idx)=>{
           const rev=(site.works||[]).reduce((a,w)=>a+calcWork(w),0);
           return(
