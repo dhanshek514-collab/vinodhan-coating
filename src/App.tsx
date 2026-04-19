@@ -1398,7 +1398,7 @@ useEffect(()=>{
                 return(
                   <tr key={w.id||i} style={{borderBottom:"1px solid #f0f4f9",background:i%2===0?"#fff":"#f8faff"}}>
                     <td style={{padding:"8px 9px",color:"#6b84a3",textAlign:"center"}}>{i+1}</td>
-                    <td style={{padding:"8px 9px"}}>{w.siteName} — {w.place}</td>
+                    <td style={{padding:"8px 9px"}}>{invSiteName||w.siteName} — {w.place}</td>
                     <td style={{padding:"8px 9px",textAlign:"right"}}>{unitStr}</td>
                     <td style={{padding:"8px 9px",textAlign:"right"}}>₹{w.rate}</td>
                     <td style={{padding:"8px 9px",fontWeight:700,textAlign:"right"}}>₹{w.amount.toLocaleString()}</td>
