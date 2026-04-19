@@ -1316,10 +1316,10 @@ useEffect(()=>{
   const uploadSig=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{if(ev.target?.result)setSigImage(ev.target.result);};r.readAsDataURL(f);};
 
   const saveInv=()=>{
-    if(allWorks.length===0)return;
-    setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks}]);
-    setSelWorks([]);setTab("history");
-  };
+  if(allWorks.length===0)return;
+  setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks,siteName:invSiteName}]);
+  setSelWorks([]);setTab("history");
+};
 
   // Delete invoice → password → recycle bin
   const deleteInv=inv=>{
@@ -1341,6 +1341,7 @@ useEffect(()=>{
     const num=inv?inv.number:invNum;
     const dt=inv?fmtD(inv.date):fmtD(invDate);
     const editable=!inv;
+    const displaySiteName=inv?inv.siteName:invSiteName;
     return(
       <div style={{maxWidth:"750px",margin:"0 auto",background:"#fff",padding:"20px",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px"}}>
         {/* Header */}
@@ -1381,7 +1382,7 @@ useEffect(()=>{
   <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>SITE DETAILS</div>
   <div style={{fontSize:"11px",lineHeight:"2.1"}}>
     <span style={{fontWeight:600,color:"#6b84a3"}}>Site Name: </span>
-    {editable?<EditField value={invSiteName} onChange={v=>setInvSiteName(v)} placeholder="Site name"/>:invSiteName||"—"}
+{editable?<EditField value={invSiteName} onChange={v=>setInvSiteName(v)} placeholder="Site name"/>:displaySiteName||"—"}
   </div>
 </div>
 </div>
@@ -1400,7 +1401,7 @@ useEffect(()=>{
                 return(
                   <tr key={w.id||i} style={{borderBottom:"1px solid #f0f4f9",background:i%2===0?"#fff":"#f8faff"}}>
                     <td style={{padding:"8px 9px",color:"#6b84a3",textAlign:"center"}}>{i+1}</td>
-                    <td style={{padding:"8px 9px"}}>{w.place}</td>
+                    <td style={{padding:"8px 9px"}}>{displaySiteName||w.siteName} — {w.place}</td>
                     <td style={{padding:"8px 9px",textAlign:"right"}}>{unitStr}</td>
                     <td style={{padding:"8px 9px",textAlign:"right"}}>₹{w.rate}</td>
                     <td style={{padding:"8px 9px",fontWeight:700,textAlign:"right"}}>₹{w.amount.toLocaleString()}</td>
