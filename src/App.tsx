@@ -401,24 +401,6 @@ const [importPwErr,setImportPwErr]=useState("");
       setImportPwModal(true);
       setImportPw("");
       setImportPwErr("");
-      r.onload=ev=>{
-        try{
-          const d=JSON.parse(ev.target.result);
-          if(d.workers)setWorkers(d.workers);
-          if(d.sites)setSites(d.sites);
-          if(d.invoices)setInvoices(d.invoices);
-          if(d.attendance)setAttendance(d.attendance);
-          if(d.assignments)setAssignments(d.assignments);
-          if(d.company)setCompany(d.company);
-          if(d.client)setClient(d.client);
-          if(d.bank)setBank(d.bank);
-          if(d.recycleBin)setRecycleBin(d.recycleBin);
-          if(d.execProfile)setExecProfile(d.execProfile);
-          alert("✅ Data restored successfully!");
-          setDrawerOpen(false);
-        }catch{alert("❌ Invalid backup file.");}
-      };
-      r.readAsText(f);
     }}/>
   </label>
 </div>
