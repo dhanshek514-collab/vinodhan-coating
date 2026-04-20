@@ -1321,7 +1321,7 @@ useEffect(()=>{
 
   const saveInv=()=>{
   if(allWorks.length===0)return;
-  setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks,siteName:invSiteName,measureNo:client.measureNo}]);
+  setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks,siteName:invSiteName,measureNo:client.measureNo,snapshot:{company:{...company},client:{...client},bank:{...bank}}}]);
   setSelWorks([]);setTab("history");
 };
 
@@ -1346,17 +1346,21 @@ useEffect(()=>{
     const dt=inv?fmtD(inv.date):fmtD(invDate);
     const editable=!inv;
     const displaySiteName=inv?inv.siteName:invSiteName;
-    const displayMeasureNo=inv?inv.measureNo:client.measureNo;
+const displayMeasureNo=inv?inv.measureNo:client.measureNo;
+const snap=inv?.snapshot;
+const dispCompany=snap?snap.company:company;
+const dispClient=snap?snap.client:client;
+const dispBank=snap?snap.bank:bank;
     return(
       <div style={{maxWidth:"750px",margin:"0 auto",background:"#fff",padding:"20px",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px"}}>
         {/* Header */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"12px",paddingBottom:"16px",borderBottom:"2px solid #0f3172",marginBottom:"16px"}}>
           <div style={{flex:1,minWidth:"180px"}}>
-            <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172",marginBottom:"4px"}}>{editable?<EditField value={company.name} onChange={v=>upC("name",v)} style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}/>:company.name}</div>
+            <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172",marginBottom:"4px"}}>{editable?<EditField value={company.name} onChange={v=>upC("name",v)} style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}/>:dispCompany.name}</div>
             <div style={{fontSize:"11px",color:"#6b84a3",lineHeight:"1.9"}}>
-              {editable?<EditField value={company.address} onChange={v=>upC("address",v)}/>:company.address}<br/>
-              Ph: {editable?<EditField value={company.phone} onChange={v=>upC("phone",v)}/>:company.phone}<br/>
-              Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>:company.gstin}
+              {editable?<EditField value={company.address} onChange={v=>upC("address",v)}/>:dispCompany.address}<br/>
+              Ph: {editable?<EditField value={company.phone} onChange={v=>upC("phone",v)}/>:dispCompany.phone}<br/>
+Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>:dispCompany.gstin}
             </div>
           </div>
           <div style={{textAlign:"right"}}>
@@ -1373,10 +1377,10 @@ useEffect(()=>{
 <div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
           <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>BILL TO</div>
           <div style={{fontSize:"11px",lineHeight:"2.1"}}>
-            <span style={{fontWeight:600,color:"#6b84a3"}}>To: </span>{editable?<EditField value={client.sendTo} onChange={v=>upCl("sendTo",v)} placeholder="Recipient"/>:client.sendTo}<br/>
-            <span style={{fontWeight:600,color:"#6b84a3"}}>Company: </span>{editable?<EditField value={client.name} onChange={v=>upCl("name",v)} style={{fontWeight:700}}/>:<strong>{client.name}</strong>}<br/>
-            <span style={{fontWeight:600,color:"#6b84a3"}}>Place: </span>{editable?<EditField value={client.place} onChange={v=>upCl("place",v)}/>:client.place}{" — "}{editable?<EditField value={client.pincode} onChange={v=>upCl("pincode",v)} style={{width:"70px"}}/>:client.pincode}<br/>
-            <span style={{fontWeight:600,color:"#6b84a3"}}>Ph: </span>{editable?<EditField value={client.phone} onChange={v=>upCl("phone",v)} placeholder="Phone"/>:client.phone}
+            <span style={{fontWeight:600,color:"#6b84a3"}}>To: </span>{editable?<EditField value={client.sendTo} onChange={v=>upCl("sendTo",v)} placeholder="Recipient"/>:dispClient.sendTo}<br/>
+<span style={{fontWeight:600,color:"#6b84a3"}}>Company: </span>{editable?<EditField value={client.name} onChange={v=>upCl("name",v)} style={{fontWeight:700}}/>:<strong>{dispClient.name}</strong>}<br/>
+<span style={{fontWeight:600,color:"#6b84a3"}}>Place: </span>{editable?<EditField value={client.place} onChange={v=>upCl("place",v)}/>:dispClient.place}{" — "}{editable?<EditField value={client.pincode} onChange={v=>upCl("pincode",v)} style={{width:"70px"}}/>:dispClient.pincode}<br/>
+<span style={{fontWeight:600,color:"#6b84a3"}}>Ph: </span>{editable?<EditField value={client.phone} onChange={v=>upCl("phone",v)} placeholder="Phone"/>:dispClient.phone}
           </div>
           <div style={{marginTop:"10px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe"}}>
             <span style={{fontWeight:600,color:"#6b84a3",fontSize:"11px"}}>Measurement Sheet No: </span>
@@ -1422,11 +1426,11 @@ useEffect(()=>{
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"14px",marginTop:"20px"}}>
           <div style={{padding:"12px 14px",background:"#f8faff",borderRadius:"9px",fontSize:"11px",lineHeight:"2",flex:1,minWidth:"180px"}}>
             <div style={{fontWeight:700,marginBottom:"3px"}}>Bank Details</div>
-            Acc Name: {editable?<EditField value={bank.accName} onChange={v=>upB("accName",v)}/>:bank.accName}<br/>
-            Bank: {editable?<EditField value={bank.bank} onChange={v=>upB("bank",v)}/>:bank.bank}<br/>
-            A/C No: {editable?<EditField value={bank.accNo} onChange={v=>upB("accNo",v)}/>:bank.accNo}<br/>
-            IFSC: {editable?<EditField value={bank.ifsc} onChange={v=>upB("ifsc",v)}/>:bank.ifsc}<br/>
-            UPI: {editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:bank.upi}
+            Acc Name: {editable?<EditField value={bank.accName} onChange={v=>upB("accName",v)}/>:dispBank.accName}<br/>
+Bank: {editable?<EditField value={bank.bank} onChange={v=>upB("bank",v)}/>:dispBank.bank}<br/>
+A/C No: {editable?<EditField value={bank.accNo} onChange={v=>upB("accNo",v)}/>:dispBank.accNo}<br/>
+IFSC: {editable?<EditField value={bank.ifsc} onChange={v=>upB("ifsc",v)}/>:dispBank.ifsc}<br/>
+UPI: {editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:dispBank.upi}
           </div>
           <div style={{textAlign:"center"}}>
             {/* Signature box */}
@@ -1444,7 +1448,7 @@ useEffect(()=>{
               <button onClick={()=>{setSigMode("physical");setSigImage(null);clearSig();}} style={{...S.btn(sigMode==="physical"?"#1e50a0":"#f0f6ff",sigMode==="physical"?"#fff":"#1e50a0"),padding:"4px 8px",fontSize:"10px"}}>🖊️ Physical</button>
               {(sigImage||sigMode==="draw")&&<button onClick={()=>{clearSig();setSigMode("none");}} style={{...S.btn("#fee2e2","#991b1b"),padding:"4px 8px",fontSize:"10px"}}>✗</button>}
             </div>}
-            <div style={{borderTop:"1px solid #1a2b4a",paddingTop:"5px",fontSize:"11px",color:"#6b84a3"}}>Authorised Signatory<br/><strong>{company.name}</strong></div>
+            <div style={{borderTop:"1px solid #1a2b4a",paddingTop:"5px",fontSize:"11px",color:"#6b84a3"}}>Authorised Signatory<br/><strong>{dispCompany.name}</strong></div>
           </div>
         </div>
       </div>
