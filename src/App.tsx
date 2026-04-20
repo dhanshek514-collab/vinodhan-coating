@@ -417,7 +417,7 @@ const [selBinInvs,setSelBinInvs]=useState([]);
     }}/>
   </label>
 </div>
-    <div style={{padding:"0 16px",marginBottom:"8px"}}>
+<div style={{padding:"0 16px",marginBottom:"8px"}}>
   <button onClick={()=>{
     const data=JSON.stringify({workers,execProfile,sites,attendance,assignments,invoices,company,client,bank,recycleBin},null,2);
     const blob=new Blob([data],{type:"application/json"});
