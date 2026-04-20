@@ -338,6 +338,10 @@ function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,set
   const [pwModal,setPwModal]=useState(null);
   const [selBinSites,setSelBinSites]=useState([]);
 const [selBinInvs,setSelBinInvs]=useState([]);
+  const [importPwModal,setImportPwModal]=useState(false);
+const [pendingFile,setPendingFile]=useState(null);
+const [importPw,setImportPw]=useState("");
+const [importPwErr,setImportPwErr]=useState("");
   const binCount=(recycleBin.sites||[]).length+(recycleBin.invoices||[]).length;
 
   const bottomNav=[
@@ -393,9 +397,10 @@ const [selBinInvs,setSelBinInvs]=useState([]);
     <input type="file" accept=".json" style={{display:"none"}} onChange={e=>{
       const f=e.target.files?.[0];
       if(!f)return;
-      const pw=prompt("Enter import password:");
-      if(pw!=="Risetogether1416"){alert("❌ Incorrect password.");return;}
-      const r=new FileReader();
+      setPendingFile(f);
+      setImportPwModal(true);
+      setImportPw("");
+      setImportPwErr("");
       r.onload=ev=>{
         try{
           const d=JSON.parse(ev.target.result);
@@ -513,6 +518,44 @@ const [selBinInvs,setSelBinInvs]=useState([]);
   onCancel={()=>setPwModal(null)}
 />}
 
+      {importPwModal&&(
+  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:4000}}>
+    <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"300px",textAlign:"center"}}>
+      <div style={{fontSize:"32px",marginBottom:"8px"}}>🔐</div>
+      <h3 style={{margin:"0 0 7px"}}>Import Backup</h3>
+      <p style={{fontSize:"12px",color:"#6b84a3",margin:"0 0 16px"}}>Enter password to restore data.</p>
+      <input type="password" value={importPw} onChange={e=>setImportPw(e.target.value)} placeholder="Enter password" style={{...S.inp,marginBottom:"10px",textAlign:"center"}}/>
+      {importPwErr&&<div style={{color:"#dc2626",fontSize:"12px",marginBottom:"10px"}}>{importPwErr}</div>}
+      <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
+        <button onClick={()=>{
+          if(importPw!=="Risetogether1416"){setImportPwErr("❌ Incorrect password.");return;}
+          const r=new FileReader();
+          r.onload=ev=>{
+            try{
+              const d=JSON.parse(ev.target.result);
+              if(d.workers)setWorkers(d.workers);
+              if(d.sites)setSites(d.sites);
+              if(d.invoices)setInvoices(d.invoices);
+              if(d.attendance)setAttendance(d.attendance);
+              if(d.assignments)setAssignments(d.assignments);
+              if(d.company)setCompany(d.company);
+              if(d.client)setClient(d.client);
+              if(d.bank)setBank(d.bank);
+              if(d.recycleBin)setRecycleBin(d.recycleBin);
+              if(d.execProfile)setExecProfile(d.execProfile);
+              setImportPwModal(false);setPendingFile(null);
+              setDrawerOpen(false);
+              alert("✅ Data restored successfully!");
+            }catch{setImportPwErr("❌ Invalid backup file.");}
+          };
+          r.readAsText(pendingFile);
+        }} style={S.btn("#1e50a0")}>Confirm</button>
+        <button onClick={()=>{setImportPwModal(false);setPendingFile(null);setImportPwErr("");}} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+      </div>
+    </div>
+  </div>
+)}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0f3172",borderTop:"1px solid rgba(255,255,255,0.1)",display:"flex",zIndex:900,boxShadow:"0 -2px 12px rgba(0,0,0,0.2)"}}>
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0f3172",borderTop:"1px solid rgba(255,255,255,0.1)",display:"flex",zIndex:900,boxShadow:"0 -2px 12px rgba(0,0,0,0.2)"}}>
         {bottomNav.map(item=>{
           const active=page===item.id;
