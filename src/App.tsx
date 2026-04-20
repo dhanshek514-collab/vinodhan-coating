@@ -307,7 +307,7 @@ useEffect(()=>{
 
   return(
     <div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'Segoe UI',sans-serif",background:"#f0f4f9",color:"#1a2b4a",overflow:"hidden"}}>
-      <TopBar user={user} page={page} setPage={setPage} landscape={landscape} setLandscape={setLandscape} setUser={setUser} recycleBin={recycleBin} setRecycleBin={setRecycleBin} sites={sites} setSites={setSites} invoices={invoices} setInvoices={setInvoices} workers={workers} execProfile={execProfile} attendance={attendance} assignments={assignments} company={company} client={client} bank={bank}/>
+      <TopBar user={user} page={page} setPage={setPage} landscape={landscape} setLandscape={setLandscape} setUser={setUser} recycleBin={recycleBin} setRecycleBin={setRecycleBin} sites={sites} setSites={setSites} invoices={invoices} setInvoices={setInvoices} workers={workers} setWorkers={setWorkers} execProfile={execProfile} setExecProfile={setExecProfile} attendance={attendance} setAttendance={setAttendance} assignments={assignments} setAssignments={setAssignments} company={company} setCompany={setCompany} client={client} setClient={setClient} bank={bank} setBank={setBank}/>
       <div style={{flex:1,overflowY:"auto",padding:landscape?"24px 28px":"16px 14px",paddingBottom:"80px"}}>
         {page==="dashboard"  && <Dashboard {...ctx} landscape={landscape}/>}
         {page==="sites"      && <Sites {...ctx}/>}
@@ -332,7 +332,7 @@ useEffect(()=>{
 }
 
 // ── TOP BAR ───────────────────────────────────────────
-function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,setRecycleBin,sites,setSites,invoices,setInvoices,workers,execProfile,attendance,assignments,company,client,bank}){
+function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,setRecycleBin,sites,setSites,invoices,setInvoices,workers,setWorkers,execProfile,setExecProfile,attendance,setAttendance,assignments,setAssignments,company,setCompany,client,setClient,bank,setBank}){
   const [drawerOpen,setDrawerOpen]=useState(false);
   const [showBin,setShowBin]=useState(false);
   const [pwModal,setPwModal]=useState(null);
@@ -388,8 +388,35 @@ const [selBinInvs,setSelBinInvs]=useState([]);
             </div>
           </div>
           <div style={{padding:"0 16px",marginBottom:"8px"}}>
-  <button onClick={()=>{
-    const data=JSON.stringify({workers,execProfile,sites,attendance,assignments,invoices,company,client,bank,recycleBin},null,2);
+  <label style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",fontSize:"13px",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",boxSizing:"border-box"}}>
+    📥 Import Backup
+    <input type="file" accept=".json" style={{display:"none"}} onChange={e=>{
+      const f=e.target.files?.[0];
+      if(!f)return;
+      const pw=prompt("Enter import password:");
+      if(pw!=="Risetogether1416"){alert("❌ Incorrect password.");return;}
+      const r=new FileReader();
+      r.onload=ev=>{
+        try{
+          const d=JSON.parse(ev.target.result);
+          if(d.workers)setWorkers(d.workers);
+          if(d.sites)setSites(d.sites);
+          if(d.invoices)setInvoices(d.invoices);
+          if(d.attendance)setAttendance(d.attendance);
+          if(d.assignments)setAssignments(d.assignments);
+          if(d.company)setCompany(d.company);
+          if(d.client)setClient(d.client);
+          if(d.bank)setBank(d.bank);
+          if(d.recycleBin)setRecycleBin(d.recycleBin);
+          if(d.execProfile)setExecProfile(d.execProfile);
+          alert("✅ Data restored successfully!");
+          setDrawerOpen(false);
+        }catch{alert("❌ Invalid backup file.");}
+      };
+      r.readAsText(f);
+    }}/>
+  </label>
+</div>
     const blob=new Blob([data],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");
