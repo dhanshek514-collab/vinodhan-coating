@@ -555,7 +555,7 @@ const [importPwErr,setImportPwErr]=useState("");
     </div>
   </div>
 )}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0f3172",borderTop:"1px solid rgba(255,255,255,0.1)",display:"flex",zIndex:900,boxShadow:"0 -2px 12px rgba(0,0,0,0.2)"}}>
+  
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0f3172",borderTop:"1px solid rgba(255,255,255,0.1)",display:"flex",zIndex:900,boxShadow:"0 -2px 12px rgba(0,0,0,0.2)"}}>
         {bottomNav.map(item=>{
           const active=page===item.id;
