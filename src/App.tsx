@@ -889,7 +889,8 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
       </div>
       {(()=>{
         const grouped=Object.values(invoices.reduce((acc,inv)=>{
-          const key=(inv.siteName||"Unknown").trim();
+          const wistronInvs=["INV-2026-010","INV-2026-012","INV-2026-014","INV-2026-016","INV-2026-017","INV-2026-019","INV-2026-021","INV-2026-022","INV-2026-027"];
+const key=wistronInvs.includes(inv.number)?"Wistron":(inv.siteName||"Unknown").trim();
           if(!acc[key])acc[key]={siteName:key,count:0,total:0};
           acc[key].count++;
           acc[key].total+=inv.total||0;
