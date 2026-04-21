@@ -1190,9 +1190,8 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
         </div>
         <div id="att-report" style={{background:"#fff",padding:"24px",borderRadius:"12px",boxShadow:"0 2px 16px rgba(30,80,160,0.08)",overflowX:"auto"}}>
           <div style={{textAlign:"center",marginBottom:"20px",borderBottom:"2px solid #0f3172",paddingBottom:"14px"}}>
-  <div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",marginBottom:"2px"}}>VinoDhan Coating</div>
-  <div style={{fontSize:"11px",color:"#6b84a3",marginBottom:"6px"}}>Specialised Epoxy Coating Services</div>
-  <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>ATTENDANCE REPORT</div>
+  <div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",marginBottom:"6px"}}>VinoDhan Coating</div>
+<div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>ATTENDANCE REPORT</div>
   <div style={{fontSize:"12px",color:"#6b84a3",marginTop:"4px"}}>{MONTHS[repMonth]} {repYear}</div>
 </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 20px",marginBottom:"20px",fontSize:"13px"}}>
