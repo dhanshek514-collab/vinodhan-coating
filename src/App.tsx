@@ -1108,6 +1108,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
   const [repNameOfWork,setRepNameOfWork]=useState("");
   const [repFromDate,setRepFromDate]=useState(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}-01`);
   const [repToDate,setRepToDate]=useState(today);
+  const [unmarkConfirm,setUnmarkConfirm]=useState(null);
   const mark=(wid,status)=>setAttendance(p=>{
   const key=`${selDate}_${selSite}_${wid}`;
   if(status===null){const n={...p};delete n[key];return n;}
@@ -1160,8 +1161,8 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
                   {[["Present","✓ P","#166534"],["Half","½ H","#d97706"],["Absent","✗ A","#991b1b"]].map(([st,lbl,ac])=>(
   <button key={st} onClick={()=>{
     if(status===st){
-      if(window.confirm(`Remove ${st} mark for this worker?`))mark(wid,null);
-    } else {
+  setUnmarkConfirm({wid,st});
+} else {
       mark(wid,st);
     }
   }} style={{flex:1,padding:"6px 4px",borderRadius:"6px",border:"none",fontSize:"11px",fontWeight:600,cursor:"pointer",background:status===st?ac:"#e5e7eb",color:status===st?"#fff":"#6b7280"}}>{lbl}</button>
@@ -1228,10 +1229,22 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
           </div>
         </div>
       </>}
+      {unmarkConfirm&&(
+  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
+    <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"300px",textAlign:"center"}}>
+      <div style={{fontSize:"32px",marginBottom:"8px"}}>⚠️</div>
+      <h3 style={{margin:"0 0 7px"}}>Remove Attendance?</h3>
+      <p style={{fontSize:"12px",color:"#6b84a3",margin:"0 0 16px"}}>Are you sure you want to remove the <strong>{unmarkConfirm.st}</strong> mark?</p>
+      <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
+        <button onClick={()=>{mark(unmarkConfirm.wid,null);setUnmarkConfirm(null);}} style={S.btn("#dc2626")}>Yes, Remove</button>
+        <button onClick={()=>setUnmarkConfirm(null)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
-
 // ── ENTRY PERMIT ──────────────────────────────────────
 function EntryPermit({workers,sites,assignments,setWorkers}){
   const [siteMode,setSiteMode]=useState("existing");
