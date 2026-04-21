@@ -330,7 +330,54 @@ useEffect(()=>{
     </div>
   );
 }
-
+async function exportExcel({workers,sites,invoices,attendance,assignments}){
+  const XLSX=await import("https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs");
+  const wb=XLSX.utils.book_new();
+  const swRows=[["Site No","Site Name","Client","Status","Place/Description","Work Type","Area/Labour","Rate (₹)","Amount (₹)","From Date","To Date"]];
+  [...sites].sort((a,b)=>a.id-b.id).forEach((s,idx)=>{
+    (s.works||[]).forEach(w=>{
+      swRows.push([idx+1,s.name,s.client,s.status,w.place,w.workType||"SQM",w.workType==="Manpower"?w.labour:w.area,w.rate,w.workType==="Manpower"?(Number(w.labour)||0)*(Number(w.rate)||0):(Number(w.area)||0)*(Number(w.rate)||0),w.fromDate||"—",w.toDate||"—"]);
+    });
+  });
+  const ws1=XLSX.utils.aoa_to_sheet(swRows);
+  ws1["!cols"]=[{wch:8},{wch:20},{wch:25},{wch:12},{wch:30},{wch:12},{wch:14},{wch:10},{wch:14},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws1,"Sites & Works");
+  const invRows=[["Invoice No","Date","Site Name","Client","Measure No","Description","Work Type","Unit","Rate (₹)","Amount (₹)","Invoice Total (₹)"]];
+  [...invoices].sort((a,b)=>a.number.localeCompare(b.number,undefined,{numeric:true})).forEach(inv=>{
+    const cl=inv.snapshot?.client||{};
+    (inv.works||[]).forEach((w,i)=>{
+      invRows.push([inv.number,inv.date||"—",inv.siteName||"—",cl.name||"—",inv.measureNo||"—",w.place,w.workType||"SQM",w.workType==="Manpower"?`${w.labour} Labour`:w.workType==="RMT"?`${w.area} rmt`:`${w.area} m²`,w.rate,w.amount||0,i===0?inv.total:""]);
+    });
+  });
+  const ws2=XLSX.utils.aoa_to_sheet(invRows);
+  ws2["!cols"]=[{wch:14},{wch:12},{wch:20},{wch:25},{wch:14},{wch:30},{wch:12},{wch:14},{wch:10},{wch:14},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws2,"Invoices");
+  const wRows=[["Name","Category","Phone","Aadhaar","Date of Birth","Date of Joining"]];
+  workers.forEach(w=>wRows.push([w.name,w.category,w.phone||"—",w.aadhaar||"—",w.dob||"—",w.doj||"—"]));
+  const ws3=XLSX.utils.aoa_to_sheet(wRows);
+  ws3["!cols"]=[{wch:20},{wch:18},{wch:14},{wch:16},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws3,"Workers");
+  const attRows=[["Worker Name","Category","Site","Month","Total Present","Total Half","Total Days"]];
+  const months={};
+  Object.keys(attendance).forEach(key=>{
+    const parts=key.split("_");
+    const date=parts[0],siteId=parts[1],wid=parts[2];
+    const month=date.slice(0,7);
+    const k=`${month}_${siteId}_${wid}`;
+    if(!months[k])months[k]={month,siteId,wid,present:0,half:0};
+    if(attendance[key]==="Present")months[k].present++;
+    if(attendance[key]==="Half")months[k].half+=0.5;
+  });
+  Object.values(months).forEach(r=>{
+    const w=workers.find(x=>x.id===Number(r.wid));
+    const s=sites.find(x=>x.id===Number(r.siteId));
+    if(w&&s)attRows.push([w.name,w.category,s.name,r.month,r.present,r.half,r.present+r.half]);
+  });
+  const ws4=XLSX.utils.aoa_to_sheet(attRows);
+  ws4["!cols"]=[{wch:20},{wch:18},{wch:20},{wch:10},{wch:14},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws4,"Attendance Summary");
+  XLSX.writeFile(wb,`VinoDhan-Report-${new Date().toISOString().split("T")[0]}.xlsx`);
+}
 // ── TOP BAR ───────────────────────────────────────────
 function TopBar({user,page,setPage,landscape,setLandscape,setUser,recycleBin,setRecycleBin,sites,setSites,invoices,setInvoices,workers,setWorkers,execProfile,setExecProfile,attendance,setAttendance,assignments,setAssignments,company,setCompany,client,setClient,bank,setBank}){
   const [drawerOpen,setDrawerOpen]=useState(false);
@@ -403,6 +450,11 @@ const [importPwErr,setImportPwErr]=useState("");
       setImportPwErr("");
     }}/>
   </label>
+</div>
+<div style={{padding:"0 16px",marginBottom:"8px"}}>
+  <button onClick={()=>exportExcel({workers,sites,invoices,attendance,assignments})} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"none",cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",fontSize:"13px",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"}}>
+    📊 Export to Excel
+  </button>
 </div>
 <div style={{padding:"0 16px",marginBottom:"8px"}}>
   <button onClick={()=>{
@@ -705,13 +757,14 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
     <div style={{fontSize:"10px",color:"#d97706",marginTop:"4px",fontWeight:600}}>{expandCard==="mp"?"▲ Hide":"▼ Details"}</div>
   </div>
         {/* Invoices */}
-  <div style={{...S.card,background:"#fce7f3",boxShadow:"none",padding:"16px",minWidth:"160px",flexShrink:0}}>
+  <div onClick={()=>setExpandCard(expandCard==="inv"?null:"inv")} style={{...S.card,background:"#fce7f3",boxShadow:"none",padding:"16px",minWidth:"160px",flexShrink:0,cursor:"pointer"}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>🧾</div>
     <div style={{fontSize:"11px",fontWeight:700,color:"#9d174d",marginBottom:"6px"}}>INVOICES</div>
     <div style={{display:"flex",flexDirection:"column",gap:"3px"}}>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#9d174d"}}>Total Raised</span><span style={{fontWeight:800,color:"#0f3172"}}>{invoices.length}</span></div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#9d174d"}}>Total Billed</span><span style={{fontWeight:800,color:"#0f3172"}}>₹{invoices.reduce((a,inv)=>a+(inv.total||0),0).toLocaleString()}</span></div>
     </div>
+    <div style={{fontSize:"10px",color:"#9d174d",marginTop:"4px",fontWeight:600}}>{expandCard==="inv"?"▲ Hide":"▼ Details"}</div>
   </div>
   {/* Revenue */}
   <div style={{...S.card,background:"#fef3c7",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
@@ -728,23 +781,28 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
         <span style={{fontWeight:800,color:"#7c3aed",fontSize:"14px"}}>{totalSqm}m² Total</span>
       </div>
       {sites.filter(s=>(s.works||[]).some(w=>w.workType==="SQM"||!w.workType)).map(s=>{
-        const works=(s.works||[]).filter(w=>w.workType==="SQM"||!w.workType);
-        const siteTotal=works.reduce((a,w)=>a+(Number(w.area)||0),0);
-        const maxArea=Math.max(...works.map(w=>Number(w.area)||0));
-        return(
-          <div key={s.id} style={{marginBottom:"16px"}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
-              <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
-              <span style={{fontWeight:700,fontSize:"13px",color:"#7c3aed"}}>{siteTotal}m²</span>
-            </div>
-            {works.map(w=>(
+  const works=(s.works||[]).filter(w=>w.workType==="SQM"||!w.workType);
+  const siteTotal=works.reduce((a,w)=>a+(Number(w.area)||0),0);
+  const grouped=Object.values(works.reduce((acc,w)=>{
+    const key=w.place.trim().toLowerCase();
+    if(!acc[key])acc[key]={place:w.place.trim(),area:0};
+    acc[key].area+=Number(w.area)||0;
+    return acc;
+  },{}));
+  return(
+    <div key={s.id} style={{marginBottom:"16px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
+        <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
+        <span style={{fontWeight:700,fontSize:"13px",color:"#7c3aed"}}>{siteTotal}m²</span>
+      </div>
+      {grouped.map(w=>(
               <div key={w.id} style={{marginBottom:"6px"}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:"11px",marginBottom:"2px"}}>
                   <span style={{color:"#1a2b4a"}}>{w.place}</span>
                   <span style={{fontWeight:600,color:"#7c3aed"}}>{w.area}m²</span>
                 </div>
                 <div style={{background:"#ede9fe",borderRadius:"4px",height:"10px",overflow:"hidden"}}>
-                  <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#7c3aed,#a78bfa)",width:`${totalSqm>0?(Number(w.area)/totalSqm)*100:0}%`,transition:"width 0.5s"}}/>
+                  <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#7c3aed,#a78bfa)",width:`${siteTotal>0?(w.area/siteTotal)*100:0}%`,transition:"width 0.5s"}}/>
                 </div>
               </div>
             ))}
@@ -759,14 +817,20 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
       </div>
       {sites.filter(s=>(s.works||[]).some(w=>w.workType==="RMT")).map(s=>{
         const works=(s.works||[]).filter(w=>w.workType==="RMT");
-        const siteTotal=works.reduce((a,w)=>a+(Number(w.area)||0),0);
-        return(
-          <div key={s.id} style={{marginBottom:"16px"}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
-              <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
-              <span style={{fontWeight:700,fontSize:"13px",color:"#9d174d"}}>{siteTotal}rmt</span>
-            </div>
-            {works.map(w=>(
+  const siteTotal=works.reduce((a,w)=>a+(Number(w.area)||0),0);
+  const grouped=Object.values(works.reduce((acc,w)=>{
+    const key=w.place.trim().toLowerCase();
+    if(!acc[key])acc[key]={place:w.place.trim(),area:0};
+    acc[key].area+=Number(w.area)||0;
+    return acc;
+  },{}));
+  return(
+    <div key={s.id} style={{marginBottom:"16px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
+        <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
+        <span style={{fontWeight:700,fontSize:"13px",color:"#9d174d"}}>{siteTotal}rmt</span>
+      </div>
+      {grouped.map(w=>(
               <div key={w.id} style={{marginBottom:"6px"}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:"11px",marginBottom:"2px"}}>
                   <span style={{color:"#1a2b4a"}}>{w.place}</span>
@@ -788,27 +852,64 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
       </div>
       {sites.filter(s=>(s.works||[]).some(w=>w.workType==="Manpower")).map(s=>{
         const works=(s.works||[]).filter(w=>w.workType==="Manpower");
-        const siteTotal=works.reduce((a,w)=>a+calcWork(w),0);
-        return(
-          <div key={s.id} style={{marginBottom:"16px"}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
-              <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
-              <span style={{fontWeight:700,fontSize:"13px",color:"#d97706"}}>₹{siteTotal.toLocaleString()}</span>
-            </div>
-            {works.map(w=>(
+  const siteTotal=works.reduce((a,w)=>a+calcWork(w),0);
+  const grouped=Object.values(works.reduce((acc,w)=>{
+    const key=w.place.trim().toLowerCase();
+    if(!acc[key])acc[key]={place:w.place.trim(),amount:0};
+    acc[key].amount+=calcWork(w);
+    return acc;
+  },{}));
+  return(
+    <div key={s.id} style={{marginBottom:"16px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
+        <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
+        <span style={{fontWeight:700,fontSize:"13px",color:"#d97706"}}>₹{siteTotal.toLocaleString()}</span>
+      </div>
+      {grouped.map(w=>(
               <div key={w.id} style={{marginBottom:"6px"}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:"11px",marginBottom:"2px"}}>
                   <span style={{color:"#1a2b4a"}}>{w.place}</span>
-                  <span style={{fontWeight:600,color:"#d97706"}}>₹{calcWork(w).toLocaleString()}</span>
+                  <span style={{fontWeight:600,color:"#d97706"}}>₹{w.amount.toLocaleString()}</span>
                 </div>
                 <div style={{background:"#fef9c3",borderRadius:"4px",height:"10px",overflow:"hidden"}}>
-                  <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#d97706,#fbbf24)",width:`${totalMp>0?(calcWork(w)/totalMp)*100:0}%`,transition:"width 0.5s"}}/>
+                  <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#d97706,#fbbf24)",width:`${siteTotal>0?(w.amount/siteTotal)*100:0}%`,transition:"width 0.5s"}}/>
                 </div>
               </div>
             ))}
           </div>
         );
       })}
+    </>}
+    {expandCard==="inv"&&<>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+        <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>🧾 Invoice Breakdown</h3>
+        <span style={{fontWeight:800,color:"#9d174d",fontSize:"14px"}}>
+          {invoices.length} Invoices — ₹{invoices.reduce((a,inv)=>a+(inv.total||0),0).toLocaleString()} Total
+        </span>
+      </div>
+      {(()=>{
+        const grouped=Object.values(invoices.reduce((acc,inv)=>{
+          const key=(inv.siteName||"Unknown").trim();
+          if(!acc[key])acc[key]={siteName:key,count:0,total:0};
+          acc[key].count++;
+          acc[key].total+=inv.total||0;
+          return acc;
+        },{})).sort((a,b)=>b.total-a.total);
+        const grandTotal=invoices.reduce((a,inv)=>a+(inv.total||0),0);
+        return grouped.map((g,i)=>(
+          <div key={i} style={{marginBottom:"12px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px",marginBottom:"2px"}}>
+              <span style={{fontWeight:600,color:"#1a2b4a"}}>{g.siteName}</span>
+              <span style={{fontWeight:700,color:"#9d174d"}}>
+                {g.count} invoice{g.count!==1?"s":""} — ₹{g.total.toLocaleString()}
+              </span>
+            </div>
+            <div style={{background:"#fce7f3",borderRadius:"4px",height:"10px",overflow:"hidden"}}>
+              <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#db2777,#f9a8d4)",width:`${grandTotal>0?(g.total/grandTotal)*100:0}%`,transition:"width 0.5s"}}/>
+            </div>
+          </div>
+        ));
+      })()}
     </>}
   </div>
 )}
