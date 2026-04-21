@@ -650,6 +650,7 @@ function Dashboard({user,workers,sites,invoices,landscape}){
 const applicators=workers.filter(w=>w.category==="Applicator").length;
 const semiApplicators=workers.filter(w=>w.category==="Semi-Applicator").length;
 const helpers=workers.filter(w=>w.category==="Helper").length;
+  const [expandCard,setExpandCard]=useState(null);
   return(
     <div>
       <h2 style={{margin:"0 0 4px",fontSize:"20px",fontWeight:800}}>Good day, {user.name}! 👋</h2>
@@ -683,22 +684,25 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
     </div>
   </div>
   {/* SQM */}
-  <div style={{...S.card,background:"#ede9fe",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
+  <div onClick={()=>setExpandCard(expandCard==="sqm"?null:"sqm")} style={{...S.card,background:"#ede9fe",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0,cursor:"pointer"}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>📐</div>
     <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>{totalSqm}m²</div>
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Total SQM</div>
+    <div style={{fontSize:"10px",color:"#7c3aed",marginTop:"4px",fontWeight:600}}>{expandCard==="sqm"?"▲ Hide":"▼ Details"}</div>
   </div>
   {/* RMT */}
-  <div style={{...S.card,background:"#fce7f3",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
+  <div onClick={()=>setExpandCard(expandCard==="rmt"?null:"rmt")} style={{...S.card,background:"#fce7f3",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0,cursor:"pointer"}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>📏</div>
     <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>{totalRmt}rmt</div>
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Total RMT</div>
+    <div style={{fontSize:"10px",color:"#9d174d",marginTop:"4px",fontWeight:600}}>{expandCard==="rmt"?"▲ Hide":"▼ Details"}</div>
   </div>
   {/* Other Charges */}
-  <div style={{...S.card,background:"#fef9c3",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
+  <div onClick={()=>setExpandCard(expandCard==="mp"?null:"mp")} style={{...S.card,background:"#fef9c3",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0,cursor:"pointer"}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>👨‍🔧</div>
     <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalMp.toLocaleString()}</div>
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Other Charges</div>
+    <div style={{fontSize:"10px",color:"#d97706",marginTop:"4px",fontWeight:600}}>{expandCard==="mp"?"▲ Hide":"▼ Details"}</div>
   </div>
         {/* Invoices */}
   <div style={{...S.card,background:"#fce7f3",boxShadow:"none",padding:"16px",minWidth:"160px",flexShrink:0}}>
@@ -716,6 +720,98 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Revenue</div>
   </div>
 </div>
+      {expandCard&&(
+  <div style={{...S.card,marginBottom:"20px"}}>
+    {expandCard==="sqm"&&<>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+        <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>📐 SQM Breakdown</h3>
+        <span style={{fontWeight:800,color:"#7c3aed",fontSize:"14px"}}>{totalSqm}m² Total</span>
+      </div>
+      {sites.filter(s=>(s.works||[]).some(w=>w.workType==="SQM"||!w.workType)).map(s=>{
+        const works=(s.works||[]).filter(w=>w.workType==="SQM"||!w.workType);
+        const siteTotal=works.reduce((a,w)=>a+(Number(w.area)||0),0);
+        const maxArea=Math.max(...works.map(w=>Number(w.area)||0));
+        return(
+          <div key={s.id} style={{marginBottom:"16px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#7c3aed"}}>{siteTotal}m²</span>
+            </div>
+            {works.map(w=>(
+              <div key={w.id} style={{marginBottom:"6px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:"11px",marginBottom:"2px"}}>
+                  <span style={{color:"#1a2b4a"}}>{w.place}</span>
+                  <span style={{fontWeight:600,color:"#7c3aed"}}>{w.area}m²</span>
+                </div>
+                <div style={{background:"#ede9fe",borderRadius:"4px",height:"10px",overflow:"hidden"}}>
+                  <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#7c3aed,#a78bfa)",width:`${totalSqm>0?(Number(w.area)/totalSqm)*100:0}%`,transition:"width 0.5s"}}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </>}
+    {expandCard==="rmt"&&<>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+        <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>📏 RMT Breakdown</h3>
+        <span style={{fontWeight:800,color:"#9d174d",fontSize:"14px"}}>{totalRmt}rmt Total</span>
+      </div>
+      {sites.filter(s=>(s.works||[]).some(w=>w.workType==="RMT")).map(s=>{
+        const works=(s.works||[]).filter(w=>w.workType==="RMT");
+        const siteTotal=works.reduce((a,w)=>a+(Number(w.area)||0),0);
+        return(
+          <div key={s.id} style={{marginBottom:"16px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#9d174d"}}>{siteTotal}rmt</span>
+            </div>
+            {works.map(w=>(
+              <div key={w.id} style={{marginBottom:"6px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:"11px",marginBottom:"2px"}}>
+                  <span style={{color:"#1a2b4a"}}>{w.place}</span>
+                  <span style={{fontWeight:600,color:"#9d174d"}}>{w.area}rmt</span>
+                </div>
+                <div style={{background:"#fce7f3",borderRadius:"4px",height:"10px",overflow:"hidden"}}>
+                  <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#db2777,#f9a8d4)",width:`${totalRmt>0?(Number(w.area)/totalRmt)*100:0}%`,transition:"width 0.5s"}}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </>}
+    {expandCard==="mp"&&<>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+        <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>👨‍🔧 Other Charges Breakdown</h3>
+        <span style={{fontWeight:800,color:"#d97706",fontSize:"14px"}}>₹{totalMp.toLocaleString()} Total</span>
+      </div>
+      {sites.filter(s=>(s.works||[]).some(w=>w.workType==="Manpower")).map(s=>{
+        const works=(s.works||[]).filter(w=>w.workType==="Manpower");
+        const siteTotal=works.reduce((a,w)=>a+calcWork(w),0);
+        return(
+          <div key={s.id} style={{marginBottom:"16px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#d97706"}}>₹{siteTotal.toLocaleString()}</span>
+            </div>
+            {works.map(w=>(
+              <div key={w.id} style={{marginBottom:"6px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:"11px",marginBottom:"2px"}}>
+                  <span style={{color:"#1a2b4a"}}>{w.place}</span>
+                  <span style={{fontWeight:600,color:"#d97706"}}>₹{calcWork(w).toLocaleString()}</span>
+                </div>
+                <div style={{background:"#fef9c3",borderRadius:"4px",height:"10px",overflow:"hidden"}}>
+                  <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#d97706,#fbbf24)",width:`${totalMp>0?(calcWork(w)/totalMp)*100:0}%`,transition:"width 0.5s"}}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </>}
+  </div>
+)}
       <div style={S.card}>
         <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>🏗️ Sites Overview</h3>
         {[...sites].sort((a,b)=>{
