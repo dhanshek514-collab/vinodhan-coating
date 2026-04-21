@@ -1108,7 +1108,11 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
   const [repNameOfWork,setRepNameOfWork]=useState("");
   const [repFromDate,setRepFromDate]=useState(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}-01`);
   const [repToDate,setRepToDate]=useState(today);
-  const mark=(wid,status)=>setAttendance(p=>({...p,[`${selDate}_${selSite}_${wid}`]:status}));
+  const mark=(wid,status)=>setAttendance(p=>{
+  const key=`${selDate}_${selSite}_${wid}`;
+  if(status===null){const n={...p};delete n[key];return n;}
+  return {...p,[key]:status};
+});
   const getStatus=wid=>attendance[`${selDate}_${selSite}_${wid}`]||null;
   const sa=selSite?(assignments[selSite]||{}):{};
   const aids=Object.keys(sa).map(Number);
@@ -1154,8 +1158,14 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
                 </div>
                 <div style={{display:"flex",gap:"5px"}}>
                   {[["Present","✓ P","#166534"],["Half","½ H","#d97706"],["Absent","✗ A","#991b1b"]].map(([st,lbl,ac])=>(
-                    <button key={st} onClick={()=>mark(wid,st)} style={{flex:1,padding:"6px 4px",borderRadius:"6px",border:"none",fontSize:"11px",fontWeight:600,cursor:"pointer",background:status===st?ac:"#e5e7eb",color:status===st?"#fff":"#6b7280"}}>{lbl}</button>
-                  ))}
+  <button key={st} onClick={()=>{
+    if(status===st){
+      if(window.confirm(`Remove ${st} mark for this worker?`))mark(wid,null);
+    } else {
+      mark(wid,st);
+    }
+  }} style={{flex:1,padding:"6px 4px",borderRadius:"6px",border:"none",fontSize:"11px",fontWeight:600,cursor:"pointer",background:status===st?ac:"#e5e7eb",color:status===st?"#fff":"#6b7280"}}>{lbl}</button>
+))}
                 </div>
               </div>
             );
@@ -1179,9 +1189,11 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
         </div>
         <div id="att-report" style={{background:"#fff",padding:"24px",borderRadius:"12px",boxShadow:"0 2px 16px rgba(30,80,160,0.08)",overflowX:"auto"}}>
           <div style={{textAlign:"center",marginBottom:"20px",borderBottom:"2px solid #0f3172",paddingBottom:"14px"}}>
-            <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>ATTENDANCE REPORT</div>
-            <div style={{fontSize:"12px",color:"#6b84a3",marginTop:"4px"}}>{MONTHS[repMonth]} {repYear}</div>
-          </div>
+  <div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",marginBottom:"2px"}}>VinoDhan Coating</div>
+  <div style={{fontSize:"11px",color:"#6b84a3",marginBottom:"6px"}}>Specialised Epoxy Coating Services</div>
+  <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>ATTENDANCE REPORT</div>
+  <div style={{fontSize:"12px",color:"#6b84a3",marginTop:"4px"}}>{MONTHS[repMonth]} {repYear}</div>
+</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 20px",marginBottom:"20px",fontSize:"13px"}}>
             {[["Client",repClient],["Site Name",repSiteObj?.name||"—"],["Name of Work",repNameOfWork||"—"],["Place",repPlace],["Duration",`${fromDate} to ${toDate}`]].map(([lbl,val])=>(
               <div key={lbl} style={{display:"flex",gap:"8px",padding:"4px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:600,color:"#6b84a3",minWidth:"90px"}}>{lbl}</span><span style={{color:"#1a2b4a"}}>: {val}</span></div>
@@ -1230,6 +1242,7 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
   const [selectedWorkers,setSelectedWorkers]=useState([]);
   const [fromDate,setFromDate]=useState(today);
   const [toDate,setToDate]=useState(today);
+  const [showExecSign,setShowExecSign]=useState(true);
 
   const siteObj=sites.find(s=>s.id===selSite);
   const permitSiteName=siteMode==="existing"?(siteObj?.name||"")    :manualSiteName;
@@ -1324,9 +1337,15 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
               </div>
             ))}
           </div>
-          <div style={{marginTop:"40px",display:"flex",justifyContent:"flex-end"}}>
-            <div style={{textAlign:"center"}}><div style={{width:"200px",borderBottom:"1px solid #1a2b4a",marginBottom:"6px",height:"40px"}}></div><div style={{fontSize:"12px",fontWeight:700,color:"#1a2b4a"}}>Vinoth Kumar. N</div><div style={{fontSize:"11px",color:"#6b84a3"}}>Site Executive — VinoDhan Coating</div></div>
-          </div>
+          <div style={{marginTop:"40px",display:"flex",justifyContent:"space-between",alignItems:"flex-end",flexWrap:"wrap",gap:"12px"}}>
+  <div className="no-print">
+    <label style={{display:"flex",alignItems:"center",gap:"8px",fontSize:"12px",color:"#6b84a3",cursor:"pointer"}}>
+      <input type="checkbox" checked={showExecSign} onChange={e=>setShowExecSign(e.target.checked)}/>
+      Show Executive Signature
+    </label>
+  </div>
+  {showExecSign&&<div style={{textAlign:"center"}}><div style={{width:"200px",borderBottom:"1px solid #1a2b4a",marginBottom:"6px",height:"40px"}}></div><div style={{fontSize:"12px",fontWeight:700,color:"#1a2b4a"}}>Vinoth Kumar. N</div><div style={{fontSize:"11px",color:"#6b84a3"}}>Site Executive — VinoDhan Coating</div></div>}
+</div>
         </div>
       ):(
         <div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"40px"}}><div style={{fontSize:"32px",marginBottom:"10px"}}>🪪</div><div>Select workers above to preview the entry permit</div></div>
