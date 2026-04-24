@@ -31,7 +31,7 @@ async function fbBackup(data) {
     });
   } catch(e) { console.error("backup error", e); }
 }
-const printCSS = `@page{size:A4;margin:15mm;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:20px;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:6px 8px;}img{max-width:100%;object-fit:cover;}.no-print{display:none!important;}`;
+const printCSS = `@page{size:A4;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:15mm;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:6px 8px;}img{max-width:100%;object-fit:cover;}.no-print{display:none!important;}`;
 function printSection(id) {
   const el = document.getElementById(id);
   if(!el) return;
@@ -1387,7 +1387,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
           <button onClick={()=>{
   const el=document.getElementById("att-report");
   if(!el)return;
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:10mm;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:10px;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:4px 6px;font-size:10px;}img{max-width:100%;}.no-print{display:none!important;}</style></head><body onload="window.print();">${el.outerHTML}</body></html>`;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:10mm;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:4px 6px;font-size:10px;}img{max-width:100%;}.no-print{display:none!important;}</style></head><body onload="window.print();">${el.outerHTML}</body></html>`;
   const a=document.createElement("a");
   a.href="data:text/html;charset=utf-8,"+encodeURIComponent(html);
   a.download="Attendance-Report.html";
