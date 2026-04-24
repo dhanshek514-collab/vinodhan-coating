@@ -1961,6 +1961,7 @@ function Ledger({ledgers,setLedgers,invoices}){
 const [form,setForm]=useState({name:"",region:"",client:"Swathi Engineering Agency",measurePrefix:"",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});
   const [selLedger,setSelLedger]=useState(null);
   const [editLedgerId,setEditLedgerId]=useState(null);
+  const [delLedgerModal,setDelLedgerModal]=useState(null);
 
   const saveLedger=()=>{
   if(!form.name.trim())return;
@@ -2037,10 +2038,16 @@ const [form,setForm]=useState({name:"",region:"",client:"Swathi Engineering Agen
             <div style={{display:"flex",gap:"7px"}}>
   <button onClick={()=>setSelLedger(l.id)} style={S.btn()}>Open →</button>
   <button onClick={()=>{setForm({name:l.name,region:l.region,client:l.client,measurePrefix:l.measurePrefix||"",enableTds:l.enableTds,tdsRate:l.tdsRate,enableRetention:l.enableRetention,retentionRate:l.retentionRate});setEditLedgerId(l.id);setShowAdd(true);}} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"9px 12px"}}>✏️</button>
+  <button onClick={()=>setDelLedgerModal(l.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"9px 12px"}}>🗑️</button>
 </div>
           </div>
         ))}
       </div>}
+      {delLedgerModal&&<PwModal
+      title="Delete Ledger?"
+      onConfirm={()=>{setLedgers(p=>p.filter(l=>l.id!==delLedgerModal));setDelLedgerModal(null);}}
+      onCancel={()=>setDelLedgerModal(null)}
+    />}
     </div>
   );
 }
