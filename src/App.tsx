@@ -1938,12 +1938,248 @@ UPI: {editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:dispBank
 }
 // ── LEDGER ────────────────────────────────────────────
 function Ledger({ledgers,setLedgers,invoices}){
+  const [showAdd,setShowAdd]=useState(false);
+  const [form,setForm]=useState({name:"",region:"",client:"Swathi Engineering Agency",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});
+  const [selLedger,setSelLedger]=useState(null);
+
+  const addLedger=()=>{
+    if(!form.name.trim())return;
+    const nl={id:Date.now(),name:form.name,region:form.region,client:form.client,enableTds:form.enableTds,tdsRate:Number(form.tdsRate),enableRetention:form.enableRetention,retentionRate:Number(form.retentionRate),entries:[]};
+    setLedgers(p=>[...p,nl]);
+    setForm({name:"",region:"",client:"Swathi Engineering Agency",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});
+    setShowAdd(false);
+  };
+
+  if(selLedger){
+    const ledger=ledgers.find(l=>l.id===selLedger);
+    if(!ledger){setSelLedger(null);return null;}
+    return <LedgerDetail ledger={ledger} ledgers={ledgers} setLedgers={setLedgers} invoices={invoices} onBack={()=>setSelLedger(null)}/>;
+  }
+
   return(
     <div>
-      <h2 style={{margin:"0 0 16px",fontSize:"20px",fontWeight:800}}>📒 Ledger</h2>
-      <div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"40px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"18px"}}>
+        <h2 style={{margin:0,fontSize:"20px",fontWeight:800}}>📒 Ledger</h2>
+        <button onClick={()=>setShowAdd(p=>!p)} style={S.btn()}>+ New Ledger</button>
+      </div>
+
+      {showAdd&&<div style={{...S.card,marginBottom:"16px",border:"1.5px solid #bfdbfe"}}>
+        <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>New Ledger</h3>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"12px"}}>
+          <div><label style={S.lbl}>Ledger Name</label><input value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="e.g. Karnataka Ledger" style={S.inp}/></div>
+          <div><label style={S.lbl}>Region</label><input value={form.region} onChange={e=>setForm(p=>({...p,region:e.target.value}))} placeholder="e.g. Bengaluru" style={S.inp}/></div>
+          <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Client</label><input value={form.client} onChange={e=>setForm(p=>({...p,client:e.target.value}))} style={S.inp}/></div>
+          <div>
+            <label style={S.lbl}>TDS</label>
+            <select value={form.enableTds?"yes":"no"} onChange={e=>setForm(p=>({...p,enableTds:e.target.value==="yes"}))} style={S.inp}>
+              <option value="no">Not Applicable</option>
+              <option value="yes">Applicable</option>
+            </select>
+          </div>
+          {form.enableTds&&<div><label style={S.lbl}>TDS Rate (%)</label><input type="number" value={form.tdsRate} onChange={e=>setForm(p=>({...p,tdsRate:e.target.value}))} style={S.inp}/></div>}
+          <div>
+            <label style={S.lbl}>Retention</label>
+            <select value={form.enableRetention?"yes":"no"} onChange={e=>setForm(p=>({...p,enableRetention:e.target.value==="yes"}))} style={S.inp}>
+              <option value="no">Not Applicable</option>
+              <option value="yes">Applicable</option>
+            </select>
+          </div>
+          {form.enableRetention&&<div><label style={S.lbl}>Retention Rate (%)</label><input type="number" value={form.retentionRate} onChange={e=>setForm(p=>({...p,retentionRate:e.target.value}))} style={S.inp}/></div>}
+        </div>
+        <div style={{display:"flex",gap:"9px"}}>
+          <button onClick={addLedger} style={S.btn()}>💾 Save</button>
+          <button onClick={()=>setShowAdd(false)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+        </div>
+      </div>}
+
+      {ledgers.length===0?<div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"40px"}}>
         <div style={{fontSize:"32px",marginBottom:"10px"}}>📒</div>
-        <div>Ledger coming soon...</div>
+        <div>No ledgers yet. Create one to get started.</div>
+      </div>
+      :<div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
+        {ledgers.map(l=>(
+          <div key={l.id} style={{...S.card,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontWeight:700,fontSize:"15px"}}>{l.name}</div>
+              <div style={{fontSize:"11px",color:"#6b84a3"}}>{l.client} {l.region?`— ${l.region}`:""}</div>
+              <div style={{display:"flex",gap:"6px",marginTop:"5px"}}>
+                {l.enableTds&&<span style={{...WORK_TYPE_COLOR["Manpower"],fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 8px"}}>TDS {l.tdsRate}%</span>}
+                {l.enableRetention&&<span style={{...WORK_TYPE_COLOR["SQM"],fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 8px"}}>Retention {l.retentionRate}%</span>}
+              </div>
+            </div>
+            <button onClick={()=>setSelLedger(l.id)} style={S.btn()}>Open →</button>
+          </div>
+        ))}
+      </div>}
+    </div>
+  );
+}
+
+function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
+  const [showAdd,setShowAdd]=useState(false);
+  const [entryForm,setEntryForm]=useState({date:today,particulars:"Bank Payment",customParticulars:"",debit:"",credit:"",note:""});
+  const [pwModal,setPwModal]=useState(null);
+  const [editRateModal,setEditRateModal]=useState(null);
+  const PARTICULARS=["Bank Payment","Transfer Received","TDS Deduction","Retention Deduction","Other"];
+
+  const updateLedger=updated=>{
+    setLedgers(p=>p.map(l=>l.id===ledger.id?updated:l));
+  };
+
+  // Pull invoices not yet added to this ledger
+  const linkedInvIds=new Set((ledger.entries||[]).filter(e=>e.invoiceId).map(e=>e.invoiceId));
+  const availableInvoices=invoices.filter(inv=>!linkedInvIds.has(inv.id));
+
+  const addInvoiceEntry=inv=>{
+    const amount=inv.total||0;
+    const newEntries=[{id:crypto.randomUUID(),date:inv.date||today,particulars:"Cont Invoice",credit:amount,debit:0,note:inv.number,invoiceId:inv.id}];
+    if(ledger.enableTds){
+      newEntries.push({id:crypto.randomUUID(),date:inv.date||today,particulars:`TDS @ ${ledger.tdsRate}%`,debit:parseFloat((amount*ledger.tdsRate/100).toFixed(2)),credit:0,note:inv.number,invoiceId:inv.id});
+    }
+    if(ledger.enableRetention){
+      newEntries.push({id:crypto.randomUUID(),date:inv.date||today,particulars:`Retention @ ${ledger.retentionRate}%`,debit:parseFloat((amount*ledger.retentionRate/100).toFixed(2)),credit:0,note:inv.number,invoiceId:inv.id});
+    }
+    updateLedger({...ledger,entries:[...(ledger.entries||[]),...newEntries]});
+  };
+
+  const addManualEntry=()=>{
+    if(!entryForm.debit&&!entryForm.credit)return;
+    const particulars=entryForm.particulars==="Other"?entryForm.customParticulars:entryForm.particulars;
+    const entry={id:crypto.randomUUID(),date:entryForm.date,particulars,debit:Number(entryForm.debit)||0,credit:Number(entryForm.credit)||0,note:entryForm.note};
+    updateLedger({...ledger,entries:[...(ledger.entries||[]),entry]});
+    setEntryForm({date:today,particulars:"Bank Payment",customParticulars:"",debit:"",credit:"",note:""});
+    setShowAdd(false);
+  };
+
+  const deleteEntry=id=>{
+    updateLedger({...ledger,entries:(ledger.entries||[]).filter(e=>e.id!==id)});
+  };
+
+  // Sort entries by date
+  const sorted=[...(ledger.entries||[])].sort((a,b)=>a.date.localeCompare(b.date));
+
+  // Calculate running balance (credit increases balance, debit decreases)
+  let balance=0;
+  const rows=sorted.map(e=>{
+    balance=balance+(e.credit||0)-(e.debit||0);
+    return{...e,balance};
+  });
+
+  const totalCredit=sorted.reduce((a,e)=>a+(e.credit||0),0);
+  const totalDebit=sorted.reduce((a,e)=>a+(e.debit||0),0);
+  const closingBalance=totalCredit-totalDebit;
+
+  return(
+    <div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"14px",flexWrap:"wrap",gap:"8px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+          <button onClick={onBack} style={S.btn("#f0f4f9","#1a2b4a")}>← Back</button>
+          <h2 style={{margin:0,fontSize:"18px",fontWeight:800}}>📒 {ledger.name}</h2>
+        </div>
+        <div style={{display:"flex",gap:"7px"}}>
+          <button onClick={()=>setShowAdd(p=>!p)} style={S.btn()}>+ Add Entry</button>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div style={{display:"flex",gap:"10px",marginBottom:"16px",overflowX:"auto",paddingBottom:"4px"}}>
+        <div style={{...S.card,background:"#dcfce7",boxShadow:"none",padding:"14px",minWidth:"130px",flexShrink:0}}>
+          <div style={{fontSize:"11px",fontWeight:700,color:"#166534",marginBottom:"4px"}}>TOTAL CREDIT</div>
+          <div style={{fontSize:"16px",fontWeight:800,color:"#0f3172"}}>₹{totalCredit.toLocaleString()}</div>
+        </div>
+        <div style={{...S.card,background:"#fee2e2",boxShadow:"none",padding:"14px",minWidth:"130px",flexShrink:0}}>
+          <div style={{fontSize:"11px",fontWeight:700,color:"#991b1b",marginBottom:"4px"}}>TOTAL DEBIT</div>
+          <div style={{fontSize:"16px",fontWeight:800,color:"#0f3172"}}>₹{totalDebit.toLocaleString()}</div>
+        </div>
+        <div style={{...S.card,background:"#dbeafe",boxShadow:"none",padding:"14px",minWidth:"130px",flexShrink:0}}>
+          <div style={{fontSize:"11px",fontWeight:700,color:"#1e40af",marginBottom:"4px"}}>CLOSING BALANCE</div>
+          <div style={{fontSize:"16px",fontWeight:800,color:"#0f3172"}}>₹{closingBalance.toLocaleString()}</div>
+        </div>
+        {ledger.enableTds&&<div style={{...S.card,background:"#fef9c3",boxShadow:"none",padding:"14px",minWidth:"130px",flexShrink:0}}>
+          <div style={{fontSize:"11px",fontWeight:700,color:"#d97706",marginBottom:"4px"}}>TDS {ledger.tdsRate}%</div>
+          <div style={{fontSize:"16px",fontWeight:800,color:"#0f3172"}}>₹{sorted.filter(e=>e.particulars.includes("TDS")).reduce((a,e)=>a+(e.debit||0),0).toLocaleString()}</div>
+        </div>}
+        {ledger.enableRetention&&<div style={{...S.card,background:"#ede9fe",boxShadow:"none",padding:"14px",minWidth:"130px",flexShrink:0}}>
+          <div style={{fontSize:"11px",fontWeight:700,color:"#5b21b6",marginBottom:"4px"}}>RETENTION {ledger.retentionRate}%</div>
+          <div style={{fontSize:"16px",fontWeight:800,color:"#0f3172"}}>₹{sorted.filter(e=>e.particulars.includes("Retention")).reduce((a,e)=>a+(e.debit||0),0).toLocaleString()}</div>
+        </div>}
+      </div>
+
+      {/* Add Invoice */}
+      {availableInvoices.length>0&&<div style={{...S.card,marginBottom:"14px",border:"1.5px solid #bfdbfe"}}>
+        <h3 style={{margin:"0 0 10px",fontSize:"13px",fontWeight:700}}>📥 Add Invoice to Ledger</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:"6px"}}>
+          {availableInvoices.map(inv=>(
+            <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:"#f0f6ff",borderRadius:"8px"}}>
+              <div>
+                <div style={{fontWeight:600,fontSize:"13px"}}>{inv.number}</div>
+                <div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtDate(inv.date)} — ₹{inv.total?.toLocaleString()}</div>
+              </div>
+              <button onClick={()=>addInvoiceEntry(inv)} style={{...S.btn("#166534"),padding:"5px 12px",fontSize:"12px"}}>+ Add</button>
+            </div>
+          ))}
+        </div>
+      </div>}
+
+      {/* Manual Entry Form */}
+      {showAdd&&<div style={{...S.card,marginBottom:"14px",border:"1.5px solid #bfdbfe"}}>
+        <h3 style={{margin:"0 0 10px",fontSize:"13px",fontWeight:700}}>New Manual Entry</h3>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"9px"}}>
+          <div><label style={S.lbl}>Date</label><input type="date" value={entryForm.date} onChange={e=>setEntryForm(p=>({...p,date:e.target.value}))} style={S.inp}/></div>
+          <div><label style={S.lbl}>Particulars</label>
+            <select value={entryForm.particulars} onChange={e=>setEntryForm(p=>({...p,particulars:e.target.value}))} style={S.inp}>
+              {PARTICULARS.map(p=><option key={p}>{p}</option>)}
+            </select>
+          </div>
+          {entryForm.particulars==="Other"&&<div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Description</label><input value={entryForm.customParticulars} onChange={e=>setEntryForm(p=>({...p,customParticulars:e.target.value}))} placeholder="Enter description" style={S.inp}/></div>}
+          <div><label style={S.lbl}>Debit (₹)</label><input type="number" value={entryForm.debit} onChange={e=>setEntryForm(p=>({...p,debit:e.target.value,credit:""}))} style={S.inp}/></div>
+          <div><label style={S.lbl}>Credit (₹)</label><input type="number" value={entryForm.credit} onChange={e=>setEntryForm(p=>({...p,credit:e.target.value,debit:""}))} style={S.inp}/></div>
+          <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Note (optional)</label><input value={entryForm.note} onChange={e=>setEntryForm(p=>({...p,note:e.target.value}))} placeholder="e.g. cheque no, reference" style={S.inp}/></div>
+        </div>
+        <div style={{display:"flex",gap:"7px",marginTop:"11px"}}>
+          <button onClick={addManualEntry} style={S.btn()}>💾 Save</button>
+          <button onClick={()=>setShowAdd(false)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+        </div>
+      </div>}
+
+      {/* Ledger Table */}
+      <div style={{...S.card,overflowX:"auto"}}>
+        <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>📋 {ledger.client} — {ledger.region||"All Regions"}</h3>
+        {rows.length===0?<div style={{textAlign:"center",color:"#9db3cc",padding:"30px"}}>No entries yet.</div>
+        :<table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px",minWidth:"500px"}}>
+          <thead><tr style={{background:"#0f3172",color:"#fff"}}>
+            <th style={{padding:"8px 10px",textAlign:"left"}}>Date</th>
+            <th style={{padding:"8px 10px",textAlign:"left"}}>Particulars</th>
+            <th style={{padding:"8px 10px",textAlign:"right"}}>Debit (₹)</th>
+            <th style={{padding:"8px 10px",textAlign:"right"}}>Credit (₹)</th>
+            <th style={{padding:"8px 10px",textAlign:"right"}}>Balance (₹)</th>
+            <th style={{padding:"8px 10px",textAlign:"center"}}>Action</th>
+          </tr></thead>
+          <tbody>
+            {rows.map((e,idx)=>(
+              <tr key={e.id} style={{background:idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #f0f4f9"}}>
+                <td style={{padding:"7px 10px",whiteSpace:"nowrap"}}>{fmtDate(e.date)}</td>
+                <td style={{padding:"7px 10px"}}>
+                  <div style={{fontWeight:600}}>{e.particulars}</div>
+                  {e.note&&<div style={{fontSize:"10px",color:"#6b84a3"}}>{e.note}</div>}
+                </td>
+                <td style={{padding:"7px 10px",textAlign:"right",color:"#991b1b",fontWeight:600}}>{e.debit>0?`₹${e.debit.toLocaleString()}`:"—"}</td>
+                <td style={{padding:"7px 10px",textAlign:"right",color:"#166534",fontWeight:600}}>{e.credit>0?`₹${e.credit.toLocaleString()}`:"—"}</td>
+                <td style={{padding:"7px 10px",textAlign:"right",fontWeight:700,color:"#1e50a0"}}>₹{e.balance.toLocaleString()}</td>
+                <td style={{padding:"7px 10px",textAlign:"center"}}>
+                  <button onClick={()=>deleteEntry(e.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"3px 8px",fontSize:"11px"}}>🗑️</button>
+                </td>
+              </tr>
+            ))}
+            <tr style={{background:"#0f3172",color:"#fff",fontWeight:700}}>
+              <td colSpan={2} style={{padding:"10px",textAlign:"right"}}>TOTAL</td>
+              <td style={{padding:"10px",textAlign:"right"}}>₹{totalDebit.toLocaleString()}</td>
+              <td style={{padding:"10px",textAlign:"right"}}>₹{totalCredit.toLocaleString()}</td>
+              <td style={{padding:"10px",textAlign:"right",color:"#f59e0b",fontSize:"14px"}}>₹{closingBalance.toLocaleString()}</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>}
       </div>
     </div>
   );
