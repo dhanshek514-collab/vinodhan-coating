@@ -2065,6 +2065,8 @@ const [delEntryModal,setDelEntryModal]=useState(null);
 const [editRateModal,setEditRateModal]=useState(null);
 const [rateForm,setRateForm]=useState({tdsRate:"",retentionRate:""});
 const [ratePwModal,setRatePwModal]=useState(false);
+  const [showTransfer,setShowTransfer]=useState(false);
+const [transferForm,setTransferForm]=useState({date:today,amount:"",toLedgerId:"",note:""});
   const PARTICULARS=["Bank Payment","Transfer Received","TDS Deduction","Retention Deduction","Other"];
 
   const updateLedger=updated=>{
@@ -2119,10 +2121,10 @@ const availableInvoices=invoices.filter(inv=>{
   const deleteEntry=id=>{
     const entry=(ledger.entries||[]).find(e=>e.id===id);
     if(entry&&entry.invoiceId){
-      // Delete all entries with same invoiceId (invoice + TDS + Retention)
       updateLedger({...ledger,entries:(ledger.entries||[]).filter(e=>e.invoiceId!==entry.invoiceId)});
+    } else if(entry&&entry.transferId){
+      setLedgers(p=>p.map(l=>({...l,entries:(l.entries||[]).filter(e=>e.transferId!==entry.transferId)})));
     } else {
-      // Delete just this manual entry
       updateLedger({...ledger,entries:(ledger.entries||[]).filter(e=>e.id!==id)});
     }
   };
@@ -2148,11 +2150,12 @@ const availableInvoices=invoices.filter(inv=>{
           <button onClick={onBack} style={S.btn("#f0f4f9","#1a2b4a")}>← Back</button>
           <h2 style={{margin:0,fontSize:"18px",fontWeight:800}}>📒 {ledger.name}</h2>
         </div>
-        <div style={{display:"flex",gap:"7px"}}>
-          <button onClick={()=>setShowAdd(p=>!p)} style={S.btn()}>+ Add Entry</button>
-          <button onClick={()=>printSection("ledger-print")} style={S.btn("#166534")}>🖨️ Print</button>
-          <button onClick={()=>exportLedgerExcel(ledger,rows,totalDebit,totalCredit,closingBalance)} style={S.btn("#d97706","#fff")}>📊 Excel</button>
-        </div>
+        <div style={{display:"flex",gap:"7px",flexWrap:"wrap"}}>
+  <button onClick={()=>setShowAdd(p=>!p)} style={S.btn()}>+ Add Entry</button>
+  <button onClick={()=>setShowTransfer(p=>!p)} style={S.btn("#7c3aed")}>↔️ Transfer</button>
+  <button onClick={()=>printSection("ledger-print")} style={S.btn("#166534")}>🖨️ Print</button>
+  <button onClick={()=>exportLedgerExcel(ledger,rows,totalDebit,totalCredit,closingBalance)} style={S.btn("#d97706","#fff")}>📊 Excel</button>
+</div>
       </div>
 
       {/* Summary Cards */}
@@ -2180,7 +2183,41 @@ const availableInvoices=invoices.filter(inv=>{
           <button onClick={()=>{setRateForm({tdsRate:String(ledger.tdsRate),retentionRate:String(ledger.retentionRate)});setRatePwModal(true);}} style={{...S.btn("#7c3aed","#fff"),padding:"3px 8px",fontSize:"10px",marginTop:"6px"}}>✏️ Edit Rate</button>
         </div>}
       </div>
-
+{/* Transfer Form */}
+{showTransfer&&<div style={{...S.card,marginBottom:"14px",border:"1.5px solid #7c3aed"}}>
+  <h3 style={{margin:"0 0 10px",fontSize:"13px",fontWeight:700}}>↔️ Transfer to Another Ledger</h3>
+  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"9px"}}>
+    <div><label style={S.lbl}>Date</label><input type="date" value={transferForm.date} onChange={e=>setTransferForm(p=>({...p,date:e.target.value}))} style={S.inp}/></div>
+    <div><label style={S.lbl}>Amount (₹)</label><input type="number" value={transferForm.amount} onChange={e=>setTransferForm(p=>({...p,amount:e.target.value}))} style={S.inp}/></div>
+    <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Transfer To</label>
+      <select value={transferForm.toLedgerId} onChange={e=>setTransferForm(p=>({...p,toLedgerId:e.target.value}))} style={S.inp}>
+        <option value="">Select Ledger...</option>
+        {ledgers.filter(l=>l.id!==ledger.id).map(l=><option key={l.id} value={l.id}>{l.name}</option>)}
+      </select>
+    </div>
+    <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Note (optional)</label><input value={transferForm.note} onChange={e=>setTransferForm(p=>({...p,note:e.target.value}))} placeholder="e.g. cheque no, reference" style={S.inp}/></div>
+  </div>
+  <div style={{display:"flex",gap:"7px",marginTop:"11px"}}>
+    <button onClick={()=>{
+      if(!transferForm.amount||!transferForm.toLedgerId)return;
+      const transferId=crypto.randomUUID();
+      const amount=Number(transferForm.amount);
+      const toLedger=ledgers.find(l=>l.id===transferForm.toLedgerId);
+      if(!toLedger)return;
+      const debitEntry={id:crypto.randomUUID(),date:transferForm.date,particulars:"Transfer to "+toLedger.name,debit:amount,credit:0,note:transferForm.note,transferId};
+      const creditEntry={id:crypto.randomUUID(),date:transferForm.date,particulars:"Transfer from "+ledger.name,debit:0,credit:amount,note:transferForm.note,transferId};
+      setLedgers(p=>p.map(l=>{
+        if(l.id===ledger.id) return{...l,entries:[...(l.entries||[]),debitEntry]};
+        if(l.id===toLedger.id) return{...l,entries:[...(l.entries||[]),creditEntry]};
+        return l;
+      }));
+      setTransferForm({date:today,amount:"",toLedgerId:"",note:""});
+      setShowTransfer(false);
+    }} style={S.btn("#7c3aed")}>💾 Save Transfer</button>
+    <button onClick={()=>setShowTransfer(false)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+  </div>
+</div>}
+      
       {/* Add Invoice */}
       {availableInvoices.length>0&&<div style={{...S.card,marginBottom:"14px",border:"1.5px solid #bfdbfe"}}>
         <h3 style={{margin:"0 0 10px",fontSize:"13px",fontWeight:700}}>📥 Add Invoice to Ledger</h3>
@@ -2235,7 +2272,7 @@ const availableInvoices=invoices.filter(inv=>{
           </tr></thead>
           <tbody>
             {rows.map((e,idx)=>(
-              <tr key={e.id} style={{background:idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #f0f4f9"}}>
+              <tr key={e.id} style={{background:e.transferId?"#fef9c3":idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #f0f4f9"}}>
                 <td style={{padding:"7px 10px",whiteSpace:"nowrap"}}>{fmtDate(e.date)}</td>
                 <td style={{padding:"7px 10px"}}>
                   <div style={{fontWeight:600}}>{e.particulars}</div>
@@ -2320,7 +2357,7 @@ const availableInvoices=invoices.filter(inv=>{
             </thead>
             <tbody>
               {rows.map((e,idx)=>(
-                <tr key={e.id} style={{background:idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #e5e7eb"}}>
+                <tr key={e.id} style={{background:e.transferId?"#fef9c3":idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #e5e7eb"}}>
                   <td style={{padding:"7px 10px",whiteSpace:"nowrap"}}>{fmtDate(e.date)}</td>
                   <td style={{padding:"7px 10px",fontWeight:600}}>{e.particulars}</td>
                   <td style={{padding:"7px 10px",color:"#6b84a3",fontSize:"11px"}}>{e.note||"—"}</td>
