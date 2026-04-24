@@ -226,10 +226,11 @@ const [user,setUser] = useState(()=>{const u=loadS("vd_user",null);return u&&u.i
   const [bank,setBank]           = useState(INIT_BANK);
   const [passwords,setPasswords] = useState({"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"});
   const [recycleBin,setRecycleBin] = useState({sites:[],invoices:[]});
-
+const [ledgers,setLedgers] = useState([]);
+  
   useEffect(()=>{
     async function loadAll(){
-      const [w,e,s,a,as,inv,co,cl,b,pw,rb] = await Promise.all([
+      const [w,e,s,a,as,inv,co,cl,b,pw,rb,ld] = await Promise.all([
         fbGet("workers",INIT_WORKERS),
         fbGet("exec",EMPTY_EXEC),
         fbGet("sites",[{id:1,name:"Site A",client:"Swathi Engineering Agency",status:"Active",works:[]}]),
@@ -241,11 +242,12 @@ const [user,setUser] = useState(()=>{const u=loadS("vd_user",null);return u&&u.i
         fbGet("bank",INIT_BANK),
         fbGet("passwords",{"DHANS1416":"Riseup1416","Site Executive":"Vinoth1024"}),
         fbGet("recycleBin",{sites:[],invoices:[]}),
+        fbGet("ledgers",[]),
       ]);
       setWorkers(w);setExecProfile(e);setSites(s);
       setAttendance(a);setAssignments(as);setInvoices(inv);
       setCompany(co);setClient(cl);setBank(b);setPasswords(pw);
-      setRecycleBin(rb);setReady(true);
+      setRecycleBin(rb);setLedgers(ld);setReady(true);
 const todayDate=new Date().toISOString().split("T")[0];
 const lastB=localStorage.getItem("vd_last_backup");
 if(lastB!==todayDate){
@@ -266,6 +268,7 @@ if(lastB!==todayDate){
   useEffect(()=>{if(!ready)return;saveS("vd_bank",bank);fbSet("bank",bank);},[bank,ready]);
   useEffect(()=>{if(!ready)return;saveS("vd_passwords",passwords);fbSet("passwords",passwords);},[passwords,ready]);
   useEffect(()=>{if(!ready)return;saveS("vd_recyclebin",recycleBin);fbSet("recycleBin",recycleBin);},[recycleBin,ready]);
+  useEffect(()=>{if(!ready)return;saveS("vd_ledgers",ledgers);fbSet("ledgers",ledgers);},[ledgers,ready]);
 useEffect(()=>{
   if(!ready||!lastBackup)return;
   const todayDate=new Date().toISOString().split("T")[0];
@@ -307,8 +310,7 @@ useEffect(()=>{
   );
   if(!user) return <LoginPage onLogin={setUser} passwords={passwords} setPasswords={setPasswords}/>;
 
-  const ctx={user,workers,setWorkers,execProfile,setExecProfile,sites,setSites,attendance,setAttendance,assignments,setAssignments,invoices,setInvoices,company,setCompany,client,setClient,bank,setBank,recycleBin,setRecycleBin};
-
+  const ctx={user,workers,setWorkers,execProfile,setExecProfile,sites,setSites,attendance,setAttendance,assignments,setAssignments,invoices,setInvoices,company,setCompany,client,setClient,bank,setBank,recycleBin,setRecycleBin,ledgers,setLedgers};
   return(
     <div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'Segoe UI',sans-serif",background:"#f0f4f9",color:"#1a2b4a",overflow:"hidden"}}>
       <TopBar user={user} page={page} setPage={setPage} landscape={landscape} setLandscape={setLandscape} setUser={setUser} recycleBin={recycleBin} setRecycleBin={setRecycleBin} sites={sites} setSites={setSites} invoices={invoices} setInvoices={setInvoices} workers={workers} setWorkers={setWorkers} execProfile={execProfile} setExecProfile={setExecProfile} attendance={attendance} setAttendance={setAttendance} assignments={assignments} setAssignments={setAssignments} company={company} setCompany={setCompany} client={client} setClient={setClient} bank={bank} setBank={setBank}/>
