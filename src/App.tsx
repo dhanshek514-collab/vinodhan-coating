@@ -30,7 +30,7 @@ async function fbBackup(data) {
     });
   } catch(e) { console.error("backup error", e); }
 }
-const printCSS = `@page{size:A4;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:15mm;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:6px 8px;}img{max-width:100%;object-fit:cover;}.no-print{display:none!important;}`;
+const printCSS = `@page{size:A4;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:15mm;margin:0;font-size:14px;}table{border-collapse:collapse;width:100%;}th,td{padding:7px 9px;font-size:13px;}h1,h2,h3{font-size:18px;}img{max-width:100%;object-fit:cover;}.no-print{display:none!important;}`;
 function printSection(id) {
   const el = document.getElementById(id);
   if(!el) return;
@@ -1478,7 +1478,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
           <button onClick={()=>{
   const el=document.getElementById("att-report");
   if(!el)return;
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:6mm;margin:0;}table{border-collapse:collapse;width:100%;table-layout:fixed;}th,td{padding:2px 1px;font-size:8px;overflow:hidden;}th:first-child,td:first-child{width:90px;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}th:not(:first-child),td:not(:first-child){width:18px;text-align:center;}img{max-width:100%;}.no-print{display:none!important;}</style></head><body onload="window.print();">${el.outerHTML}</body></html>`;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:6mm;margin:0;font-size:11px;}table{border-collapse:collapse;width:100%;table-layout:fixed;}th,td{padding:3px 2px;font-size:9px;overflow:hidden;}th:first-child,td:first-child{width:100px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}th:not(:first-child),td:not(:first-child){width:18px;text-align:center;}h1,h2,h3,div{font-size:11px;}.no-print{display:none!important;}</style></head><body onload="window.print();">${el.outerHTML}</body></html>`;
   const a=document.createElement("a");
   a.href="data:text/html;charset=utf-8,"+encodeURIComponent(html);
   a.download="Attendance-Report.html";
