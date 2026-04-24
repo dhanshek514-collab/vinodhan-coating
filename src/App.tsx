@@ -1767,7 +1767,7 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
 <span style={{fontWeight:600,color:"#6b84a3"}}>Ph: </span>{editable?<EditField value={client.phone} onChange={v=>upCl("phone",v)} placeholder="Phone"/>:dispClient.phone}
           </div>
           <div style={{marginTop:"10px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe"}}>
-            <span style={{fontWeight:600,color:"#6b84a3",fontSize:"11px"}}>Measurement Sheet No: </span>
+            <span style={{fontWeight:600,color:"#6b84a3",fontSize:"11px"}}>Measurement Job No: </span>
             {editable?<EditField value={client.measureNo} onChange={v=>upCl("measureNo",v)} placeholder="Sheet no."/>:<strong>{displayMeasureNo||"—"}</strong>}
          </div>
 </div>
