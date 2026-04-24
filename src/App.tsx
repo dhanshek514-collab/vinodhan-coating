@@ -2090,7 +2090,9 @@ const availableInvoices=invoices.filter(inv=>{
     if(inv.measureNo.toUpperCase().startsWith("SEAK")) return 2;
     return 0;
   };
-  return getOrder(a)-getOrder(b);
+  const orderDiff=getOrder(a)-getOrder(b);
+  if(orderDiff!==0) return orderDiff;
+  return a.number.localeCompare(b.number,undefined,{numeric:true});
 });
 
   const addInvoiceEntry=inv=>{
