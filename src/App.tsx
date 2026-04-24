@@ -1478,7 +1478,7 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
           <button onClick={()=>{
   const el=document.getElementById("att-report");
   if(!el)return;
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:10mm;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:4px 6px;font-size:10px;}img{max-width:100%;}.no-print{display:none!important;}</style></head><body onload="window.print();">${el.outerHTML}</body></html>`;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:6mm;margin:0;}table{border-collapse:collapse;width:100%;table-layout:fixed;}th,td{padding:2px 1px;font-size:8px;overflow:hidden;}th:first-child,td:first-child{width:90px;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}th:not(:first-child),td:not(:first-child){width:18px;text-align:center;}img{max-width:100%;}.no-print{display:none!important;}</style></head><body onload="window.print();">${el.outerHTML}</body></html>`;
   const a=document.createElement("a");
   a.href="data:text/html;charset=utf-8,"+encodeURIComponent(html);
   a.download="Attendance-Report.html";
