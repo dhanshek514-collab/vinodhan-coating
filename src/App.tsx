@@ -1790,7 +1790,7 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
               {works.length===0&&<tr><td colSpan={5} style={{padding:"16px",textAlign:"center",color:"#9db3cc"}}>No work entries.</td></tr>}
               {works.map((w,i)=>{
                 const type=w.workType||"SQM";
-                const unitStr=type==="Manpower"?`${w.labour} Labour`:type==="RMT"?`${w.area} rmt`:type==="KGS"?`${w.area} kgs`:type==="Other"?w.place:`${w.area} m²`;
+                const unitStr=type==="Manpower"?`${w.labour} Labour`:type==="RMT"?`${w.area} rmt`:type==="KGS"?`${w.area} kgs`:type==="Other"?"—":`${w.area} m²`;
                 return(
                   <tr key={w.id||i} style={{borderBottom:"1px solid #f0f4f9",background:i%2===0?"#fff":"#f8faff"}}>
                     <td style={{padding:"8px 9px",color:"#6b84a3",textAlign:"center"}}>{i+1}</td>
