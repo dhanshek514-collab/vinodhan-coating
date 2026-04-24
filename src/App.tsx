@@ -2083,6 +2083,14 @@ const availableInvoices=invoices.filter(inv=>{
     return true;
   }
   return true;
+}).sort((a,b)=>{
+  const getOrder=inv=>{
+    if(!inv.measureNo||inv.measureNo.trim()==="") return 0;
+    if(inv.measureNo.toUpperCase().startsWith("SEAC")) return 1;
+    if(inv.measureNo.toUpperCase().startsWith("SEAK")) return 2;
+    return 0;
+  };
+  return getOrder(a)-getOrder(b);
 });
 
   const addInvoiceEntry=inv=>{
