@@ -1821,7 +1821,7 @@ UPI: {editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:dispBank
             <div style={{width:"180px",height:"90px",border:"1.5px dashed #bfdbfe",borderRadius:"8px",marginBottom:"6px",overflow:"hidden",background:"#fafcff",display:"flex",alignItems:"center",justifyContent:"center"}}>
               {sigImage?<img src={sigImage} style={{width:"100%",height:"100%",objectFit:"contain"}}/>
               :sigMode==="draw"?<canvas ref={sigCanvas} width={180} height={90} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw} onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} style={{cursor:"crosshair",touchAction:"none",display:"block"}}/>
-              :<span style={{fontSize:"11px",color:"#9db3cc"}}>{sigMode==="physical"?"Physical Sign":"Seal / Signature"}</span>}
+              :<span className="no-print" style={{fontSize:"11px",color:"#9db3cc"}}>{sigMode==="physical"?"Physical Sign":"Seal / Signature"}</span>}
             </div>
             {/* Signature controls — hidden on print */}
             {editable&&<div className="no-print" style={{display:"flex",gap:"4px",justifyContent:"center",marginBottom:"6px",flexWrap:"wrap"}}>
