@@ -2056,7 +2056,8 @@ function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
   const [showAdd,setShowAdd]=useState(false);
   const [entryForm,setEntryForm]=useState({date:today,particulars:"Bank Payment",customParticulars:"",debit:"",credit:"",note:""});
   const [pwModal,setPwModal]=useState(null);
-  const [editRateModal,setEditRateModal]=useState(null);
+const [delEntryModal,setDelEntryModal]=useState(null);
+const [editRateModal,setEditRateModal]=useState(null);
   const PARTICULARS=["Bank Payment","Transfer Received","TDS Deduction","Retention Deduction","Other"];
 
   const updateLedger=updated=>{
@@ -2216,7 +2217,7 @@ const availableInvoices=invoices.filter(inv=>{
                 <td style={{padding:"7px 10px",textAlign:"right",color:"#166534",fontWeight:600}}>{e.credit>0?`₹${e.credit.toLocaleString()}`:"—"}</td>
                 <td style={{padding:"7px 10px",textAlign:"right",fontWeight:700,color:"#1e50a0"}}>₹{e.balance.toLocaleString()}</td>
                 <td style={{padding:"7px 10px",textAlign:"center"}}>
-                  <button onClick={()=>deleteEntry(e.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"3px 8px",fontSize:"11px"}}>🗑️</button>
+                  <button onClick={()=>setDelEntryModal(e.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"3px 8px",fontSize:"11px"}}>🗑️</button>
                 </td>
               </tr>
             ))}
@@ -2230,7 +2231,12 @@ const availableInvoices=invoices.filter(inv=>{
           </tbody>
         </table>}
       </div>
-
+{delEntryModal&&<PwModal
+        title="Delete Entry?"
+        onConfirm={()=>{deleteEntry(delEntryModal);setDelEntryModal(null);}}
+        onCancel={()=>setDelEntryModal(null)}
+      />}
+      
       {/* PRINTABLE LEDGER */}
       <div id="ledger-print" style={{display:"none"}}>
         <div style={{fontFamily:"'Segoe UI',sans-serif",color:"#1a2b4a",padding:"10mm"}}>
