@@ -2251,5 +2251,3 @@ function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
     </div>
   );
 }
-  );
-}
