@@ -2202,8 +2202,6 @@ function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
           </tbody>
         </table>}
       </div>
-    </div>
-    </div>
 
       {/* PRINTABLE LEDGER */}
       <div id="ledger-print" style={{display:"none"}}>
