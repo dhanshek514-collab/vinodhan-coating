@@ -2058,6 +2058,8 @@ function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
   const [pwModal,setPwModal]=useState(null);
 const [delEntryModal,setDelEntryModal]=useState(null);
 const [editRateModal,setEditRateModal]=useState(null);
+const [rateForm,setRateForm]=useState({tdsRate:"",retentionRate:""});
+const [ratePwModal,setRatePwModal]=useState(false);
   const PARTICULARS=["Bank Payment","Transfer Received","TDS Deduction","Retention Deduction","Other"];
 
   const updateLedger=updated=>{
@@ -2148,10 +2150,12 @@ const availableInvoices=invoices.filter(inv=>{
         {ledger.enableTds&&<div style={{...S.card,background:"#fef9c3",boxShadow:"none",padding:"14px",minWidth:"130px",flexShrink:0}}>
           <div style={{fontSize:"11px",fontWeight:700,color:"#d97706",marginBottom:"4px"}}>TDS {ledger.tdsRate}%</div>
           <div style={{fontSize:"16px",fontWeight:800,color:"#0f3172"}}>₹{sorted.filter(e=>e.particulars.includes("TDS")).reduce((a,e)=>a+(e.debit||0),0).toLocaleString()}</div>
+          <button onClick={()=>{setRateForm({tdsRate:String(ledger.tdsRate),retentionRate:String(ledger.retentionRate)});setRatePwModal(true);}} style={{...S.btn("#f59e0b","#fff"),padding:"3px 8px",fontSize:"10px",marginTop:"6px"}}>✏️ Edit Rate</button>
         </div>}
         {ledger.enableRetention&&<div style={{...S.card,background:"#ede9fe",boxShadow:"none",padding:"14px",minWidth:"130px",flexShrink:0}}>
           <div style={{fontSize:"11px",fontWeight:700,color:"#5b21b6",marginBottom:"4px"}}>RETENTION {ledger.retentionRate}%</div>
           <div style={{fontSize:"16px",fontWeight:800,color:"#0f3172"}}>₹{sorted.filter(e=>e.particulars.includes("Retention")).reduce((a,e)=>a+(e.debit||0),0).toLocaleString()}</div>
+          <button onClick={()=>{setRateForm({tdsRate:String(ledger.tdsRate),retentionRate:String(ledger.retentionRate)});setRatePwModal(true);}} style={{...S.btn("#7c3aed","#fff"),padding:"3px 8px",fontSize:"10px",marginTop:"6px"}}>✏️ Edit Rate</button>
         </div>}
       </div>
 
@@ -2231,6 +2235,35 @@ const availableInvoices=invoices.filter(inv=>{
           </tbody>
         </table>}
       </div>
+      {ratePwModal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
+          <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"300px",textAlign:"center"}}>
+            <div style={{fontSize:"32px",marginBottom:"8px"}}>🔐</div>
+            <h3 style={{margin:"0 0 7px"}}>Edit Rates</h3>
+            <p style={{fontSize:"12px",color:"#6b84a3",margin:"0 0 16px"}}>Enter password to edit TDS/Retention rates.</p>
+            <input type="password" id="rate-pw-input" placeholder="Enter password" style={{...S.inp,marginBottom:"14px",textAlign:"center"}}/>
+            {ledger.enableTds&&<div style={{marginBottom:"10px",textAlign:"left"}}>
+              <label style={S.lbl}>TDS Rate (%)</label>
+              <input type="number" value={rateForm.tdsRate} onChange={e=>setRateForm(p=>({...p,tdsRate:e.target.value}))} style={S.inp}/>
+            </div>}
+            {ledger.enableRetention&&<div style={{marginBottom:"14px",textAlign:"left"}}>
+              <label style={S.lbl}>Retention Rate (%)</label>
+              <input type="number" value={rateForm.retentionRate} onChange={e=>setRateForm(p=>({...p,retentionRate:e.target.value}))} style={S.inp}/>
+            </div>}
+            <div id="rate-err" style={{color:"#dc2626",fontSize:"12px",marginBottom:"10px",display:"none"}}>❌ Incorrect password.</div>
+            <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
+              <button onClick={()=>{
+                const pw=document.getElementById("rate-pw-input").value;
+                if(pw!==RECYCLE_PASSWORD){document.getElementById("rate-err").style.display="block";return;}
+                updateLedger({...ledger,tdsRate:Number(rateForm.tdsRate),retentionRate:Number(rateForm.retentionRate)});
+                setRatePwModal(false);
+              }} style={S.btn("#1e50a0")}>Confirm</button>
+              <button onClick={()=>setRatePwModal(false)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
 {delEntryModal&&<PwModal
         title="Delete Entry?"
         onConfirm={()=>{deleteEntry(delEntryModal);setDelEntryModal(null);}}
