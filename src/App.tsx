@@ -1960,14 +1960,20 @@ function Ledger({ledgers,setLedgers,invoices}){
   const [showAdd,setShowAdd]=useState(false);
 const [form,setForm]=useState({name:"",region:"",client:"Swathi Engineering Agency",measurePrefix:"",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});
   const [selLedger,setSelLedger]=useState(null);
+  const [editLedgerId,setEditLedgerId]=useState(null);
 
-  const addLedger=()=>{
-    if(!form.name.trim())return;
+  const saveLedger=()=>{
+  if(!form.name.trim())return;
+  if(editLedgerId){
+    setLedgers(p=>p.map(l=>l.id===editLedgerId?{...l,name:form.name,region:form.region,client:form.client,measurePrefix:form.measurePrefix,enableTds:form.enableTds,tdsRate:Number(form.tdsRate),enableRetention:form.enableRetention,retentionRate:Number(form.retentionRate)}:l));
+    setEditLedgerId(null);
+  } else {
     const nl={id:Date.now(),name:form.name,region:form.region,client:form.client,measurePrefix:form.measurePrefix,enableTds:form.enableTds,tdsRate:Number(form.tdsRate),enableRetention:form.enableRetention,retentionRate:Number(form.retentionRate),entries:[]};
     setLedgers(p=>[...p,nl]);
-    setForm({name:"",region:"",client:"Swathi Engineering Agency",measurePrefix:"",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});
-    setShowAdd(false);
-  };
+  }
+  setForm({name:"",region:"",client:"Swathi Engineering Agency",measurePrefix:"",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});
+  setShowAdd(false);
+};
 
   if(selLedger){
     const ledger=ledgers.find(l=>l.id===selLedger);
@@ -1979,11 +1985,11 @@ const [form,setForm]=useState({name:"",region:"",client:"Swathi Engineering Agen
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"18px"}}>
         <h2 style={{margin:0,fontSize:"20px",fontWeight:800}}>📒 Ledger</h2>
-        <button onClick={()=>setShowAdd(p=>!p)} style={S.btn()}>+ New Ledger</button>
+        <button onClick={()=>{setEditLedgerId(null);setForm({name:"",region:"",client:"Swathi Engineering Agency",measurePrefix:"",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});setShowAdd(p=>!p);}} style={S.btn()}>+ New Ledger</button>
       </div>
 
       {showAdd&&<div style={{...S.card,marginBottom:"16px",border:"1.5px solid #bfdbfe"}}>
-        <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>New Ledger</h3>
+        <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>{editLedgerId?"Edit Ledger":"New Ledger"}</h3>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"12px"}}>
           <div><label style={S.lbl}>Ledger Name</label><input value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="e.g. Karnataka Ledger" style={S.inp}/></div>
           <div><label style={S.lbl}>Region</label><input value={form.region} onChange={e=>setForm(p=>({...p,region:e.target.value}))} placeholder="e.g. Bengaluru" style={S.inp}/></div>
@@ -2007,8 +2013,8 @@ const [form,setForm]=useState({name:"",region:"",client:"Swathi Engineering Agen
           {form.enableRetention&&<div><label style={S.lbl}>Retention Rate (%)</label><input type="number" value={form.retentionRate} onChange={e=>setForm(p=>({...p,retentionRate:e.target.value}))} style={S.inp}/></div>}
         </div>
         <div style={{display:"flex",gap:"9px"}}>
-          <button onClick={addLedger} style={S.btn()}>💾 Save</button>
-          <button onClick={()=>setShowAdd(false)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+          <button onClick={saveLedger} style={S.btn()}>💾 {editLedgerId?"Update":"Save"}</button>
+          <button onClick={()=>{setShowAdd(false);setEditLedgerId(null);setForm({name:"",region:"",client:"Swathi Engineering Agency",measurePrefix:"",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});}} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
         </div>
       </div>}
 
@@ -2028,7 +2034,10 @@ const [form,setForm]=useState({name:"",region:"",client:"Swathi Engineering Agen
                 {l.enableRetention&&<span style={{...WORK_TYPE_COLOR["SQM"],fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 8px"}}>Retention {l.retentionRate}%</span>}
               </div>
             </div>
-            <button onClick={()=>setSelLedger(l.id)} style={S.btn()}>Open →</button>
+            <div style={{display:"flex",gap:"7px"}}>
+  <button onClick={()=>setSelLedger(l.id)} style={S.btn()}>Open →</button>
+  <button onClick={()=>{setForm({name:l.name,region:l.region,client:l.client,measurePrefix:l.measurePrefix||"",enableTds:l.enableTds,tdsRate:l.tdsRate,enableRetention:l.enableRetention,retentionRate:l.retentionRate});setEditLedgerId(l.id);setShowAdd(true);}} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"9px 12px"}}>✏️</button>
+</div>
           </div>
         ))}
       </div>}
