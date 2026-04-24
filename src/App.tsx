@@ -274,7 +274,7 @@ useEffect(()=>{
   const todayDate=new Date().toISOString().split("T")[0];
   const lastB=localStorage.getItem("vd_last_backup");
   if(lastB===todayDate)return;
-  fbBackup({workers,execProfile,sites,attendance,assignments,invoices,company,client,bank,passwords,recycleBin});
+  fbBackup({workers,execProfile,sites,attendance,assignments,invoices,company,client,bank,passwords,recycleBin,ledgers});
   localStorage.setItem("vd_last_backup",todayDate);
 },[lastBackup,ready]);
   
@@ -466,7 +466,7 @@ const [importPwErr,setImportPwErr]=useState("");
 </div>
 <div style={{padding:"0 16px",marginBottom:"8px"}}>
   <button onClick={()=>{
-    const data=JSON.stringify({workers,execProfile,sites,attendance,assignments,invoices,company,client,bank,recycleBin},null,2);
+    const data=JSON.stringify({workers,execProfile,sites,attendance,assignments,invoices,company,client,bank,recycleBin,ledgers},null,2);
     const blob=new Blob([data],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");
@@ -584,7 +584,8 @@ const [importPwErr,setImportPwErr]=useState("");
               if(d.client)setClient(d.client);
               if(d.bank)setBank(d.bank);
               if(d.recycleBin)setRecycleBin(d.recycleBin);
-              if(d.execProfile)setExecProfile(d.execProfile);
+if(d.execProfile)setExecProfile(d.execProfile);
+if(d.ledgers)setLedgers(d.ledgers);
               setImportPwModal(false);setPendingFile(null);
               setDrawerOpen(false);
               alert("✅ Data restored successfully!");
