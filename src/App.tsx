@@ -2107,7 +2107,14 @@ const availableInvoices=invoices.filter(inv=>{
   };
 
   const deleteEntry=id=>{
-    updateLedger({...ledger,entries:(ledger.entries||[]).filter(e=>e.id!==id)});
+    const entry=(ledger.entries||[]).find(e=>e.id===id);
+    if(entry&&entry.invoiceId){
+      // Delete all entries with same invoiceId (invoice + TDS + Retention)
+      updateLedger({...ledger,entries:(ledger.entries||[]).filter(e=>e.invoiceId!==entry.invoiceId)});
+    } else {
+      // Delete just this manual entry
+      updateLedger({...ledger,entries:(ledger.entries||[]).filter(e=>e.id!==id)});
+    }
   };
 
   // Sort entries by date
@@ -2170,12 +2177,14 @@ const availableInvoices=invoices.filter(inv=>{
         <div style={{display:"flex",flexDirection:"column",gap:"6px"}}>
           {availableInvoices.map(inv=>(
             <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:"#f0f6ff",borderRadius:"8px"}}>
-              <div>
-                <div style={{fontWeight:600,fontSize:"13px"}}>{inv.number}</div>
-                <div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtDate(inv.date)} — ₹{inv.total?.toLocaleString()}</div>
-              </div>
-              <button onClick={()=>addInvoiceEntry(inv)} style={{...S.btn("#166534"),padding:"5px 12px",fontSize:"12px"}}>+ Add</button>
-            </div>
+  <div>
+    <div style={{fontWeight:600,fontSize:"13px"}}>{inv.number}</div>
+    <div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtDate(inv.date)} — ₹{inv.total?.toLocaleString()}</div>
+    <div style={{fontSize:"11px",color:"#6b84a3"}}>{inv.siteName||"—"}</div>
+    {inv.measureNo&&<div style={{fontSize:"10px",fontWeight:700,color:"#1e50a0",marginTop:"2px"}}>📋 {inv.measureNo}</div>}
+  </div>
+  <button onClick={()=>addInvoiceEntry(inv)} style={{...S.btn("#166634"),padding:"5px 12px",fontSize:"12px"}}>+ Add</button>
+</div>
           ))}
         </div>
       </div>}
