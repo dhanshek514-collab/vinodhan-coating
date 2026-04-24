@@ -1384,7 +1384,16 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
             <div><label style={S.lbl}>Work From Date</label><input type="date" value={repFromDate} onChange={e=>setRepFromDate(e.target.value)} style={S.inp}/></div>
             <div><label style={S.lbl}>Work To Date</label><input type="date" value={repToDate} onChange={e=>setRepToDate(e.target.value)} style={S.inp}/></div>
           </div>
-          <button onClick={()=>printSection("att-report")} style={S.btn()}>🖨️ Print / PDF</button>
+          <button onClick={()=>{
+  const el=document.getElementById("att-report");
+  if(!el)return;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:10mm;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:10px;margin:0;}table{border-collapse:collapse;width:100%;}th,td{padding:4px 6px;font-size:10px;}img{max-width:100%;}.no-print{display:none!important;}</style></head><body onload="window.print();">${el.outerHTML}</body></html>`;
+  const a=document.createElement("a");
+  a.href="data:text/html;charset=utf-8,"+encodeURIComponent(html);
+  a.download="Attendance-Report.html";
+  a.style.display="none";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}} style={S.btn()}>🖨️ Print / PDF</button>
         </div>
         <div id="att-report" style={{background:"#fff",padding:"24px",borderRadius:"12px",boxShadow:"0 2px 16px rgba(30,80,160,0.08)",overflowX:"auto"}}>
           <div style={{textAlign:"center",marginBottom:"20px",borderBottom:"2px solid #0f3172",paddingBottom:"14px"}}>
@@ -1636,7 +1645,7 @@ const dispCompany=snap?snap.company:company;
 const dispClient=snap?snap.client:client;
 const dispBank=snap?snap.bank:bank;
     return(
-      <div style={{maxWidth:"750px",margin:"0 auto",background:"#fff",padding:"20px",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px"}}>
+      <div style={{width:"210mm",minHeight:"297mm",margin:"0 auto",background:"#fff",padding:"20mm",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px",border:"2px solid #0f3172",outline:"4px solid #e8f0fe",outlineOffset:"-8px",boxSizing:"border-box"}}>
         {/* Header */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"12px",paddingBottom:"16px",borderBottom:"2px solid #0f3172",marginBottom:"16px"}}>
           <div style={{flex:1,minWidth:"180px"}}>
@@ -1701,7 +1710,7 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
                   </tr>
                 );
               })}
-              <tr style={{background:"#0f3172",color:"#fff"}}><td colSpan={4} style={{padding:"10px 9px",fontWeight:700,textAlign:"right"}}>TOTAL</td><td style={{padding:"10px 9px",fontWeight:800,fontSize:"14px",textAlign:"right"}}>₹{tot.toLocaleString()}</td></tr>
+              <tr style={{background:"#0f3172",color:"#fff"}}><td colSpan={4} style={{padding:"10px 9px",fontWeight:700,textAlign:"right"}}>TOTAL</td><td style={{padding:"10px 9px",fontWeight:800,fontSize:"16px",textAlign:"right",color:"#f59e0b",letterSpacing:"0.5px"}}>₹{tot.toLocaleString()}</td></tr>
             </tbody>
           </table>
         </div>
