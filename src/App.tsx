@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-
 const FB_PROJECT = "vinodhan-coating";
 const FB_API_KEY = import.meta.env.VITE_FB_API_KEY;
 const FB_BASE    = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents/vinodhan`;
@@ -79,11 +78,13 @@ const CAT_COLOR = {
   "Semi-Applicator": { bg:"#ede9fe", color:"#5b21b6" },
   "Helper":          { bg:"#dcfce7", color:"#166534" },
 };
-const WORK_TYPES = ["SQM","RMT","Manpower"];
+const WORK_TYPES = ["SQM","RMT","Manpower","KGS","Other"];
 const WORK_TYPE_COLOR = {
   "SQM":      { bg:"#dbeafe", color:"#1e40af" },
   "RMT":      { bg:"#ede9fe", color:"#5b21b6" },
   "Manpower": { bg:"#fef3c7", color:"#d97706" },
+  "KGS":      { bg:"#dcfce7", color:"#166534" },
+  "Other":    { bg:"#fee2e2", color:"#991b1b" },
 };
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const today = new Date().toISOString().split("T")[0];
@@ -112,11 +113,14 @@ function saveS(key,value){try{localStorage.setItem(key,JSON.stringify(value));}c
 
 function calcWork(w){
   if(w.workType==="Manpower") return (Number(w.labour)||0)*(Number(w.rate)||0);
+  if(w.workType==="Other") return Number(w.amount)||0;
   return (Number(w.area)||0)*(Number(w.rate)||0);
 }
 function workUnitLabel(w){
   if(w.workType==="RMT") return `${w.area}rmt × ₹${w.rate}`;
   if(w.workType==="Manpower") return `${w.labour} Labour × ₹${w.rate}/day`;
+  if(w.workType==="KGS") return `${w.area}kgs × ₹${w.rate}`;
+  if(w.workType==="Other") return `₹${w.amount}`;
   return `${w.area}m² × ₹${w.rate}`;
 }
 
@@ -696,7 +700,9 @@ function Dashboard({user,workers,sites,invoices,landscape}){
   const totalSqm=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="SQM"||!w.workType).reduce((a,w)=>a+(Number(w.area)||0),sum),0);
   const totalRmt=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="RMT").reduce((a,w)=>a+(Number(w.area)||0),sum),0);
   const totalMp=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="Manpower").reduce((a,w)=>a+calcWork(w),sum),0);
-  const totalRev=sites.reduce((sum,s)=>(s.works||[]).reduce((a,w)=>a+calcWork(w),sum),0);
+const totalKgs=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="KGS").reduce((a,w)=>a+(Number(w.area)||0),sum),0);
+const totalOther=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="Other").reduce((a,w)=>a+(Number(w.amount)||0),sum),0);
+const totalRev=sites.reduce((sum,s)=>(s.works||[]).reduce((a,w)=>a+calcWork(w),sum),0);
   const activeSites=sites.filter(s=>s.status==="Active").length;
   const completedSites=sites.filter(s=>s.status==="Completed").length;
 const applicators=workers.filter(w=>w.category==="Applicator").length;
@@ -707,8 +713,9 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
     <div>
       <h2 style={{margin:"0 0 4px",fontSize:"20px",fontWeight:800}}>Good day, {user.name}! 👋</h2>
       <p style={{margin:"0 0 20px",color:"#6b84a3",fontSize:"12px"}}>{today}</p>
-      <div style={{display:"flex",gap:"12px",marginBottom:"20px",overflowX:"auto",paddingBottom:"8px",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
-  {/* Workers Breakdown */}
+      {/* ROW 1 — Summary cards */}
+<div style={{display:"flex",gap:"12px",marginBottom:"12px",overflowX:"auto",paddingBottom:"8px",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
+  {/* Workers */}
   <div style={{...S.card,background:"#dbeafe",boxShadow:"none",padding:"16px",minWidth:"160px",flexShrink:0}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>👷</div>
     <div style={{fontSize:"11px",fontWeight:700,color:"#1e40af",marginBottom:"6px"}}>WORKERS</div>
@@ -719,7 +726,7 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
       <div style={{borderTop:"1px solid #bfdbfe",marginTop:"3px",paddingTop:"3px",display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#6b84a3"}}>Total</span><span style={{fontWeight:800,color:"#0f3172"}}>{workers.length}</span></div>
     </div>
   </div>
-  {/* Sites Breakdown */}
+  {/* Sites */}
   <div style={{...S.card,background:"#dcfce7",boxShadow:"none",padding:"16px",minWidth:"150px",flexShrink:0}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>🏗️</div>
     <div style={{fontSize:"11px",fontWeight:700,color:"#166534",marginBottom:"6px"}}>SITES</div>
@@ -735,6 +742,15 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
       <div style={{borderTop:"1px solid #bbf7d0",marginTop:"3px",paddingTop:"3px",display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#6b84a3"}}>Total</span><span style={{fontWeight:800,color:"#0f3172"}}>{sites.length}</span></div>
     </div>
   </div>
+  {/* Revenue */}
+  <div style={{...S.card,background:"#fef3c7",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>💰</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalRev.toLocaleString()}</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Revenue</div>
+  </div>
+</div>
+{/* ROW 2 — Breakdown cards */}
+<div style={{display:"flex",gap:"12px",marginBottom:"20px",overflowX:"auto",paddingBottom:"8px",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
   {/* SQM */}
   <div onClick={()=>setExpandCard(expandCard==="sqm"?null:"sqm")} style={{...S.card,background:"#ede9fe",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0,cursor:"pointer"}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>📐</div>
@@ -749,14 +765,28 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Total RMT</div>
     <div style={{fontSize:"10px",color:"#9d174d",marginTop:"4px",fontWeight:600}}>{expandCard==="rmt"?"▲ Hide":"▼ Details"}</div>
   </div>
-  {/* Other Charges */}
+  {/* Other Charges (Manpower) */}
   <div onClick={()=>setExpandCard(expandCard==="mp"?null:"mp")} style={{...S.card,background:"#fef9c3",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0,cursor:"pointer"}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>👨‍🔧</div>
     <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalMp.toLocaleString()}</div>
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Other Charges</div>
     <div style={{fontSize:"10px",color:"#d97706",marginTop:"4px",fontWeight:600}}>{expandCard==="mp"?"▲ Hide":"▼ Details"}</div>
   </div>
-        {/* Invoices */}
+  {/* KGS */}
+  <div onClick={()=>setExpandCard(expandCard==="kgs"?null:"kgs")} style={{...S.card,background:"#dcfce7",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0,cursor:"pointer"}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>⚖️</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>{totalKgs}kgs</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Total KGS</div>
+    <div style={{fontSize:"10px",color:"#166534",marginTop:"4px",fontWeight:600}}>{expandCard==="kgs"?"▲ Hide":"▼ Details"}</div>
+  </div>
+  {/* Other */}
+  <div onClick={()=>setExpandCard(expandCard==="other"?null:"other")} style={{...S.card,background:"#fee2e2",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0,cursor:"pointer"}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>🔧</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalOther.toLocaleString()}</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Other</div>
+    <div style={{fontSize:"10px",color:"#991b1b",marginTop:"4px",fontWeight:600}}>{expandCard==="other"?"▲ Hide":"▼ Details"}</div>
+  </div>
+  {/* Invoices */}
   <div onClick={()=>setExpandCard(expandCard==="inv"?null:"inv")} style={{...S.card,background:"#fce7f3",boxShadow:"none",padding:"16px",minWidth:"160px",flexShrink:0,cursor:"pointer"}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>🧾</div>
     <div style={{fontSize:"11px",fontWeight:700,color:"#9d174d",marginBottom:"6px"}}>INVOICES</div>
@@ -765,12 +795,6 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
       <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#9d174d"}}>Total Billed</span><span style={{fontWeight:800,color:"#0f3172"}}>₹{invoices.reduce((a,inv)=>a+(inv.total||0),0).toLocaleString()}</span></div>
     </div>
     <div style={{fontSize:"10px",color:"#9d174d",marginTop:"4px",fontWeight:600}}>{expandCard==="inv"?"▲ Hide":"▼ Details"}</div>
-  </div>
-  {/* Revenue */}
-  <div style={{...S.card,background:"#fef3c7",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
-    <div style={{fontSize:"22px",marginBottom:"6px"}}>💰</div>
-    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalRev.toLocaleString()}</div>
-    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Revenue</div>
   </div>
 </div>
       {expandCard&&(
@@ -880,6 +904,70 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
         );
       })}
     </>}
+    {expandCard==="kgs"&&<>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+        <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>⚖️ KGS Breakdown</h3>
+        <span style={{fontWeight:800,color:"#166534",fontSize:"14px"}}>{totalKgs}kgs Total</span>
+      </div>
+      {sites.filter(s=>(s.works||[]).some(w=>w.workType==="KGS")).map(s=>{
+        const works=(s.works||[]).filter(w=>w.workType==="KGS");
+        const siteTotal=works.reduce((a,w)=>a+(Number(w.area)||0),0);
+        const grouped=Object.values(works.reduce((acc,w)=>{
+          const key=w.place.trim().toLowerCase();
+          if(!acc[key])acc[key]={place:w.place.trim(),area:0};
+          acc[key].area+=Number(w.area)||0;
+          return acc;
+        },{}));
+        return(
+          <div key={s.id} style={{marginBottom:"16px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#166534"}}>{siteTotal}kgs</span>
+            </div>
+            {grouped.map((w,i)=>(
+              <div key={i} style={{marginBottom:"6px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:"11px",marginBottom:"2px"}}>
+                  <span style={{color:"#1a2b4a"}}>{w.place}</span>
+                  <span style={{fontWeight:600,color:"#166534"}}>{w.area}kgs</span>
+                </div>
+                <div style={{background:"#dcfce7",borderRadius:"4px",height:"10px",overflow:"hidden"}}>
+                  <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#166534,#4ade80)",width:`${siteTotal>0?(w.area/siteTotal)*100:0}%`,transition:"width 0.5s"}}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </>}
+    {expandCard==="other"&&<>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+        <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>🔧 Other Breakdown</h3>
+        <span style={{fontWeight:800,color:"#991b1b",fontSize:"14px"}}>₹{totalOther.toLocaleString()} Total</span>
+      </div>
+      {sites.filter(s=>(s.works||[]).some(w=>w.workType==="Other")).map(s=>{
+        const works=(s.works||[]).filter(w=>w.workType==="Other");
+        const siteTotal=works.reduce((a,w)=>a+(Number(w.amount)||0),0);
+        return(
+          <div key={s.id} style={{marginBottom:"16px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#991b1b"}}>₹{siteTotal.toLocaleString()}</span>
+            </div>
+            {works.map((w,i)=>(
+              <div key={i} style={{marginBottom:"6px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:"11px",marginBottom:"2px"}}>
+                  <span style={{color:"#1a2b4a"}}>{w.place}</span>
+                  <span style={{fontWeight:600,color:"#991b1b"}}>₹{Number(w.amount).toLocaleString()}</span>
+                </div>
+                <div style={{background:"#fee2e2",borderRadius:"4px",height:"10px",overflow:"hidden"}}>
+                  <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#991b1b,#f87171)",width:`${siteTotal>0?(Number(w.amount)/siteTotal)*100:0}%`,transition:"width 0.5s"}}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </>}
     {expandCard==="inv"&&<>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
         <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>🧾 Invoice Breakdown</h3>
@@ -980,7 +1068,7 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
   const [siteForm,setSiteForm]=useState({name:"",client:"Swathi Engineering Agency",status:"Active"});
   const [expandSite,setExpandSite]=useState(null);
   const [siteTab,setSiteTab]=useState({});
-  const EMPTY_WORK={place:"",workersList:"",fromDate:"",toDate:"",area:"",rate:"",labour:"",workType:"SQM"};
+  const EMPTY_WORK={place:"",workersList:"",fromDate:"",toDate:"",area:"",rate:"",labour:"",amount:"",workType:"SQM"};
   const [workForm,setWorkForm]=useState(EMPTY_WORK);
   const [editWorkId,setEditWorkId]=useState(null);
   const [addingWork,setAddingWork]=useState(null);
@@ -1010,8 +1098,9 @@ const confirmDeleteSite=()=>{
   const changeDesig=(siteId,wid,desig)=>setAssignments(p=>({...p,[siteId]:{...(p[siteId]||{}),[wid]:desig}}));
   const saveWork=siteId=>{
     if(!workForm.place)return;
-    if(workForm.workType==="Manpower"&&(!workForm.labour||!workForm.rate))return;
-    if(workForm.workType!=="Manpower"&&(!workForm.area||!workForm.rate))return;
+if(workForm.workType==="Manpower"&&(!workForm.labour||!workForm.rate))return;
+if(workForm.workType==="Other"&&!workForm.amount)return;
+if(workForm.workType!=="Manpower"&&workForm.workType!=="Other"&&(!workForm.area||!workForm.rate))return;
     setSites(p=>p.map(s=>{
       if(s.id!==siteId)return s;
       if(editWorkId)return{...s,works:(s.works||[]).map(w=>w.id===editWorkId?{...w,...workForm,area:Number(workForm.area),rate:Number(workForm.rate),labour:Number(workForm.labour)}:w)};
@@ -1032,7 +1121,7 @@ const confirmDeleteSite=()=>{
   }
 };
 const confirmDeleteWork=()=>{setSites(p=>p.map(s=>s.id===delWorkModal.siteId?{...s,works:(s.works||[]).filter(w=>w.id!==delWorkModal.wid)}:s));setDelWorkModal(null);};
-  const startEdit=(siteId,w)=>{setAddingWork(siteId);setEditWorkId(w.id);setWorkForm({place:w.place,workersList:w.workersList||"",fromDate:w.fromDate||"",toDate:w.toDate||"",area:String(w.area||""),rate:String(w.rate||""),labour:String(w.labour||""),workType:w.workType||"SQM"});};
+  const startEdit=(siteId,w)=>{setAddingWork(siteId);setEditWorkId(w.id);setWorkForm({place:w.place,workersList:w.workersList||"",fromDate:w.fromDate||"",toDate:w.toDate||"",area:String(w.area||""),rate:String(w.rate||""),labour:String(w.labour||""),amount:String(w.amount||""),workType:w.workType||"SQM"});};
 
   return(
     <div>
@@ -1144,16 +1233,18 @@ return bMax.localeCompare(aMax);
                     <div><label style={S.lbl}>From Date</label><input type="date" value={workForm.fromDate} onChange={e=>setWorkForm(p=>({...p,fromDate:e.target.value}))} style={S.inp}/></div>
                     <div><label style={S.lbl}>To Date</label><input type="date" value={workForm.toDate} onChange={e=>setWorkForm(p=>({...p,toDate:e.target.value}))} style={S.inp}/></div>
                     {workForm.workType==="Manpower"
-                      ?<><div><label style={S.lbl}>No. of Labour</label><input type="number" value={workForm.labour} onChange={e=>setWorkForm(p=>({...p,labour:e.target.value}))} style={S.inp}/></div>
-                        <div><label style={S.lbl}>Rate per Day (₹)</label><input type="number" value={workForm.rate} onChange={e=>setWorkForm(p=>({...p,rate:e.target.value}))} style={S.inp}/></div></>
-                      :<><div><label style={S.lbl}>{workForm.workType==="RMT"?"Length (rmt)":"Area (m²)"}</label><input type="number" value={workForm.area} onChange={e=>setWorkForm(p=>({...p,area:e.target.value}))} style={S.inp}/></div>
-                        <div><label style={S.lbl}>Rate (₹/{workForm.workType==="RMT"?"rmt":"m²"})</label><input type="number" value={workForm.rate} onChange={e=>setWorkForm(p=>({...p,rate:e.target.value}))} style={S.inp}/></div></>
-                    }
+  ?<><div><label style={S.lbl}>No. of Labour</label><input type="number" value={workForm.labour} onChange={e=>setWorkForm(p=>({...p,labour:e.target.value}))} style={S.inp}/></div>
+    <div><label style={S.lbl}>Rate per Day (₹)</label><input type="number" value={workForm.rate} onChange={e=>setWorkForm(p=>({...p,rate:e.target.value}))} style={S.inp}/></div></>
+  :workForm.workType==="Other"
+  ?<><div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Amount (₹)</label><input type="number" value={workForm.amount} onChange={e=>setWorkForm(p=>({...p,amount:e.target.value}))} style={S.inp}/></div></>
+  :<><div><label style={S.lbl}>{workForm.workType==="RMT"?"Length (rmt)":workForm.workType==="KGS"?"Weight (kgs)":"Area (m²)"}</label><input type="number" value={workForm.area} onChange={e=>setWorkForm(p=>({...p,area:e.target.value}))} style={S.inp}/></div>
+    <div><label style={S.lbl}>Rate (₹/{workForm.workType==="RMT"?"rmt":workForm.workType==="KGS"?"kgs":"m²"})</label><input type="number" value={workForm.rate} onChange={e=>setWorkForm(p=>({...p,rate:e.target.value}))} style={S.inp}/></div></>
+}
                   </div>
-                  {((workForm.workType==="Manpower"&&workForm.labour&&workForm.rate)||(workForm.workType!=="Manpower"&&workForm.area&&workForm.rate))&&
-                    <div style={{marginTop:"8px",padding:"7px 11px",background:"#dcfce7",borderRadius:"7px",fontSize:"13px",fontWeight:600,color:"#166534"}}>
-                      💰 ₹{workForm.workType==="Manpower"?(Number(workForm.labour)*Number(workForm.rate)).toLocaleString():(Number(workForm.area)*Number(workForm.rate)).toLocaleString()}
-                    </div>}
+                  {((workForm.workType==="Manpower"&&workForm.labour&&workForm.rate)||(workForm.workType==="Other"&&workForm.amount)||(workForm.workType!=="Manpower"&&workForm.workType!=="Other"&&workForm.area&&workForm.rate))&&
+  <div style={{marginTop:"8px",padding:"7px 11px",background:"#dcfce7",borderRadius:"7px",fontSize:"13px",fontWeight:600,color:"#166534"}}>
+    💰 ₹{workForm.workType==="Manpower"?(Number(workForm.labour)*Number(workForm.rate)).toLocaleString():workForm.workType==="Other"?Number(workForm.amount).toLocaleString():(Number(workForm.area)*Number(workForm.rate)).toLocaleString()}
+  </div>}
                   <div style={{display:"flex",gap:"7px",marginTop:"11px"}}>
                     <button onClick={()=>saveWork(site.id)} style={{...S.btn(),fontSize:"12px",padding:"7px 13px"}}>💾 Save</button>
                     <button onClick={()=>{setAddingWork(null);setEditWorkId(null);}} style={{...S.btn("#f0f4f9","#1a2b4a"),fontSize:"12px",padding:"7px 13px"}}>Cancel</button>
@@ -1699,7 +1790,7 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
               {works.length===0&&<tr><td colSpan={5} style={{padding:"16px",textAlign:"center",color:"#9db3cc"}}>No work entries.</td></tr>}
               {works.map((w,i)=>{
                 const type=w.workType||"SQM";
-                const unitStr=type==="Manpower"?`${w.labour} Labour`:type==="RMT"?`${w.area} rmt`:`${w.area} m²`;
+                const unitStr=type==="Manpower"?`${w.labour} Labour`:type==="RMT"?`${w.area} rmt`:type==="KGS"?`${w.area} kgs`:type==="Other"?w.place:`${w.area} m²`;
                 return(
                   <tr key={w.id||i} style={{borderBottom:"1px solid #f0f4f9",background:i%2===0?"#fff":"#f8faff"}}>
                     <td style={{padding:"8px 9px",color:"#6b84a3",textAlign:"center"}}>{i+1}</td>
