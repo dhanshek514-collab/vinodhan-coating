@@ -1936,6 +1936,25 @@ UPI: {editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:dispBank
     </div>
   );
 }
+async function exportLedgerExcel(ledger,rows,totalDebit,totalCredit,closingBalance){
+  const XLSX=await import("https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs");
+  const wb=XLSX.utils.book_new();
+  const wsRows=[
+    ["VinoDhan Coating — "+ledger.name],
+    ["Client: "+ledger.client+(ledger.region?" — "+ledger.region:"")],
+    [],
+    ["Date","Particulars","Note","Debit (₹)","Credit (₹)","Closing Balance (₹)"],
+  ];
+  rows.forEach(e=>{
+    wsRows.push([fmtDate(e.date),e.particulars,e.note||"",e.debit>0?e.debit:"",e.credit>0?e.credit:"",e.balance]);
+  });
+  wsRows.push([]);
+  wsRows.push(["","","TOTAL",totalDebit,totalCredit,closingBalance]);
+  const ws=XLSX.utils.aoa_to_sheet(wsRows);
+  ws["!cols"]=[{wch:14},{wch:25},{wch:20},{wch:14},{wch:14},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws,ledger.name.slice(0,31));
+  XLSX.writeFile(wb,`${ledger.name}-${new Date().toISOString().split("T")[0]}.xlsx`);
+}
 // ── LEDGER ────────────────────────────────────────────
 function Ledger({ledgers,setLedgers,invoices}){
   const [showAdd,setShowAdd]=useState(false);
@@ -2078,6 +2097,8 @@ function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
         </div>
         <div style={{display:"flex",gap:"7px"}}>
           <button onClick={()=>setShowAdd(p=>!p)} style={S.btn()}>+ Add Entry</button>
+          <button onClick={()=>printSection("ledger-print")} style={S.btn("#166534")}>🖨️ Print</button>
+          <button onClick={()=>exportLedgerExcel(ledger,rows,totalDebit,totalCredit,closingBalance)} style={S.btn("#d97706","#fff")}>📊 Excel</button>
         </div>
       </div>
 
@@ -2182,5 +2203,55 @@ function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
         </table>}
       </div>
     </div>
+    </div>
+
+      {/* PRINTABLE LEDGER */}
+      <div id="ledger-print" style={{display:"none"}}>
+        <div style={{fontFamily:"'Segoe UI',sans-serif",color:"#1a2b4a",padding:"10mm"}}>
+          <div style={{textAlign:"center",marginBottom:"16px",borderBottom:"2px solid #0f3172",paddingBottom:"12px"}}>
+            <div style={{fontSize:"20px",fontWeight:800,color:"#0f3172"}}>VinoDhan Coating</div>
+            <div style={{fontSize:"16px",fontWeight:700,color:"#0f3172",marginTop:"4px"}}>{ledger.name}</div>
+            <div style={{fontSize:"12px",color:"#6b84a3",marginTop:"4px"}}>Client: {ledger.client} {ledger.region?`— ${ledger.region}`:""}</div>
+          </div>
+          <div style={{display:"flex",gap:"20px",marginBottom:"16px",fontSize:"12px"}}>
+            <div><span style={{fontWeight:600,color:"#6b84a3"}}>Total Credit: </span><span style={{fontWeight:700,color:"#166534"}}>₹{totalCredit.toLocaleString()}</span></div>
+            <div><span style={{fontWeight:600,color:"#6b84a3"}}>Total Debit: </span><span style={{fontWeight:700,color:"#991b1b"}}>₹{totalDebit.toLocaleString()}</span></div>
+            <div><span style={{fontWeight:600,color:"#6b84a3"}}>Closing Balance: </span><span style={{fontWeight:700,color:"#1e50a0"}}>₹{closingBalance.toLocaleString()}</span></div>
+          </div>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+            <thead>
+              <tr style={{background:"#0f3172",color:"#fff"}}>
+                <th style={{padding:"8px 10px",textAlign:"left",fontWeight:600}}>Date</th>
+                <th style={{padding:"8px 10px",textAlign:"left",fontWeight:600}}>Particulars</th>
+                <th style={{padding:"8px 10px",textAlign:"left",fontWeight:600}}>Note</th>
+                <th style={{padding:"8px 10px",textAlign:"right",fontWeight:600}}>Debit (₹)</th>
+                <th style={{padding:"8px 10px",textAlign:"right",fontWeight:600}}>Credit (₹)</th>
+                <th style={{padding:"8px 10px",textAlign:"right",fontWeight:600}}>Balance (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((e,idx)=>(
+                <tr key={e.id} style={{background:idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #e5e7eb"}}>
+                  <td style={{padding:"7px 10px",whiteSpace:"nowrap"}}>{fmtDate(e.date)}</td>
+                  <td style={{padding:"7px 10px",fontWeight:600}}>{e.particulars}</td>
+                  <td style={{padding:"7px 10px",color:"#6b84a3",fontSize:"11px"}}>{e.note||"—"}</td>
+                  <td style={{padding:"7px 10px",textAlign:"right",color:"#991b1b",fontWeight:600}}>{e.debit>0?`₹${e.debit.toLocaleString()}`:"—"}</td>
+                  <td style={{padding:"7px 10px",textAlign:"right",color:"#166534",fontWeight:600}}>{e.credit>0?`₹${e.credit.toLocaleString()}`:"—"}</td>
+                  <td style={{padding:"7px 10px",textAlign:"right",fontWeight:700,color:"#1e50a0"}}>₹{e.balance.toLocaleString()}</td>
+                </tr>
+              ))}
+              <tr style={{background:"#0f3172",color:"#fff",fontWeight:700}}>
+                <td colSpan={3} style={{padding:"10px",textAlign:"right"}}>TOTAL</td>
+                <td style={{padding:"10px",textAlign:"right"}}>₹{totalDebit.toLocaleString()}</td>
+                <td style={{padding:"10px",textAlign:"right"}}>₹{totalCredit.toLocaleString()}</td>
+                <td style={{padding:"10px",textAlign:"right",color:"#f59e0b",fontSize:"14px"}}>₹{closingBalance.toLocaleString()}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
   );
 }
