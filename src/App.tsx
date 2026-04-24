@@ -321,6 +321,7 @@ useEffect(()=>{
         {page==="attendance" && <Attendance {...ctx}/>}
         {page==="permit"     && <EntryPermit {...ctx}/>}
         {page==="invoice"    && <Invoice {...ctx}/>}
+        {page==="ledger"     && <Ledger {...ctx}/>}
       </div>
       {showWarning&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:99998}}>
@@ -404,6 +405,7 @@ const [importPwErr,setImportPwErr]=useState("");
     {id:"attendance",label:"Attend",icon:"✅"},
     {id:"permit",label:"Permit",icon:"🪪"},
     {id:"invoice",label:"Invoice",icon:"🧾"},
+    {id:"ledger",label:"Ledger",icon:"📒"},
   ];
 
   const restoreSite=s=>{setSites(p=>[...p,s]);setRecycleBin(p=>({...p,sites:(p.sites||[]).filter(x=>x.id!==s.id)}));};
@@ -1931,6 +1933,18 @@ UPI: {editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:dispBank
         onConfirm={pwModal.action}
         onCancel={()=>setPwModal(null)}
       />}
+    </div>
+  );
+}
+// ── LEDGER ────────────────────────────────────────────
+function Ledger({ledgers,setLedgers,invoices}){
+  return(
+    <div>
+      <h2 style={{margin:"0 0 16px",fontSize:"20px",fontWeight:800}}>📒 Ledger</h2>
+      <div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"40px"}}>
+        <div style={{fontSize:"32px",marginBottom:"10px"}}>📒</div>
+        <div>Ledger coming soon...</div>
+      </div>
     </div>
   );
 }
