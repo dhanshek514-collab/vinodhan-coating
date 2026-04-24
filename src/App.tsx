@@ -1958,14 +1958,14 @@ async function exportLedgerExcel(ledger,rows,totalDebit,totalCredit,closingBalan
 // ── LEDGER ────────────────────────────────────────────
 function Ledger({ledgers,setLedgers,invoices}){
   const [showAdd,setShowAdd]=useState(false);
-  const [form,setForm]=useState({name:"",region:"",client:"Swathi Engineering Agency",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});
+const [form,setForm]=useState({name:"",region:"",client:"Swathi Engineering Agency",measurePrefix:"",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});
   const [selLedger,setSelLedger]=useState(null);
 
   const addLedger=()=>{
     if(!form.name.trim())return;
-    const nl={id:Date.now(),name:form.name,region:form.region,client:form.client,enableTds:form.enableTds,tdsRate:Number(form.tdsRate),enableRetention:form.enableRetention,retentionRate:Number(form.retentionRate),entries:[]};
+    const nl={id:Date.now(),name:form.name,region:form.region,client:form.client,measurePrefix:form.measurePrefix,enableTds:form.enableTds,tdsRate:Number(form.tdsRate),enableRetention:form.enableRetention,retentionRate:Number(form.retentionRate),entries:[]};
     setLedgers(p=>[...p,nl]);
-    setForm({name:"",region:"",client:"Swathi Engineering Agency",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});
+    setForm({name:"",region:"",client:"Swathi Engineering Agency",measurePrefix:"",enableTds:false,tdsRate:1,enableRetention:false,retentionRate:5});
     setShowAdd(false);
   };
 
@@ -1988,6 +1988,7 @@ function Ledger({ledgers,setLedgers,invoices}){
           <div><label style={S.lbl}>Ledger Name</label><input value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="e.g. Karnataka Ledger" style={S.inp}/></div>
           <div><label style={S.lbl}>Region</label><input value={form.region} onChange={e=>setForm(p=>({...p,region:e.target.value}))} placeholder="e.g. Bengaluru" style={S.inp}/></div>
           <div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Client</label><input value={form.client} onChange={e=>setForm(p=>({...p,client:e.target.value}))} style={S.inp}/></div>
+<div style={{gridColumn:"1/-1"}}><label style={S.lbl}>Measurement Job No Prefix (e.g. SEAK or SEAC)</label><input value={form.measurePrefix} onChange={e=>setForm(p=>({...p,measurePrefix:e.target.value.toUpperCase()}))} placeholder="e.g. SEAK" style={S.inp}/></div>
           <div>
             <label style={S.lbl}>TDS</label>
             <select value={form.enableTds?"yes":"no"} onChange={e=>setForm(p=>({...p,enableTds:e.target.value==="yes"}))} style={S.inp}>
@@ -2021,6 +2022,7 @@ function Ledger({ledgers,setLedgers,invoices}){
             <div>
               <div style={{fontWeight:700,fontSize:"15px"}}>{l.name}</div>
               <div style={{fontSize:"11px",color:"#6b84a3"}}>{l.client} {l.region?`— ${l.region}`:""}</div>
+{l.measurePrefix&&<div style={{fontSize:"11px",fontWeight:600,color:"#1e50a0",marginTop:"2px"}}>Job Prefix: {l.measurePrefix}</div>}
               <div style={{display:"flex",gap:"6px",marginTop:"5px"}}>
                 {l.enableTds&&<span style={{...WORK_TYPE_COLOR["Manpower"],fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 8px"}}>TDS {l.tdsRate}%</span>}
                 {l.enableRetention&&<span style={{...WORK_TYPE_COLOR["SQM"],fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 8px"}}>Retention {l.retentionRate}%</span>}
@@ -2047,7 +2049,17 @@ function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
 
   // Pull invoices not yet added to this ledger
   const linkedInvIds=new Set((ledger.entries||[]).filter(e=>e.invoiceId).map(e=>e.invoiceId));
-  const availableInvoices=invoices.filter(inv=>!linkedInvIds.has(inv.id));
+const allLinkedInvIds=new Set(ledgers.flatMap(l=>(l.entries||[]).filter(e=>e.invoiceId).map(e=>e.invoiceId)));
+const availableInvoices=invoices.filter(inv=>{
+  if(allLinkedInvIds.has(inv.id))return false;
+  if(ledger.measurePrefix&&inv.measureNo&&inv.measureNo.trim()!==""){
+    return inv.measureNo.toUpperCase().startsWith(ledger.measurePrefix.toUpperCase());
+  }
+  if(ledger.measurePrefix&&(!inv.measureNo||inv.measureNo.trim()==="")){
+    return true;
+  }
+  return true;
+});
 
   const addInvoiceEntry=inv=>{
     const amount=inv.total||0;
