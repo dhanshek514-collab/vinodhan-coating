@@ -62,11 +62,13 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>VinoDhan C
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
   bar.appendChild(backBtn); bar.appendChild(title); bar.appendChild(dlBtn);
-  const content=document.createElement("div");
-  content.style.cssText="flex:1;overflow-y:auto;padding:24px;background:#f0f4f9;";
-  content.innerHTML=el.outerHTML;
-  overlay.appendChild(bar); overlay.appendChild(content);
+  const iframe=document.createElement("iframe");
+  iframe.style.cssText="flex:1;width:100%;border:none;background:#fff;";
+  overlay.appendChild(bar);overlay.appendChild(iframe);
   document.body.appendChild(overlay);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
 }
 
 const USERS = [
