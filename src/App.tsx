@@ -34,7 +34,9 @@ const printCSS = `@page{size:A4;margin:0;}body{font-family:'Segoe UI',sans-serif
 function printSection(id) {
   const el = document.getElementById(id);
   if(!el) return;
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>VinoDhan Coating</title><style>${printCSS}</style></head><body onload="window.print();">${el.outerHTML}</body></html>`;
+  const clone = el.cloneNode(true);
+clone.style.display = "block";
+const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>VinoDhan Coating</title><style>${printCSS}</style></head><body onload="window.print();">${clone.outerHTML}</body></html>`;
   const existing = document.getElementById("print-overlay");
   if(existing) document.body.removeChild(existing);
   const overlay = document.createElement("div");
