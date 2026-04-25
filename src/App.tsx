@@ -1543,7 +1543,7 @@ function EForm({form,setF}){return<div style={{display:"grid",gridTemplateColumn
 </div>;}
 
 // ── ATTENDANCE ────────────────────────────────────────
-function Attendance({workers,sites,attendance,setAttendance,assignments}){
+function Attendance({workers,sites,attendance,setAttendance,assignments,savedReports,setSavedReports}){
   const [tab,setTab]=useState("mark");
   const [selSite,setSelSite]=useState(sites[0]?.id||0);
   const [selDate,setSelDate]=useState(today);
@@ -1556,6 +1556,8 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
   const [repFromDate,setRepFromDate]=useState(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}-01`);
   const [repToDate,setRepToDate]=useState(today);
   const [unmarkConfirm,setUnmarkConfirm]=useState(null);
+  const [saveReportModal,setSaveReportModal]=useState(false);
+const [reportDelModal,setReportDelModal]=useState(null);
   const mark=(wid,status)=>setAttendance(p=>{
   const key=`${selDate}_${selSite}_${wid}`;
   if(status===null){const n={...p};delete n[key];return n;}
@@ -1643,7 +1645,46 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
   a.style.display="none";
   document.body.appendChild(a);a.click();document.body.removeChild(a);
 }} style={S.btn()}>🖨️ Print / PDF</button>
+          <button onClick={()=>setSaveReportModal(true)} style={{...S.btn("#166534"),marginLeft:"9px"}}>💾 Save Report</button>
         </div>
+        {saveReportModal&&(
+  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
+    <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"300px",textAlign:"center"}}>
+      <div style={{fontSize:"32px",marginBottom:"8px"}}>💾</div>
+      <h3 style={{margin:"0 0 7px"}}>Save Report?</h3>
+      <p style={{fontSize:"12px",color:"#6b84a3",margin:"0 0 16px"}}>
+        Save attendance report for <strong>{repSiteObj?.name}</strong> — <strong>{MONTHS[repMonth]} {repYear}</strong>
+      </p>
+      <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
+        <button onClick={()=>{
+          const report={
+            id:Date.now(),
+            siteId:repSite,
+            siteName:repSiteObj?.name||"—",
+            month:repMonth,
+            year:repYear,
+            client:repClient,
+            place:repPlace,
+            nameOfWork:repNameOfWork,
+            fromDate:repFromDate,
+            toDate:repToDate,
+            savedAt:today,
+            workers:repWorkers.map(w=>({
+              id:w.id,
+              name:w.name,
+              category:repAssign[w.id]||w.category,
+              attendance:days.map(d=>({day:d,val:getAttVal(w.id,d)}))
+            }))
+          };
+          setSavedReports(p=>[...p,report]);
+          setSaveReportModal(false);
+          alert("✅ Report saved successfully!");
+        }} style={S.btn("#166534")}>💾 Save</button>
+        <button onClick={()=>setSaveReportModal(false)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+      </div>
+    </div>
+  </div>
+)}
         <div id="att-report" style={{background:"#fff",padding:"24px",borderRadius:"12px",boxShadow:"0 2px 16px rgba(30,80,160,0.08)",overflowX:"auto"}}>
           <div style={{textAlign:"center",marginBottom:"20px",borderBottom:"2px solid #0f3172",paddingBottom:"14px"}}>
   <div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",marginBottom:"6px"}}>VinoDhan Coating</div>
@@ -1684,6 +1725,83 @@ function Attendance({workers,sites,attendance,setAttendance,assignments}){
           </div>
         </div>
       </>}
+      {/* Saved Reports List */}
+{savedReports.length>0&&<div style={{...S.card,marginTop:"20px"}}>
+  <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>📁 Saved Reports</h3>
+  {[...savedReports].sort((a,b)=>b.id-a.id).map(r=>(
+    <div key={r.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
+      <div>
+        <div style={{fontWeight:600,fontSize:"13px"}}>{r.siteName}</div>
+        <div style={{fontSize:"11px",color:"#6b84a3"}}>{MONTHS[r.month]} {r.year} — Saved {fmtDate(r.savedAt)}</div>
+      </div>
+      <div style={{display:"flex",gap:"7px"}}>
+        <button onClick={()=>{
+          const daysInM=getDaysInMonth(r.month,r.year);
+          const daysArr=Array.from({length:daysInM},(_,i)=>i+1);
+          const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:6mm;margin:0;font-size:11px;}table{border-collapse:collapse;width:100%;table-layout:fixed;}th,td{padding:3px 2px;font-size:9px;overflow:hidden;}th:first-child,td:first-child{width:100px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}th:not(:first-child),td:not(:first-child){width:18px;text-align:center;}h1,h2,h3,div{font-size:11px;}</style></head><body onload="window.print();">
+          <div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #0f3172;padding-bottom:14px;">
+            <div style="font-size:22px;font-weight:800;color:#0f3172;">VinoDhan Coating</div>
+            <div style="font-size:18px;font-weight:800;color:#0f3172;">ATTENDANCE REPORT</div>
+            <div style="font-size:12px;color:#6b84a3;margin-top:4px;">${MONTHS[r.month]} ${r.year}</div>
+          </div>
+          <table>
+            <thead><tr style="background:#0f3172;color:#fff;">
+              <th style="padding:8px 10px;text-align:left;">Worker Name</th>
+              ${daysArr.map(d=>`<th>${d}</th>`).join("")}
+              <th>Total</th>
+            </tr></thead>
+            <tbody>
+              ${r.workers.map((w,idx)=>{
+                const total=w.attendance.reduce((a,d)=>d.val==="Present"?a+1:d.val==="Half"?a+0.5:a,0);
+                return`<tr style="background:${idx%2===0?"#fff":"#f8faff"};">
+                  <td style="padding:7px 10px;font-weight:600;">${w.name}</td>
+                  ${daysArr.map(d=>{const v=w.attendance.find(a=>a.day===d)?.val||"";const bg=v==="Present"?"#dcfce7":v==="Half"?"#fef9c3":v==="Absent"?"#fee2e2":"transparent";const col=v==="Present"?"#166534":v==="Half"?"#d97706":v==="Absent"?"#991b1b":"#d1d5db";return`<td style="background:${bg};color:${col};font-weight:600;">${v==="Present"?"P":v==="Half"?"H":v==="Absent"?"A":""}</td>`;}).join("")}
+                  <td style="text-align:center;font-weight:800;color:#1e50a0;">${total}</td>
+                </tr>`;
+              }).join("")}
+            </tbody>
+          </table>
+          </body></html>`;
+          const existing=document.getElementById("print-overlay");
+          if(existing)document.body.removeChild(existing);
+          const overlay=document.createElement("div");
+          overlay.id="print-overlay";
+          overlay.style.cssText="position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;";
+          const bar=document.createElement("div");
+          bar.style.cssText="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;";
+          const backBtn=document.createElement("button");
+          backBtn.innerText="← Back";
+          backBtn.style.cssText="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
+          backBtn.onclick=()=>document.body.removeChild(overlay);
+          const dlBtn=document.createElement("button");
+          dlBtn.innerText="⬇️ Download & Print";
+          dlBtn.style.cssText="background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
+          dlBtn.onclick=()=>{
+            const a=document.createElement("a");
+            a.href="data:text/html;charset=utf-8,"+encodeURIComponent(html);
+            a.download=`Attendance-${r.siteName}-${MONTHS[r.month]}-${r.year}.html`;
+            a.style.display="none";document.body.appendChild(a);a.click();document.body.removeChild(a);
+          };
+          bar.appendChild(backBtn);bar.appendChild(dlBtn);
+          const iframe=document.createElement("iframe");
+          iframe.style.cssText="flex:1;width:100%;border:none;";
+          overlay.appendChild(bar);overlay.appendChild(iframe);
+          document.body.appendChild(overlay);
+          iframe.contentDocument.open();
+          iframe.contentDocument.write(html);
+          iframe.contentDocument.close();
+        }} style={{...S.btn(),padding:"5px 11px",fontSize:"12px"}}>🖨️ Print</button>
+        <button onClick={()=>setReportDelModal(r.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️</button>
+      </div>
+    </div>
+  ))}
+</div>}
+
+{reportDelModal&&<PwModal
+  title="Delete Saved Report?"
+  onConfirm={()=>{setSavedReports(p=>p.filter(r=>r.id!==reportDelModal));setReportDelModal(null);}}
+  onCancel={()=>setReportDelModal(null)}
+/>}
       {unmarkConfirm&&(
   <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
     <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"300px",textAlign:"center"}}>
