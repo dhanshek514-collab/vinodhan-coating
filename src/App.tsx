@@ -2326,6 +2326,64 @@ const availableInvoices=invoices.filter(inv=>{
           <button onClick={()=>{setRateForm({tdsRate:String(ledger.tdsRate),retentionRate:String(ledger.retentionRate)});setRatePwModal(true);}} style={{...S.btn("#7c3aed","#fff"),padding:"3px 8px",fontSize:"10px",marginTop:"6px"}}>✏️ Edit Rate</button>
         </div>}
       </div>
+      {/* Chennai Extra Cards — shows on any ledger that received a transfer */}
+{(()=>{
+  const transferCredits=(ledger.entries||[]).filter(e=>e.transferId&&e.credit>0);
+  const hasTransferReceived=transferCredits.length>0;
+  if(!hasTransferReceived)return null;
+
+  // Find source ledger (the one that sent transfer to this ledger)
+  const sourceLedger=ledgers.find(l=>
+    (l.entries||[]).some(e=>
+      e.transferId&&e.debit>0&&
+      transferCredits.some(ce=>ce.transferId===e.transferId)
+    )
+  );
+
+  const totalTransferReceived=transferCredits.reduce((a,e)=>a+(e.credit||0),0);
+
+  const thisTDS=(ledger.entries||[]).filter(e=>e.particulars.includes("TDS")).reduce((a,e)=>a+(e.debit||0),0);
+  const sourceTDS=sourceLedger?(sourceLedger.entries||[]).filter(e=>e.particulars.includes("TDS")).reduce((a,e)=>a+(e.debit||0),0):0;
+  const combinedTDS=thisTDS+sourceTDS;
+
+  const thisRetention=(ledger.entries||[]).filter(e=>e.particulars.includes("Retention")).reduce((a,e)=>a+(e.debit||0),0);
+  const sourceRetention=sourceLedger?(sourceLedger.entries||[]).filter(e=>e.particulars.includes("Retention")).reduce((a,e)=>a+(e.debit||0),0):0;
+  const combinedRetention=thisRetention+sourceRetention;
+
+  return(
+    <div style={{...S.card,marginBottom:"16px",border:"1.5px solid #0f3172"}}>
+      <h3 style={{margin:"0 0 12px",fontSize:"13px",fontWeight:700,color:"#0f3172"}}>
+        📊 Combined Summary {sourceLedger?`— ${sourceLedger.name} + ${ledger.name}`:""}
+      </h3>
+      <div style={{display:"flex",gap:"10px",overflowX:"auto",paddingBottom:"4px"}}>
+        {/* Transfer Received */}
+        <div style={{...S.card,background:"#fef9c3",boxShadow:"none",padding:"14px",minWidth:"150px",flexShrink:0}}>
+          <div style={{fontSize:"11px",fontWeight:700,color:"#d97706",marginBottom:"4px"}}>
+            TRANSFER FROM {sourceLedger?sourceLedger.name.toUpperCase():"SOURCE"}
+          </div>
+          <div style={{fontSize:"16px",fontWeight:800,color:"#0f3172"}}>₹{totalTransferReceived.toLocaleString()}</div>
+        </div>
+        {/* Combined TDS */}
+        <div style={{...S.card,background:"#fef9c3",boxShadow:"none",padding:"14px",minWidth:"150px",flexShrink:0}}>
+          <div style={{fontSize:"11px",fontWeight:700,color:"#d97706",marginBottom:"4px"}}>COMBINED TDS</div>
+          <div style={{fontSize:"16px",fontWeight:800,color:"#0f3172"}}>₹{combinedTDS.toLocaleString()}</div>
+          {sourceLedger&&<div style={{fontSize:"10px",color:"#6b84a3",marginTop:"4px"}}>
+            {sourceLedger.name}: ₹{sourceTDS.toLocaleString()} + {ledger.name}: ₹{thisTDS.toLocaleString()}
+          </div>}
+        </div>
+        {/* Combined Retention */}
+        <div style={{...S.card,background:"#ede9fe",boxShadow:"none",padding:"14px",minWidth:"150px",flexShrink:0}}>
+          <div style={{fontSize:"11px",fontWeight:700,color:"#5b21b6",marginBottom:"4px"}}>COMBINED RETENTION</div>
+          <div style={{fontSize:"16px",fontWeight:800,color:"#0f3172"}}>₹{combinedRetention.toLocaleString()}</div>
+          {sourceLedger&&<div style={{fontSize:"10px",color:"#6b84a3",marginTop:"4px"}}>
+            {sourceLedger.name}: ₹{sourceRetention.toLocaleString()} + {ledger.name}: ₹{thisRetention.toLocaleString()}
+          </div>}
+        </div>
+      </div>
+    </div>
+  );
+})()}
+
 {/* Transfer Form */}
 {showTransfer&&<div style={{...S.card,marginBottom:"14px",border:"1.5px solid #7c3aed"}}>
   <h3 style={{margin:"0 0 10px",fontSize:"13px",fontWeight:700}}>↔️ Transfer to Another Ledger</h3>
