@@ -1819,7 +1819,7 @@ const [reportDelModal,setReportDelModal]=useState(null);
   );
 }
 // ── ENTRY PERMIT ──────────────────────────────────────
-function EntryPermit({workers,sites,assignments,setWorkers}){
+function EntryPermit({workers,sites,assignments,setWorkers,savedPermits,setSavedPermits}){
   const [siteMode,setSiteMode]=useState("existing");
   const [selSite,setSelSite]=useState(sites[0]?.id||0);
   const [manualSiteName,setManualSiteName]=useState("");
@@ -1829,6 +1829,8 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
   const [fromDate,setFromDate]=useState(today);
   const [toDate,setToDate]=useState(today);
   const [showExecSign,setShowExecSign]=useState(true);
+  const [savePermitModal,setSavePermitModal]=useState(false);
+const [permitDelModal,setPermitDelModal]=useState(null);
 
   const siteObj=sites.find(s=>s.id===selSite);
   const permitSiteName=siteMode==="existing"?(siteObj?.name||"")    :manualSiteName;
@@ -1898,8 +1900,48 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
             })}
           </div>}
         </div>
-        <button onClick={()=>printSection("entry-permit")} style={{...S.btn(),opacity:selectedWorkers.length===0?0.5:1}} disabled={selectedWorkers.length===0}>🖨️ Print Entry Permit ({selectedWorkers.length} workers)</button>
+        <div style={{display:"flex",gap:"9px",flexWrap:"wrap"}}>
+  <button onClick={()=>printSection("entry-permit")} style={{...S.btn(),opacity:selectedWorkers.length===0?0.5:1}} disabled={selectedWorkers.length===0}>🖨️ Print Entry Permit ({selectedWorkers.length} workers)</button>
+  <button onClick={()=>setSavePermitModal(true)} style={{...S.btn("#166534"),opacity:selectedWorkers.length===0?0.5:1}} disabled={selectedWorkers.length===0}>💾 Save Permit</button>
+</div>
       </div>
+      {savePermitModal&&(
+  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
+    <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"300px",textAlign:"center"}}>
+      <div style={{fontSize:"32px",marginBottom:"8px"}}>💾</div>
+      <h3 style={{margin:"0 0 7px"}}>Save Entry Permit?</h3>
+      <p style={{fontSize:"12px",color:"#6b84a3",margin:"0 0 16px"}}>
+        Save permit for <strong>{permitSiteName}</strong> with <strong>{permitWorkers.length} workers</strong>
+      </p>
+      <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
+        <button onClick={()=>{
+          const permit={
+            id:Date.now(),
+            siteName:permitSiteName,
+            client:permitClient,
+            place:permitPlace,
+            fromDate,
+            toDate,
+            savedAt:today,
+            workers:permitWorkers.map(w=>({
+              id:w.id,
+              name:w.name,
+              category:sa[w.id]||w.category,
+              aadhaar:w.aadhaar||"",
+              phone:w.phone||"",
+              dob:w.dob||"",
+              photo:w.photo||""
+            }))
+          };
+          setSavedPermits(p=>[...p,permit]);
+          setSavePermitModal(false);
+          alert("✅ Permit saved successfully!");
+        }} style={S.btn("#166534")}>💾 Save</button>
+        <button onClick={()=>setSavePermitModal(false)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+      </div>
+    </div>
+  </div>
+)}
       {permitWorkers.length>0?(
         <div id="entry-permit" style={{background:"#fff",padding:"28px",borderRadius:"12px",boxShadow:"0 2px 16px rgba(30,80,160,0.08)"}}>
           <div style={{textAlign:"center",marginBottom:"20px",paddingBottom:"14px",borderBottom:"2px solid #0f3172"}}><div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",letterSpacing:"2px"}}>ENTRY PERMIT</div></div>
@@ -1936,6 +1978,88 @@ function EntryPermit({workers,sites,assignments,setWorkers}){
       ):(
         <div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"40px"}}><div style={{fontSize:"32px",marginBottom:"10px"}}>🪪</div><div>Select workers above to preview the entry permit</div></div>
       )}
+
+{/* Saved Permits List */}
+{savedPermits.length>0&&<div style={{...S.card,marginTop:"20px"}}>
+  <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>📁 Saved Permits</h3>
+  {[...savedPermits].sort((a,b)=>b.id-a.id).map(p=>(
+    <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
+      <div>
+        <div style={{fontWeight:600,fontSize:"13px"}}>{p.siteName}</div>
+        <div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtDate(p.fromDate)} → {fmtDate(p.toDate)} — {p.workers.length} workers</div>
+        <div style={{fontSize:"11px",color:"#6b84a3"}}>Saved {fmtDate(p.savedAt)}</div>
+      </div>
+      <div style={{display:"flex",gap:"7px"}}>
+        <button onClick={()=>{
+          const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Entry Permit</title><style>@page{size:A4;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:15mm;margin:0;font-size:13px;}table{border-collapse:collapse;width:100%;}</style></head><body onload="window.print();">
+          <div style="text-align:center;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #0f3172;">
+            <div style="font-size:22px;font-weight:800;color:#0f3172;letter-spacing:2px;">ENTRY PERMIT</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 30px;margin-bottom:24px;font-size:13px;">
+            ${[["Client",p.client],["Contractor","VinoDhan Coating"],["Site Name",p.siteName],["Place",p.place],["Valid From",fmtDate(p.fromDate)],["Valid To",fmtDate(p.toDate)]].map(([lbl,val])=>`
+              <div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #f0f4f9;">
+                <span style="font-weight:700;color:#6b84a3;min-width:100px;font-size:12px;">${lbl}</span>
+                <span style="color:#1a2b4a;font-weight:600;">: ${val}</span>
+              </div>
+            `).join("")}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            ${p.workers.map(w=>`
+              <div style="border:1.5px solid #e5e7eb;border-radius:10px;overflow:hidden;display:flex;min-height:130px;">
+                <div style="width:100px;flex-shrink:0;background:#f0f4f9;display:flex;align-items:center;justify-content:center;border-right:1px solid #e5e7eb;">
+                  ${w.photo?`<img src="${w.photo}" style="width:100px;height:130px;object-fit:cover;"/>`:`<div style="text-align:center;padding:10px;"><div style="font-size:32px;">👤</div></div>`}
+                </div>
+                <div style="flex:1;padding:12px 14px;font-size:12px;">
+                  <div style="font-weight:800;font-size:14px;color:#0f3172;margin-bottom:8px;">${w.name}</div>
+                  <div style="display:flex;gap:6px;margin-bottom:5px;"><span style="color:#6b84a3;font-weight:600;min-width:65px;">Category</span><span>: ${w.category}</span></div>
+                  <div style="display:flex;gap:6px;margin-bottom:5px;"><span style="color:#6b84a3;font-weight:600;min-width:65px;">Aadhaar</span><span>: ${w.aadhaar||"—"}</span></div>
+                  <div style="display:flex;gap:6px;margin-bottom:5px;"><span style="color:#6b84a3;font-weight:600;min-width:65px;">Phone</span><span>: ${w.phone||"—"}</span></div>
+                  <div style="display:flex;gap:6px;margin-bottom:5px;"><span style="color:#6b84a3;font-weight:600;min-width:65px;">DOB</span><span>: ${w.dob?fmtDate(w.dob):"—"}</span></div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+          </body></html>`;
+          const existing=document.getElementById("print-overlay");
+          if(existing)document.body.removeChild(existing);
+          const overlay=document.createElement("div");
+          overlay.id="print-overlay";
+          overlay.style.cssText="position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;";
+          const bar=document.createElement("div");
+          bar.style.cssText="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;";
+          const backBtn=document.createElement("button");
+          backBtn.innerText="← Back";
+          backBtn.style.cssText="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
+          backBtn.onclick=()=>document.body.removeChild(overlay);
+          const dlBtn=document.createElement("button");
+          dlBtn.innerText="⬇️ Download & Print";
+          dlBtn.style.cssText="background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
+          dlBtn.onclick=()=>{
+            const a=document.createElement("a");
+            a.href="data:text/html;charset=utf-8,"+encodeURIComponent(html);
+            a.download=`Permit-${p.siteName}-${p.savedAt}.html`;
+            a.style.display="none";document.body.appendChild(a);a.click();document.body.removeChild(a);
+          };
+          bar.appendChild(backBtn);bar.appendChild(dlBtn);
+          const iframe=document.createElement("iframe");
+          iframe.style.cssText="flex:1;width:100%;border:none;";
+          overlay.appendChild(bar);overlay.appendChild(iframe);
+          document.body.appendChild(overlay);
+          iframe.contentDocument.open();
+          iframe.contentDocument.write(html);
+          iframe.contentDocument.close();
+        }} style={{...S.btn(),padding:"5px 11px",fontSize:"12px"}}>🖨️ Print</button>
+        <button onClick={()=>setPermitDelModal(p.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️</button>
+      </div>
+    </div>
+  ))}
+</div>}
+
+{permitDelModal&&<PwModal
+  title="Delete Saved Permit?"
+  onConfirm={()=>{setSavedPermits(p=>p.filter(x=>x.id!==permitDelModal));setPermitDelModal(null);}}
+  onCancel={()=>setPermitDelModal(null)}
+/>}
     </div>
   );
 }
