@@ -2575,7 +2575,7 @@ const availableInvoices=invoices.filter(inv=>{
       />}
       
       {/* PRINTABLE LEDGER */}
-      <div id="ledger-print" style={{display:"none"}}>
+      <div id="ledger-print" style={{position:"absolute",left:"-9999px",top:0,width:"210mm"}}>
         <div style={{fontFamily:"'Segoe UI',sans-serif",color:"#1a2b4a",padding:"10mm"}}>
           <div style={{textAlign:"center",marginBottom:"16px",borderBottom:"2px solid #0f3172",paddingBottom:"12px"}}>
             <div style={{fontSize:"20px",fontWeight:800,color:"#0f3172"}}>VinoDhan Coating</div>
