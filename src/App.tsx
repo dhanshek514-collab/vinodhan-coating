@@ -2298,7 +2298,81 @@ const availableInvoices=invoices.filter(inv=>{
         <div style={{display:"flex",gap:"7px",flexWrap:"wrap"}}>
   <button onClick={()=>setShowAdd(p=>!p)} style={S.btn()}>+ Add Entry</button>
   <button onClick={()=>setShowTransfer(p=>!p)} style={S.btn("#7c3aed")}>↔️ Transfer</button>
-  <button onClick={()=>printSection("ledger-print")} style={S.btn("#166534")}>🖨️ Print</button>
+  <button onClick={()=>{
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${ledger.name}</title><style>${printCSS}</style></head><body onload="window.print();">
+  <div style="font-family:'Segoe UI',sans-serif;color:#1a2b4a;padding:10mm;">
+    <div style="text-align:center;margin-bottom:16px;border-bottom:2px solid #0f3172;padding-bottom:12px;">
+      <div style="font-size:20px;font-weight:800;color:#0f3172;">VinoDhan Coating</div>
+      <div style="font-size:16px;font-weight:700;color:#0f3172;margin-top:4px;">${ledger.name}</div>
+      <div style="font-size:12px;color:#6b84a3;margin-top:4px;">Client: ${ledger.client}${ledger.region?" — "+ledger.region:""}</div>
+    </div>
+    <div style="display:flex;gap:20px;margin-bottom:16px;font-size:12px;">
+      <div><span style="font-weight:600;color:#6b84a3;">Total Credit: </span><span style="font-weight:700;color:#166534;">₹${totalCredit.toLocaleString()}</span></div>
+      <div><span style="font-weight:600;color:#6b84a3;">Total Debit: </span><span style="font-weight:700;color:#991b1b;">₹${totalDebit.toLocaleString()}</span></div>
+      <div><span style="font-weight:600;color:#6b84a3;">Closing Balance: </span><span style="font-weight:700;color:#1e50a0;">₹${closingBalance.toLocaleString()}</span></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead>
+        <tr style="background:#0f3172;color:#fff;">
+          <th style="padding:8px 10px;text-align:left;">Date</th>
+          <th style="padding:8px 10px;text-align:left;">Particulars</th>
+          <th style="padding:8px 10px;text-align:left;">Note</th>
+          <th style="padding:8px 10px;text-align:right;">Debit (₹)</th>
+          <th style="padding:8px 10px;text-align:right;">Credit (₹)</th>
+          <th style="padding:8px 10px;text-align:right;">Balance (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((e,idx)=>`
+          <tr style="background:${e.transferId?"#fef9c3":idx%2===0?"#fff":"#f8faff"};border-bottom:1px solid #e5e7eb;">
+            <td style="padding:7px 10px;white-space:nowrap;">${fmtDate(e.date)}</td>
+            <td style="padding:7px 10px;font-weight:600;">${e.particulars}</td>
+            <td style="padding:7px 10px;color:#6b84a3;font-size:11px;">${e.note||"—"}</td>
+            <td style="padding:7px 10px;text-align:right;color:#991b1b;font-weight:600;">${e.debit>0?"₹"+e.debit.toLocaleString():"—"}</td>
+            <td style="padding:7px 10px;text-align:right;color:#166534;font-weight:600;">${e.credit>0?"₹"+e.credit.toLocaleString():"—"}</td>
+            <td style="padding:7px 10px;text-align:right;font-weight:700;color:#1e50a0;">₹${e.balance.toLocaleString()}</td>
+          </tr>
+        `).join("")}
+        <tr style="background:#0f3172;color:#fff;font-weight:700;">
+          <td colspan="3" style="padding:10px;text-align:right;">TOTAL</td>
+          <td style="padding:10px;text-align:right;">₹${totalDebit.toLocaleString()}</td>
+          <td style="padding:10px;text-align:right;">₹${totalCredit.toLocaleString()}</td>
+          <td style="padding:10px;text-align:right;color:#f59e0b;font-size:14px;">₹${closingBalance.toLocaleString()}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  </body></html>`;
+  const existing=document.getElementById("print-overlay");
+  if(existing)document.body.removeChild(existing);
+  const overlay=document.createElement("div");
+  overlay.id="print-overlay";
+  overlay.style.cssText="position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;";
+  const bar=document.createElement("div");
+  bar.style.cssText="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;flex-wrap:wrap;";
+  const backBtn=document.createElement("button");
+  backBtn.innerText="← Back";
+  backBtn.style.cssText="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
+  backBtn.onclick=()=>document.body.removeChild(overlay);
+  const title=document.createElement("div");
+  title.innerText="Preview — scroll to review";
+  title.style.cssText="color:#fff;font-size:13px;font-weight:600;flex:1;text-align:center;";
+  const dlBtn=document.createElement("button");
+  dlBtn.innerText="⬇️ Download & Print";
+  dlBtn.style.cssText="background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
+  dlBtn.onclick=()=>{
+    const encoded="data:text/html;charset=utf-8,"+encodeURIComponent(html);
+    const a=document.createElement("a");
+    a.href=encoded;a.download=`${ledger.name}-${new Date().toISOString().split("T")[0]}.html`;
+    a.style.display="none";document.body.appendChild(a);a.click();document.body.removeChild(a);
+  };
+  bar.appendChild(backBtn);bar.appendChild(title);bar.appendChild(dlBtn);
+  const content=document.createElement("div");
+  content.style.cssText="flex:1;overflow-y:auto;padding:24px;background:#f0f4f9;";
+  content.innerHTML=html;
+  overlay.appendChild(bar);overlay.appendChild(content);
+  document.body.appendChild(overlay);
+}} style={S.btn("#166534")}>🖨️ Print</button>
   <button onClick={()=>exportLedgerExcel(ledger,rows,totalDebit,totalCredit,closingBalance)} style={S.btn("#d97706","#fff")}>📊 Excel</button>
 </div>
       </div>
@@ -2573,52 +2647,6 @@ const availableInvoices=invoices.filter(inv=>{
         onConfirm={()=>{deleteEntry(delEntryModal);setDelEntryModal(null);}}
         onCancel={()=>setDelEntryModal(null)}
       />}
-      
-      {/* PRINTABLE LEDGER */}
-      <div id="ledger-print" style={{position:"absolute",left:"-9999px",top:0,width:"210mm"}}>
-        <div style={{fontFamily:"'Segoe UI',sans-serif",color:"#1a2b4a",padding:"10mm"}}>
-          <div style={{textAlign:"center",marginBottom:"16px",borderBottom:"2px solid #0f3172",paddingBottom:"12px"}}>
-            <div style={{fontSize:"20px",fontWeight:800,color:"#0f3172"}}>VinoDhan Coating</div>
-            <div style={{fontSize:"16px",fontWeight:700,color:"#0f3172",marginTop:"4px"}}>{ledger.name}</div>
-            <div style={{fontSize:"12px",color:"#6b84a3",marginTop:"4px"}}>Client: {ledger.client} {ledger.region?`— ${ledger.region}`:""}</div>
-          </div>
-          <div style={{display:"flex",gap:"20px",marginBottom:"16px",fontSize:"12px"}}>
-            <div><span style={{fontWeight:600,color:"#6b84a3"}}>Total Credit: </span><span style={{fontWeight:700,color:"#166534"}}>₹{totalCredit.toLocaleString()}</span></div>
-            <div><span style={{fontWeight:600,color:"#6b84a3"}}>Total Debit: </span><span style={{fontWeight:700,color:"#991b1b"}}>₹{totalDebit.toLocaleString()}</span></div>
-            <div><span style={{fontWeight:600,color:"#6b84a3"}}>Closing Balance: </span><span style={{fontWeight:700,color:"#1e50a0"}}>₹{closingBalance.toLocaleString()}</span></div>
-          </div>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
-            <thead>
-              <tr style={{background:"#0f3172",color:"#fff"}}>
-                <th style={{padding:"8px 10px",textAlign:"left",fontWeight:600}}>Date</th>
-                <th style={{padding:"8px 10px",textAlign:"left",fontWeight:600}}>Particulars</th>
-                <th style={{padding:"8px 10px",textAlign:"left",fontWeight:600}}>Note</th>
-                <th style={{padding:"8px 10px",textAlign:"right",fontWeight:600}}>Debit (₹)</th>
-                <th style={{padding:"8px 10px",textAlign:"right",fontWeight:600}}>Credit (₹)</th>
-                <th style={{padding:"8px 10px",textAlign:"right",fontWeight:600}}>Balance (₹)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((e,idx)=>(
-                <tr key={e.id} style={{background:e.transferId?"#fef9c3":idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #e5e7eb"}}>
-                  <td style={{padding:"7px 10px",whiteSpace:"nowrap"}}>{fmtDate(e.date)}</td>
-                  <td style={{padding:"7px 10px",fontWeight:600}}>{e.particulars}</td>
-                  <td style={{padding:"7px 10px",color:"#6b84a3",fontSize:"11px"}}>{e.note||"—"}</td>
-                  <td style={{padding:"7px 10px",textAlign:"right",color:"#991b1b",fontWeight:600}}>{e.debit>0?`₹${e.debit.toLocaleString()}`:"—"}</td>
-                  <td style={{padding:"7px 10px",textAlign:"right",color:"#166534",fontWeight:600}}>{e.credit>0?`₹${e.credit.toLocaleString()}`:"—"}</td>
-                  <td style={{padding:"7px 10px",textAlign:"right",fontWeight:700,color:"#1e50a0"}}>₹{e.balance.toLocaleString()}</td>
-                </tr>
-              ))}
-              <tr style={{background:"#0f3172",color:"#fff",fontWeight:700}}>
-                <td colSpan={3} style={{padding:"10px",textAlign:"right"}}>TOTAL</td>
-                <td style={{padding:"10px",textAlign:"right"}}>₹{totalDebit.toLocaleString()}</td>
-                <td style={{padding:"10px",textAlign:"right"}}>₹{totalCredit.toLocaleString()}</td>
-                <td style={{padding:"10px",textAlign:"right",color:"#f59e0b",fontSize:"14px"}}>₹{closingBalance.toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 }
