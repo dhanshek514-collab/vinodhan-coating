@@ -701,7 +701,7 @@ function DashSiteWorks({works}){
   );
 }
 
-function Dashboard({user,workers,sites,invoices,landscape}){
+function Dashboard({user,workers,sites,invoices,ledgers,landscape}){
   const totalSqm=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="SQM"||!w.workType).reduce((a,w)=>a+(Number(w.area)||0),sum),0);
   const totalRmt=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="RMT").reduce((a,w)=>a+(Number(w.area)||0),sum),0);
   const totalMp=sites.reduce((sum,s)=>(s.works||[]).filter(w=>w.workType==="Manpower").reduce((a,w)=>a+calcWork(w),sum),0);
@@ -714,6 +714,34 @@ const applicators=workers.filter(w=>w.category==="Applicator").length;
 const semiApplicators=workers.filter(w=>w.category==="Semi-Applicator").length;
 const helpers=workers.filter(w=>w.category==="Helper").length;
   const [expandCard,setExpandCard]=useState(null);
+  const [expandLedger,setExpandLedger]=useState(null);
+  // Ledger calculations
+const allEntries=ledgers.flatMap(l=>(l.entries||[]).map(e=>({...e,ledgerName:l.name,ledgerPrefix:l.measurePrefix||""})));
+const totalTDS=allEntries.filter(e=>e.particulars.includes("TDS")).reduce((a,e)=>a+(e.debit||0),0);
+const totalRetention=allEntries.filter(e=>e.particulars.includes("Retention")).reduce((a,e)=>a+(e.debit||0),0);
+
+// Outstanding per ledger
+const ledgerBalances=ledgers.map(l=>{
+  const entries=l.entries||[];
+  const credit=entries.reduce((a,e)=>a+(e.credit||0),0);
+  const debit=entries.reduce((a,e)=>a+(e.debit||0),0);
+  return{id:l.id,name:l.name,balance:credit-debit,prefix:l.measurePrefix||""};
+});
+const totalOutstanding=ledgerBalances.reduce((a,l)=>a+l.balance,0);
+
+// Tally
+const totalInvoiced=invoices.reduce((a,inv)=>a+(inv.total||0),0);
+const bankPayments=ledgers
+  .filter(l=>!l.measurePrefix||!l.measurePrefix.toUpperCase().startsWith("SEAK"))
+  .flatMap(l=>(l.entries||[]))
+  .filter(e=>e.particulars==="Bank Payment")
+  .reduce((a,e)=>a+(e.debit||0),0);
+const nonSeakOutstanding=ledgerBalances
+  .filter(l=>!l.prefix.toUpperCase().startsWith("SEAK"))
+  .reduce((a,l)=>a+l.balance,0);
+const tallySum=totalTDS+totalRetention+bankPayments+nonSeakOutstanding;
+const tallyDiff=totalInvoiced-tallySum;
+const tallyOk=Math.abs(tallyDiff)<1;
   return(
     <div>
       <h2 style={{margin:"0 0 4px",fontSize:"20px",fontWeight:800}}>Good day, {user.name}! 👋</h2>
@@ -802,6 +830,120 @@ const helpers=workers.filter(w=>w.category==="Helper").length;
     <div style={{fontSize:"10px",color:"#9d174d",marginTop:"4px",fontWeight:600}}>{expandCard==="inv"?"▲ Hide":"▼ Details"}</div>
   </div>
 </div>
+      {/* ROW 3 — Ledger Summary */}
+{ledgers.length>0&&<div style={{display:"flex",gap:"12px",marginBottom:"20px",overflowX:"auto",paddingBottom:"8px",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
+  {/* Outstanding */}
+  <div onClick={()=>setExpandLedger(expandLedger==="outstanding"?null:"outstanding")} style={{...S.card,background:"#f0fdf4",boxShadow:"none",padding:"16px",minWidth:"150px",flexShrink:0,cursor:"pointer"}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>💼</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalOutstanding.toLocaleString()}</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Outstanding</div>
+    <div style={{fontSize:"10px",color:"#166534",marginTop:"4px",fontWeight:600}}>{expandLedger==="outstanding"?"▲ Hide":"▼ Details"}</div>
+  </div>
+  {/* TDS */}
+  <div onClick={()=>setExpandLedger(expandLedger==="tds"?null:"tds")} style={{...S.card,background:"#fef9c3",boxShadow:"none",padding:"16px",minWidth:"150px",flexShrink:0,cursor:"pointer"}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>🧾</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalTDS.toLocaleString()}</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Total TDS</div>
+    <div style={{fontSize:"10px",color:"#d97706",marginTop:"4px",fontWeight:600}}>{expandLedger==="tds"?"▲ Hide":"▼ Details"}</div>
+  </div>
+  {/* Retention */}
+  <div onClick={()=>setExpandLedger(expandLedger==="retention"?null:"retention")} style={{...S.card,background:"#ede9fe",boxShadow:"none",padding:"16px",minWidth:"150px",flexShrink:0,cursor:"pointer"}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>🔒</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalRetention.toLocaleString()}</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Total Retention</div>
+    <div style={{fontSize:"10px",color:"#5b21b6",marginTop:"4px",fontWeight:600}}>{expandLedger==="retention"?"▲ Hide":"▼ Details"}</div>
+  </div>
+  {/* Tally */}
+  <div onClick={()=>setExpandLedger(expandLedger==="tally"?null:"tally")} style={{...S.card,background:tallyOk?"#dcfce7":"#fee2e2",boxShadow:"none",padding:"16px",minWidth:"150px",flexShrink:0,cursor:"pointer"}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>{tallyOk?"✅":"❌"}</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>{tallyOk?"Balanced":`₹${Math.abs(tallyDiff).toLocaleString()}`}</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Tally</div>
+    <div style={{fontSize:"10px",color:tallyOk?"#166534":"#991b1b",marginTop:"4px",fontWeight:600}}>{expandLedger==="tally"?"▲ Hide":"▼ Details"}</div>
+  </div>
+</div>}
+      {expandLedger&&ledgers.length>0&&<div style={{...S.card,marginBottom:"20px"}}>
+  {expandLedger==="outstanding"&&<>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+      <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>💼 Outstanding per Ledger</h3>
+      <span style={{fontWeight:800,color:"#166534",fontSize:"14px"}}>₹{totalOutstanding.toLocaleString()} Total</span>
+    </div>
+    {ledgerBalances.map((l,i)=>(
+      <div key={l.id} style={{marginBottom:"10px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px",marginBottom:"3px"}}>
+          <span style={{fontWeight:600,color:"#1a2b4a"}}>{l.name}</span>
+          <span style={{fontWeight:700,color:l.balance>=0?"#166534":"#991b1b"}}>₹{l.balance.toLocaleString()}</span>
+        </div>
+        <div style={{background:"#f0f4f9",borderRadius:"4px",height:"10px",overflow:"hidden"}}>
+          <div style={{height:"100%",borderRadius:"4px",background:l.balance>=0?"linear-gradient(90deg,#166534,#4ade80)":"linear-gradient(90deg,#991b1b,#f87171)",width:`${totalOutstanding>0?(Math.abs(l.balance)/Math.abs(totalOutstanding))*100:0}%`,transition:"width 0.5s"}}/>
+        </div>
+      </div>
+    ))}
+  </>}
+  {expandLedger==="tds"&&<>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+      <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>🧾 TDS per Ledger</h3>
+      <span style={{fontWeight:800,color:"#d97706",fontSize:"14px"}}>₹{totalTDS.toLocaleString()} Total</span>
+    </div>
+    {ledgers.map(l=>{
+      const tds=(l.entries||[]).filter(e=>e.particulars.includes("TDS")).reduce((a,e)=>a+(e.debit||0),0);
+      if(tds===0)return null;
+      return(
+        <div key={l.id} style={{marginBottom:"10px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px",marginBottom:"3px"}}>
+            <span style={{fontWeight:600,color:"#1a2b4a"}}>{l.name}</span>
+            <span style={{fontWeight:700,color:"#d97706"}}>₹{tds.toLocaleString()}</span>
+          </div>
+          <div style={{background:"#fef9c3",borderRadius:"4px",height:"10px",overflow:"hidden"}}>
+            <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#d97706,#fbbf24)",width:`${totalTDS>0?(tds/totalTDS)*100:0}%`,transition:"width 0.5s"}}/>
+          </div>
+        </div>
+      );
+    })}
+  </>}
+  {expandLedger==="retention"&&<>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+      <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>🔒 Retention per Ledger</h3>
+      <span style={{fontWeight:800,color:"#5b21b6",fontSize:"14px"}}>₹{totalRetention.toLocaleString()} Total</span>
+    </div>
+    {ledgers.map(l=>{
+      const ret=(l.entries||[]).filter(e=>e.particulars.includes("Retention")).reduce((a,e)=>a+(e.debit||0),0);
+      if(ret===0)return null;
+      return(
+        <div key={l.id} style={{marginBottom:"10px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px",marginBottom:"3px"}}>
+            <span style={{fontWeight:600,color:"#1a2b4a"}}>{l.name}</span>
+            <span style={{fontWeight:700,color:"#5b21b6"}}>₹{ret.toLocaleString()}</span>
+          </div>
+          <div style={{background:"#ede9fe",borderRadius:"4px",height:"10px",overflow:"hidden"}}>
+            <div style={{height:"100%",borderRadius:"4px",background:"linear-gradient(90deg,#5b21b6,#a78bfa)",width:`${totalRetention>0?(ret/totalRetention)*100:0}%`,transition:"width 0.5s"}}/>
+          </div>
+        </div>
+      );
+    })}
+  </>}
+  {expandLedger==="tally"&&<>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+      <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>{tallyOk?"✅ Ledger Balanced":"❌ Ledger Mismatch"}</h3>
+      <span style={{fontWeight:800,color:tallyOk?"#166534":"#991b1b",fontSize:"14px"}}>{tallyOk?"All Good":`Diff: ₹${Math.abs(tallyDiff).toLocaleString()}`}</span>
+    </div>
+    {[
+      ["Total Invoiced","#0f3172",totalInvoiced],
+      ["Less: TDS","#d97706",-totalTDS],
+      ["Less: Retention","#5b21b6",-totalRetention],
+      ["Less: Bank Payments","#166534",-bankPayments],
+      ["Outstanding Balance","#1e50a0",nonSeakOutstanding],
+    ].map(([lbl,color,val])=>(
+      <div key={lbl} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #f0f4f9",fontSize:"13px"}}>
+        <span style={{color:"#6b84a3",fontWeight:600}}>{lbl}</span>
+        <span style={{fontWeight:700,color}}>{val<0?`-₹${Math.abs(val).toLocaleString()}`:`₹${val.toLocaleString()}`}</span>
+      </div>
+    ))}
+    <div style={{display:"flex",justifyContent:"space-between",padding:"10px 0",fontSize:"14px",marginTop:"4px"}}>
+      <span style={{fontWeight:700}}>Difference</span>
+      <span style={{fontWeight:800,color:tallyOk?"#166534":"#991b1b"}}>{tallyOk?"₹0 ✅":`₹${Math.abs(tallyDiff).toLocaleString()} ❌`}</span>
+    </div>
+  </>}
+</div>}
       {expandCard&&(
   <div style={{...S.card,marginBottom:"20px"}}>
     {expandCard==="sqm"&&<>
