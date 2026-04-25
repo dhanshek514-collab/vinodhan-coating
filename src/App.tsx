@@ -758,6 +758,8 @@ const tallyOk=Math.abs(tallyDiff)<1;
       <h2 style={{margin:"0 0 4px",fontSize:"20px",fontWeight:800}}>Good day, {user.name}! 👋</h2>
       <p style={{margin:"0 0 20px",color:"#6b84a3",fontSize:"12px"}}>{today}</p>
       {/* ROW 1 — Summary cards */}
+<div style={{background:"#f8faff",borderRadius:"16px",padding:"12px 12px 4px",marginBottom:"16px"}}>
+<div style={{fontSize:"11px",fontWeight:700,color:"#9db3cc",letterSpacing:"1.5px",marginBottom:"10px"}}>👥 TEAM & REVENUE</div>
 <div style={{display:"flex",gap:"12px",marginBottom:"12px",overflowX:"auto",paddingBottom:"8px",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
   {/* Workers */}
   <div style={{...S.card,background:"#dbeafe",boxShadow:"none",padding:"16px",minWidth:"160px",flexShrink:0}}>
@@ -793,7 +795,10 @@ const tallyOk=Math.abs(tallyDiff)<1;
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Revenue</div>
   </div>
 </div>
+</div>
 {/* ROW 2 — Breakdown cards */}
+<div style={{background:"#f0f4f9",borderRadius:"16px",padding:"12px 12px 4px",marginBottom:"16px"}}>
+<div style={{fontSize:"11px",fontWeight:700,color:"#9db3cc",letterSpacing:"1.5px",marginBottom:"10px"}}>📐 WORK SUMMARY</div>
 <div style={{display:"flex",gap:"12px",marginBottom:"20px",overflowX:"auto",paddingBottom:"8px",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
   {/* SQM */}
   <div onClick={()=>setExpandCard(expandCard==="sqm"?null:"sqm")} style={{...S.card,background:"#ede9fe",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0,cursor:"pointer"}}>
@@ -841,8 +846,11 @@ const tallyOk=Math.abs(tallyDiff)<1;
     <div style={{fontSize:"10px",color:"#9d174d",marginTop:"4px",fontWeight:600}}>{expandCard==="inv"?"▲ Hide":"▼ Details"}</div>
   </div>
 </div>
-      {/* ROW 3 — Ledger Summary */}
-{ledgers.length>0&&<div style={{display:"flex",gap:"12px",marginBottom:"20px",overflowX:"auto",paddingBottom:"8px",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
+</div>
+{/* ROW 3 — Ledger Summary */}
+{ledgers.length>0&&<div style={{background:"#f0f6ff",borderRadius:"16px",padding:"12px 12px 4px",marginBottom:"16px"}}>
+<div style={{fontSize:"11px",fontWeight:700,color:"#9db3cc",letterSpacing:"1.5px",marginBottom:"10px"}}>💰 FINANCIAL OVERVIEW</div>
+<div style={{display:"flex",gap:"12px",marginBottom:"20px",overflowX:"auto",paddingBottom:"8px",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
   {/* Outstanding */}
   <div onClick={()=>setExpandLedger(expandLedger==="outstanding"?null:"outstanding")} style={{...S.card,background:"#f0fdf4",boxShadow:"none",padding:"16px",minWidth:"150px",flexShrink:0,cursor:"pointer"}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>💼</div>
@@ -871,6 +879,7 @@ const tallyOk=Math.abs(tallyDiff)<1;
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Tally</div>
     <div style={{fontSize:"10px",color:tallyOk?"#166534":"#991b1b",marginTop:"4px",fontWeight:600}}>{expandLedger==="tally"?"▲ Hide":"▼ Details"}</div>
   </div>
+</div>
 </div>}
       {expandLedger&&ledgers.length>0&&<div style={{...S.card,marginBottom:"20px"}}>
   {expandLedger==="outstanding"&&<>
