@@ -2062,6 +2062,7 @@ function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
   const [entryForm,setEntryForm]=useState({date:today,particulars:"Bank Payment",customParticulars:"",debit:"",credit:"",note:""});
   const [pwModal,setPwModal]=useState(null);
 const [delEntryModal,setDelEntryModal]=useState(null);
+  const [editEntryModal,setEditEntryModal]=useState(null);
 const [editRateModal,setEditRateModal]=useState(null);
 const [rateForm,setRateForm]=useState({tdsRate:"",retentionRate:""});
 const [ratePwModal,setRatePwModal]=useState(false);
@@ -2199,21 +2200,21 @@ const availableInvoices=invoices.filter(inv=>{
   </div>
   <div style={{display:"flex",gap:"7px",marginTop:"11px"}}>
     <button onClick={()=>{
-      if(!transferForm.amount||!transferForm.toLedgerId)return;
-      const transferId=crypto.randomUUID();
-      const amount=Number(transferForm.amount);
-      const toLedger=ledgers.find(l=>l.id===transferForm.toLedgerId);
-      if(!toLedger)return;
-      const debitEntry={id:crypto.randomUUID(),date:transferForm.date,particulars:"Transfer to "+toLedger.name,debit:amount,credit:0,note:transferForm.note,transferId};
-      const creditEntry={id:crypto.randomUUID(),date:transferForm.date,particulars:"Transfer from "+ledger.name,debit:0,credit:amount,note:transferForm.note,transferId};
-      setLedgers(p=>p.map(l=>{
-        if(l.id===ledger.id) return{...l,entries:[...(l.entries||[]),debitEntry]};
-        if(l.id===toLedger.id) return{...l,entries:[...(l.entries||[]),creditEntry]};
-        return l;
-      }));
-      setTransferForm({date:today,amount:"",toLedgerId:"",note:""});
-      setShowTransfer(false);
-    }} style={S.btn("#7c3aed")}>💾 Save Transfer</button>
+  if(!transferForm.amount||!transferForm.toLedgerId)return;
+  const transferId=crypto.randomUUID();
+  const amount=Number(transferForm.amount);
+  const toLedger=ledgers.find(l=>String(l.id)===String(transferForm.toLedgerId));
+  if(!toLedger)return;
+  const debitEntry={id:crypto.randomUUID(),date:transferForm.date,particulars:"Transfer to "+toLedger.name,debit:amount,credit:0,note:transferForm.note,transferId};
+  const creditEntry={id:crypto.randomUUID(),date:transferForm.date,particulars:"Transfer from "+ledger.name,debit:0,credit:amount,note:transferForm.note,transferId};
+  setLedgers(p=>p.map(l=>{
+    if(String(l.id)===String(ledger.id)) return{...l,entries:[...(l.entries||[]),debitEntry]};
+    if(String(l.id)===String(toLedger.id)) return{...l,entries:[...(l.entries||[]),creditEntry]};
+    return l;
+  }));
+  setTransferForm({date:today,amount:"",toLedgerId:"",note:""});
+  setShowTransfer(false);
+}} style={S.btn("#7c3aed")}>💾 Save Transfer</button>
     <button onClick={()=>setShowTransfer(false)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
   </div>
 </div>}
@@ -2282,8 +2283,11 @@ const availableInvoices=invoices.filter(inv=>{
                 <td style={{padding:"7px 10px",textAlign:"right",color:"#166534",fontWeight:600}}>{e.credit>0?`₹${e.credit.toLocaleString()}`:"—"}</td>
                 <td style={{padding:"7px 10px",textAlign:"right",fontWeight:700,color:"#1e50a0"}}>₹{e.balance.toLocaleString()}</td>
                 <td style={{padding:"7px 10px",textAlign:"center"}}>
-                  <button onClick={()=>setDelEntryModal(e.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"3px 8px",fontSize:"11px"}}>🗑️</button>
-                </td>
+  <div style={{display:"flex",gap:"4px",justifyContent:"center"}}>
+    <button onClick={()=>setEditEntryModal({...e})} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"3px 8px",fontSize:"11px"}}>✏️</button>
+    <button onClick={()=>setDelEntryModal(e.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"3px 8px",fontSize:"11px"}}>🗑️</button>
+  </div>
+</td>
               </tr>
             ))}
             <tr style={{background:"#0f3172",color:"#fff",fontWeight:700}}>
@@ -2296,6 +2300,37 @@ const availableInvoices=invoices.filter(inv=>{
           </tbody>
         </table>}
       </div>
+      {editEntryModal&&(
+  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
+    <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"320px"}}>
+      <h3 style={{margin:"0 0 14px",fontSize:"14px",fontWeight:700}}>✏️ Edit Entry</h3>
+      <div style={{display:"grid",gap:"10px",marginBottom:"14px"}}>
+        <div><label style={S.lbl}>Date</label>
+          <input type="date" value={editEntryModal.date} onChange={e=>setEditEntryModal(p=>({...p,date:e.target.value}))} style={S.inp}/>
+        </div>
+        <div><label style={S.lbl}>Particulars</label>
+          <input value={editEntryModal.particulars} onChange={e=>setEditEntryModal(p=>({...p,particulars:e.target.value}))} style={S.inp}/>
+        </div>
+        <div><label style={S.lbl}>Debit (₹)</label>
+          <input type="number" value={editEntryModal.debit||""} onChange={e=>setEditEntryModal(p=>({...p,debit:Number(e.target.value),credit:0}))} style={S.inp}/>
+        </div>
+        <div><label style={S.lbl}>Credit (₹)</label>
+          <input type="number" value={editEntryModal.credit||""} onChange={e=>setEditEntryModal(p=>({...p,credit:Number(e.target.value),debit:0}))} style={S.inp}/>
+        </div>
+        <div><label style={S.lbl}>Note</label>
+          <input value={editEntryModal.note||""} onChange={e=>setEditEntryModal(p=>({...p,note:e.target.value}))} placeholder="e.g. cheque no, reference" style={S.inp}/>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
+        <button onClick={()=>{
+          updateLedger({...ledger,entries:(ledger.entries||[]).map(e=>e.id===editEntryModal.id?{...editEntryModal}:e)});
+          setEditEntryModal(null);
+        }} style={S.btn()}>💾 Save</button>
+        <button onClick={()=>setEditEntryModal(null)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+      </div>
+    </div>
+  </div>
+)}
       {ratePwModal&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
           <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"300px",textAlign:"center"}}>
