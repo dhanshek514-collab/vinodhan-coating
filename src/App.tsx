@@ -2312,8 +2312,14 @@ const availableInvoices=invoices.filter(inv=>{
           <input value={editEntryModal.particulars} onChange={e=>setEditEntryModal(p=>({...p,particulars:e.target.value}))} style={S.inp}/>
         </div>
         <div><label style={S.lbl}>Debit (₹)</label>
-          <input type="number" value={editEntryModal.debit||""} onChange={e=>setEditEntryModal(p=>({...p,debit:Number(e.target.value),credit:0}))} style={S.inp}/>
-        </div>
+  {(editEntryModal.particulars.includes("TDS")||editEntryModal.particulars.includes("Retention"))&&(
+    <div style={{display:"flex",gap:"7px",marginBottom:"7px"}}>
+      <button onClick={()=>setEditEntryModal(p=>({...p,debit:0,credit:0,particulars:p.particulars+" (N/A)"}))} style={{...S.btn("#fee2e2","#991b1b"),padding:"4px 10px",fontSize:"11px"}}>✗ Not Applicable</button>
+      <span style={{fontSize:"11px",color:"#6b84a3",alignSelf:"center"}}>Sets amount to zero</span>
+    </div>
+  )}
+  <input type="number" value={editEntryModal.debit||""} onChange={e=>setEditEntryModal(p=>({...p,debit:Number(e.target.value),credit:0}))} style={S.inp}/>
+</div>
         <div><label style={S.lbl}>Credit (₹)</label>
           <input type="number" value={editEntryModal.credit||""} onChange={e=>setEditEntryModal(p=>({...p,credit:Number(e.target.value),debit:0}))} style={S.inp}/>
         </div>
