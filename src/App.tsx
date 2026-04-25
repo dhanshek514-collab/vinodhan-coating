@@ -2458,6 +2458,7 @@ function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
   const [pwModal,setPwModal]=useState(null);
 const [delEntryModal,setDelEntryModal]=useState(null);
   const [editEntryModal,setEditEntryModal]=useState(null);
+  const [editPwModal,setEditPwModal]=useState(null);
 const [editRateModal,setEditRateModal]=useState(null);
 const [rateForm,setRateForm]=useState({tdsRate:"",retentionRate:""});
 const [ratePwModal,setRatePwModal]=useState(false);
@@ -2811,7 +2812,7 @@ const availableInvoices=invoices.filter(inv=>{
                 <td style={{padding:"7px 10px",textAlign:"right",fontWeight:700,color:"#1e50a0"}}>₹{e.balance.toLocaleString()}</td>
                 <td style={{padding:"7px 10px",textAlign:"center"}}>
   <div style={{display:"flex",gap:"4px",justifyContent:"center"}}>
-    <button onClick={()=>setEditEntryModal({...e})} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"3px 8px",fontSize:"11px"}}>✏️</button>
+    <button onClick={()=>setEditPwModal({...e})} style={{...S.btn("#f0f6ff","#1e50a0"),padding:"3px 8px",fontSize:"11px"}}>✏️</button>
     <button onClick={()=>setDelEntryModal(e.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"3px 8px",fontSize:"11px"}}>🗑️</button>
   </div>
 </td>
@@ -2827,6 +2828,11 @@ const availableInvoices=invoices.filter(inv=>{
           </tbody>
         </table>}
       </div>
+      {editPwModal&&<PwModal
+  title="Edit Entry?"
+  onConfirm={()=>{setEditEntryModal({...editPwModal});setEditPwModal(null);}}
+  onCancel={()=>setEditPwModal(null)}
+/>}
       {editEntryModal&&(
   <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
     <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"320px"}}>
