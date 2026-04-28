@@ -2856,9 +2856,16 @@ const availableInvoices=invoices.filter(inv=>{
               <tr key={e.id} style={{background:e.transferId?"#fef9c3":idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #f0f4f9"}}>
                 <td style={{padding:"7px 10px",whiteSpace:"nowrap"}}>{fmtDate(e.date)}</td>
                 <td style={{padding:"7px 10px"}}>
-                  <div style={{fontWeight:600}}>{e.particulars}</div>
-                  {e.note&&<div style={{fontSize:"10px",color:"#6b84a3"}}>{e.note}</div>}
-                </td>
+  <div style={{fontWeight:600}}>{e.particulars}</div>
+  {e.note&&<div style={{fontSize:"11px",marginTop:"3px"}}>
+    {e.invoiceId
+      ?<span style={{background:"#dbeafe",color:"#1e40af",fontWeight:700,borderRadius:"6px",padding:"2px 8px",fontSize:"11px"}}>{e.note}</span>
+      :e.transferId
+      ?<span style={{background:"#fef9c3",color:"#d97706",fontWeight:700,borderRadius:"6px",padding:"2px 8px",fontSize:"11px"}}>{e.note}</span>
+      :<span style={{color:"#6b84a3",fontSize:"10px"}}>{e.note}</span>
+    }
+  </div>}
+</td>
                 <td style={{padding:"7px 10px",textAlign:"right",color:"#991b1b",fontWeight:600}}>{e.debit>0?`₹${e.debit.toLocaleString()}`:"—"}</td>
                 <td style={{padding:"7px 10px",textAlign:"right",color:"#166534",fontWeight:600}}>{e.credit>0?`₹${e.credit.toLocaleString()}`:"—"}</td>
                 <td style={{padding:"7px 10px",textAlign:"right",fontWeight:700,color:"#1e50a0"}}>₹{e.balance.toLocaleString()}</td>
