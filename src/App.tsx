@@ -1879,6 +1879,7 @@ function EntryPermit({workers,sites,assignments,setWorkers,savedPermits,setSaved
   const [fromDate,setFromDate]=useState(today);
   const [toDate,setToDate]=useState(today);
   const [showExecSign,setShowExecSign]=useState(true);
+  const [permitPlaceOfWork,setPermitPlaceOfWork]=useState("");
   const [savePermitModal,setSavePermitModal]=useState(false);
 const [permitDelModal,setPermitDelModal]=useState(null);
 
@@ -1966,10 +1967,10 @@ const [permitDelModal,setPermitDelModal]=useState(null);
       <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
         <button onClick={()=>{
           const permit={
-            id:Date.now(),
-            siteName:permitSiteName,
-            client:permitClient,
-            place:permitPlace,
+  id:Date.now(),
+  siteName:permitSiteName,
+  client:permitClient,
+  place:permitPlaceOfWork,
             fromDate,
             toDate,
             savedAt:today,
@@ -1996,10 +1997,13 @@ const [permitDelModal,setPermitDelModal]=useState(null);
         <div id="entry-permit" style={{background:"#fff",padding:"28px",borderRadius:"12px",boxShadow:"0 2px 16px rgba(30,80,160,0.08)"}}>
           <div style={{textAlign:"center",marginBottom:"20px",paddingBottom:"14px",borderBottom:"2px solid #0f3172"}}><div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",letterSpacing:"2px"}}>ENTRY PERMIT</div></div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 30px",marginBottom:"24px",fontSize:"13px"}}>
-            {[["Client",permitClient],["Contractor","VinoDhan Coating"],["Site Name",permitSiteName],["Place",permitPlace],["Valid From",fmtDate(fromDate)],["Valid To",fmtDate(toDate)]].map(([lbl,val])=>(
-              <div key={lbl} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>{lbl}</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {val}</span></div>
-            ))}
-          </div>
+  <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Site Name</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {permitSiteName}</span></div>
+  <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Contractor</span><span style={{color:"#1a2b4a",fontWeight:600}}>: VinoDhan Coating</span></div>
+  <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9",alignItems:"center"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Place of Work</span><input value={permitPlaceOfWork} onChange={e=>setPermitPlaceOfWork(e.target.value)} placeholder="Enter place of work" style={{...S.inp,padding:"2px 8px",fontSize:"12px",flex:1}}/></div>
+  <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Client</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {permitClient}</span></div>
+  <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Valid From</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {fmtDate(fromDate)}</span></div>
+  <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Valid To</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {fmtDate(toDate)}</span></div>
+</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px"}}>
             {permitWorkers.map(w=>(
               <div key={w.id} style={{border:"1.5px solid #e5e7eb",borderRadius:"10px",overflow:"hidden",display:"flex",minHeight:"130px"}}>
@@ -2046,7 +2050,7 @@ const [permitDelModal,setPermitDelModal]=useState(null);
             <div style="font-size:22px;font-weight:800;color:#0f3172;letter-spacing:2px;">ENTRY PERMIT</div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 30px;margin-bottom:24px;font-size:13px;">
-            ${[["Client",p.client],["Contractor","VinoDhan Coating"],["Site Name",p.siteName],["Place",p.place],["Valid From",fmtDate(p.fromDate)],["Valid To",fmtDate(p.toDate)]].map(([lbl,val])=>`
+            ${[["Site Name",p.siteName],["Contractor","VinoDhan Coating"],["Place of Work",p.place],["Client",p.client],["Valid From",fmtDate(p.fromDate)],["Valid To",fmtDate(p.toDate)]].map(([lbl,val])=>`
               <div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #f0f4f9;">
                 <span style="font-weight:700;color:#6b84a3;min-width:100px;font-size:12px;">${lbl}</span>
                 <span style="color:#1a2b4a;font-weight:600;">: ${val}</span>
