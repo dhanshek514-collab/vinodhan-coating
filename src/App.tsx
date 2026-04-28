@@ -726,6 +726,13 @@ const semiApplicators=workers.filter(w=>w.category==="Semi-Applicator").length;
 const helpers=workers.filter(w=>w.category==="Helper").length;
   const [expandCard,setExpandCard]=useState(null);
   const [expandLedger,setExpandLedger]=useState(null);
+  const invoicedWorkIds=new Set(invoices.flatMap(inv=>(inv.works||[]).map(w=>w.id)));
+const uninvoicedSites=sites.map(s=>({
+  ...s,
+  uninvoicedWorks:(s.works||[]).filter(w=>!invoicedWorkIds.has(w.id))
+})).filter(s=>s.uninvoicedWorks.length>0);
+const totalUninvoiced=uninvoicedSites.reduce((a,s)=>a+s.uninvoicedWorks.reduce((b,w)=>b+calcWork(w),0),0);
+const totalInvoicedAmt=invoices.reduce((a,inv)=>a+(inv.total||0),0);
   // Ledger calculations
 const allEntries=ledgers.flatMap(l=>(l.entries||[]).map(e=>({...e,ledgerName:l.name,ledgerPrefix:l.measurePrefix||""})));
 const totalTDS=allEntries.filter(e=>e.particulars.includes("TDS")).reduce((a,e)=>a+(e.debit||0),0);
@@ -788,11 +795,28 @@ const tallyOk=Math.abs(tallyDiff)<1;
       <div style={{borderTop:"1px solid #bbf7d0",marginTop:"3px",paddingTop:"3px",display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#6b84a3"}}>Total</span><span style={{fontWeight:800,color:"#0f3172"}}>{sites.length}</span></div>
     </div>
   </div>
-  {/* Revenue */}
+{/* Revenue */}
   <div style={{...S.card,background:"#fef3c7",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>💰</div>
     <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalRev.toLocaleString()}</div>
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Revenue</div>
+  </div>
+  {/* Invoices */}
+  <div onClick={()=>setExpandCard(expandCard==="inv"?null:"inv")} style={{...S.card,background:"#fce7f3",boxShadow:"none",padding:"16px",minWidth:"160px",flexShrink:0,cursor:"pointer"}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>🧾</div>
+    <div style={{fontSize:"11px",fontWeight:700,color:"#9d174d",marginBottom:"6px"}}>INVOICES</div>
+    <div style={{display:"flex",flexDirection:"column",gap:"3px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#9d174d"}}>Total Raised</span><span style={{fontWeight:800,color:"#0f3172"}}>{invoices.length}</span></div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#9d174d"}}>Total Billed</span><span style={{fontWeight:800,color:"#0f3172"}}>₹{totalInvoicedAmt.toLocaleString()}</span></div>
+    </div>
+    <div style={{fontSize:"10px",color:"#9d174d",marginTop:"4px",fontWeight:600}}>{expandCard==="inv"?"▲ Hide":"▼ Details"}</div>
+  </div>
+  {/* Uninvoiced */}
+  <div onClick={()=>setExpandCard(expandCard==="uninv"?null:"uninv")} style={{...S.card,background:"#fff7ed",boxShadow:"none",padding:"16px",minWidth:"150px",flexShrink:0,cursor:"pointer"}}>
+    <div style={{fontSize:"22px",marginBottom:"6px"}}>📋</div>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalUninvoiced.toLocaleString()}</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Uninvoiced</div>
+    <div style={{fontSize:"10px",color:"#ea580c",marginTop:"4px",fontWeight:600}}>{expandCard==="uninv"?"▲ Hide":"▼ Details"}</div>
   </div>
 </div>
 </div>
@@ -814,7 +838,7 @@ const tallyOk=Math.abs(tallyDiff)<1;
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Total RMT</div>
     <div style={{fontSize:"10px",color:"#9d174d",marginTop:"4px",fontWeight:600}}>{expandCard==="rmt"?"▲ Hide":"▼ Details"}</div>
   </div>
-  {/* Other Charges (Manpower) */}
+  {/* Manpower */}
   <div onClick={()=>setExpandCard(expandCard==="mp"?null:"mp")} style={{...S.card,background:"#fef9c3",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0,cursor:"pointer"}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>👨‍🔧</div>
     <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalMp.toLocaleString()}</div>
@@ -834,16 +858,6 @@ const tallyOk=Math.abs(tallyDiff)<1;
     <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalOther.toLocaleString()}</div>
     <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Other</div>
     <div style={{fontSize:"10px",color:"#991b1b",marginTop:"4px",fontWeight:600}}>{expandCard==="other"?"▲ Hide":"▼ Details"}</div>
-  </div>
-  {/* Invoices */}
-  <div onClick={()=>setExpandCard(expandCard==="inv"?null:"inv")} style={{...S.card,background:"#fce7f3",boxShadow:"none",padding:"16px",minWidth:"160px",flexShrink:0,cursor:"pointer"}}>
-    <div style={{fontSize:"22px",marginBottom:"6px"}}>🧾</div>
-    <div style={{fontSize:"11px",fontWeight:700,color:"#9d174d",marginBottom:"6px"}}>INVOICES</div>
-    <div style={{display:"flex",flexDirection:"column",gap:"3px"}}>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#9d174d"}}>Total Raised</span><span style={{fontWeight:800,color:"#0f3172"}}>{invoices.length}</span></div>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#9d174d"}}>Total Billed</span><span style={{fontWeight:800,color:"#0f3172"}}>₹{invoices.reduce((a,inv)=>a+(inv.total||0),0).toLocaleString()}</span></div>
-    </div>
-    <div style={{fontSize:"10px",color:"#9d174d",marginTop:"4px",fontWeight:600}}>{expandCard==="inv"?"▲ Hide":"▼ Details"}</div>
   </div>
 </div>
 </div>
@@ -1166,6 +1180,33 @@ const key=raw.includes("wist")||raw.includes("wisr")?"Wistron":(inv.siteName||"U
           </div>
         ));
       })()}
+    </>}
+    {expandCard==="uninv"&&<>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+        <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>📋 Uninvoiced Works</h3>
+        <span style={{fontWeight:800,color:"#ea580c",fontSize:"14px"}}>₹{totalUninvoiced.toLocaleString()} Total</span>
+      </div>
+      {uninvoicedSites.length===0?<div style={{textAlign:"center",color:"#9db3cc",padding:"20px"}}>All works have been invoiced! ✅</div>
+      :uninvoicedSites.map(s=>{
+        const siteTotal=s.uninvoicedWorks.reduce((a,w)=>a+calcWork(w),0);
+        return(
+          <div key={s.id} style={{marginBottom:"16px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"8px"}}>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#0f3172"}}>{s.name}</span>
+              <span style={{fontWeight:700,fontSize:"13px",color:"#ea580c"}}>₹{siteTotal.toLocaleString()}</span>
+            </div>
+            {s.uninvoicedWorks.map(w=>(
+              <div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 10px",background:"#fff7ed",borderRadius:"8px",marginBottom:"5px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"7px"}}>
+                  <span style={S.wbadge(w.workType||"SQM")}>{w.workType||"SQM"}</span>
+                  <span style={{fontSize:"12px",color:"#1a2b4a"}}>{w.place}</span>
+                </div>
+                <span style={{fontWeight:700,fontSize:"12px",color:"#ea580c"}}>₹{calcWork(w).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })}
     </>}
   </div>
 )}
@@ -2628,11 +2669,13 @@ const availableInvoices=invoices.filter(inv=>{
     a.style.display="none";document.body.appendChild(a);a.click();document.body.removeChild(a);
   };
   bar.appendChild(backBtn);bar.appendChild(title);bar.appendChild(dlBtn);
-  const content=document.createElement("div");
-  content.style.cssText="flex:1;overflow-y:auto;padding:24px;background:#f0f4f9;";
-  content.innerHTML=html;
-  overlay.appendChild(bar);overlay.appendChild(content);
+  const iframe=document.createElement("iframe");
+  iframe.style.cssText="flex:1;width:100%;border:none;";
+  overlay.appendChild(bar);overlay.appendChild(iframe);
   document.body.appendChild(overlay);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
 }} style={S.btn("#166534")}>🖨️ Print</button>
   <button onClick={()=>exportLedgerExcel(ledger,rows,totalDebit,totalCredit,closingBalance)} style={S.btn("#d97706","#fff")}>📊 Excel</button>
 </div>
