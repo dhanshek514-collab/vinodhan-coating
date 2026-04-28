@@ -842,7 +842,7 @@ const tallyOk=Math.abs(tallyDiff)<1;
   <div onClick={()=>setExpandCard(expandCard==="mp"?null:"mp")} style={{...S.card,background:"#fef9c3",boxShadow:"none",padding:"16px",minWidth:"130px",flexShrink:0,cursor:"pointer"}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>👨‍🔧</div>
     <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}>₹{totalMp.toLocaleString()}</div>
-    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Other Charges</div>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"2px"}}>Manpower</div>
     <div style={{fontSize:"10px",color:"#d97706",marginTop:"4px",fontWeight:600}}>{expandCard==="mp"?"▲ Hide":"▼ Details"}</div>
   </div>
   {/* KGS */}
@@ -1052,7 +1052,7 @@ const tallyOk=Math.abs(tallyDiff)<1;
     </>}
     {expandCard==="mp"&&<>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
-        <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>👨‍🔧 Other Charges Breakdown</h3>
+        <h3 style={{margin:0,fontSize:"14px",fontWeight:700}}>👨‍🔧 Manpower Breakdown</h3>
         <span style={{fontWeight:800,color:"#d97706",fontSize:"14px"}}>₹{totalMp.toLocaleString()} Total</span>
       </div>
       {sites.filter(s=>(s.works||[]).some(w=>w.workType==="Manpower")).map(s=>{
