@@ -2362,11 +2362,12 @@ UPI: {editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:dispBank
           {invoices.length===0?<p style={{color:"#9db3cc",fontSize:"13px"}}>No invoices saved yet.</p>
           :[...invoices].sort((a,b)=>b.number.localeCompare(a.number,undefined,{numeric:true})).map((inv,idx)=>(
             <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
-             <div>
-  <div style={{fontWeight:600,fontSize:"13px"}}>{invoices.length-idx}. {inv.number} {inv.flagged&&<span style={{color:"#dc2626",fontSize:"11px"}}>⚠️ Incomplete</span>}</div>
-  <div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtD(inv.date)} — {inv.siteName||"—"}</div>
-  {inv.measureNo&&<div style={{fontSize:"10px",fontWeight:600,color:"#1e50a0",marginTop:"2px"}}>📋 {inv.measureNo}</div>}
-</div>
+  <div>
+    <div style={{fontWeight:600,fontSize:"13px"}}>{invoices.length-idx}. {inv.flagged&&<span style={{color:"#dc2626",fontSize:"11px"}}>⚠️ Incomplete</span>}</div>
+    <span style={{background:"#dbeafe",color:"#1e40af",fontWeight:700,borderRadius:"6px",padding:"2px 8px",fontSize:"12px"}}>{inv.number}</span>
+    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"4px"}}>{fmtD(inv.date)} — {inv.siteName||"—"}</div>
+    {inv.measureNo&&<div style={{fontSize:"10px",fontWeight:600,color:"#1e50a0",marginTop:"2px"}}>📋 {inv.measureNo}</div>}
+  </div>
               <div style={{display:"flex",gap:"7px",alignItems:"center"}}>
                 <div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{inv.total?.toLocaleString()}</div>
                 <button onClick={()=>setViewInv(inv)} style={{...S.btn(),padding:"5px 11px",fontSize:"12px"}}>View</button>
