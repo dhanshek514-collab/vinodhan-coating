@@ -30,7 +30,7 @@ async function fbBackup(data) {
     });
   } catch(e) { console.error("backup error", e); }
 }
-const printCSS = `@page{size:A4;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:15mm;margin:0;font-size:14px;}table{border-collapse:collapse;width:100%;}th,td{padding:7px 9px;font-size:13px;}h1,h2,h3{font-size:18px;}img{max-width:100%;object-fit:cover;}.no-print{display:none!important;}`;
+const printCSS = `@page{size:A4;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:15mm;margin:0;font-size:14px;}table{border-collapse:collapse;width:100%;}th,td{padding:7px 9px;font-size:13px;}h1,h2,h3{font-size:18px;}img{max-width:100%;object-fit:cover;}.no-print{display:none!important;}.print-only{display:inline!important;}`;
 function printSection(id) {
   const el = document.getElementById(id);
   if(!el) return;
@@ -1999,7 +1999,11 @@ const [permitDelModal,setPermitDelModal]=useState(null);
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 30px",marginBottom:"24px",fontSize:"13px"}}>
   <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Site Name</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {permitSiteName}</span></div>
   <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Contractor</span><span style={{color:"#1a2b4a",fontWeight:600}}>: VinoDhan Coating</span></div>
-  <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9",alignItems:"center"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Place of Work</span><input value={permitPlaceOfWork} onChange={e=>setPermitPlaceOfWork(e.target.value)} placeholder="Enter place of work" style={{...S.inp,padding:"2px 8px",fontSize:"12px",flex:1}}/></div>
+  <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9",alignItems:"center"}}>
+  <span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Place of Work</span>
+  <span className="no-print" style={{flex:1}}><input value={permitPlaceOfWork} onChange={e=>setPermitPlaceOfWork(e.target.value)} placeholder="Enter place of work" style={{...S.inp,padding:"2px 8px",fontSize:"12px",width:"100%"}}/></span>
+  <span className="print-only" style={{color:"#1a2b4a",fontWeight:600,display:"none"}}>: {permitPlaceOfWork||"—"}</span>
+</div>
   <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Client</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {permitClient}</span></div>
   <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Valid From</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {fmtDate(fromDate)}</span></div>
   <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Valid To</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {fmtDate(toDate)}</span></div>
@@ -2019,14 +2023,18 @@ const [permitDelModal,setPermitDelModal]=useState(null);
               </div>
             ))}
           </div>
-          <div style={{marginTop:"40px",display:"flex",justifyContent:"space-between",alignItems:"flex-end",flexWrap:"wrap",gap:"12px"}}>
-  <div className="no-print">
+          <div style={{marginTop:"40px",display:"flex",justifyContent:"flex-end",alignItems:"flex-end",flexWrap:"wrap",gap:"12px"}}>
+  <div className="no-print" style={{position:"absolute",bottom:"20mm",left:"15mm"}}>
     <label style={{display:"flex",alignItems:"center",gap:"8px",fontSize:"12px",color:"#6b84a3",cursor:"pointer"}}>
       <input type="checkbox" checked={showExecSign} onChange={e=>setShowExecSign(e.target.checked)}/>
       Show Executive Signature
     </label>
   </div>
-  {showExecSign&&<div style={{textAlign:"center"}}><div style={{width:"200px",borderBottom:"1px solid #1a2b4a",marginBottom:"6px",height:"40px"}}></div><div style={{fontSize:"12px",fontWeight:700,color:"#1a2b4a"}}>Vinoth Kumar. N</div><div style={{fontSize:"11px",color:"#6b84a3"}}>Site Executive — VinoDhan Coating</div></div>}
+  {showExecSign&&<div style={{textAlign:"center",marginLeft:"auto"}}>
+    <div style={{width:"200px",borderBottom:"1px solid #1a2b4a",marginBottom:"6px",height:"40px"}}></div>
+    <div style={{fontSize:"12px",fontWeight:700,color:"#1a2b4a"}}>Vinoth Kumar. N</div>
+    <div style={{fontSize:"11px",color:"#6b84a3"}}>Site Executive — VinoDhan Coating</div>
+  </div>}
 </div>
         </div>
       ):(
