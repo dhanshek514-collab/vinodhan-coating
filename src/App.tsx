@@ -2660,7 +2660,13 @@ const availableInvoices=invoices.filter(inv=>{
       </thead>
       <tbody>
         ${rows.map((e,idx)=>`
-          <tr style="background:${e.transferId?"#fef9c3":idx%2===0?"#fff":"#f8faff"};border-bottom:1px solid #e5e7eb;">
+          <tr style="background:${
+  e.transferId?"#fef9c3":
+  e.particulars==="Cont Invoice"?"#f0fdf4":
+  e.particulars==="Bank Payment"?"#eff6ff":
+  (e.particulars.includes("TDS")||e.particulars.includes("Retention"))?"#fdf4ff":
+  idx%2===0?"#fff":"#f8faff"
+};border-bottom:1px solid #e5e7eb;">
             <td style="padding:7px 10px;white-space:nowrap;">${fmtDate(e.date)}</td>
             <td style="padding:7px 10px;font-weight:600;">${e.particulars}</td>
             <td style="padding:7px 10px;color:#6b84a3;font-size:11px;">${e.note||"—"}</td>
@@ -2887,7 +2893,13 @@ const availableInvoices=invoices.filter(inv=>{
           </tr></thead>
           <tbody>
             {rows.map((e,idx)=>(
-              <tr key={e.id} style={{background:e.transferId?"#fef9c3":idx%2===0?"#fff":"#f8faff",borderBottom:"1px solid #f0f4f9"}}>
+              <tr key={e.id} style={{background:
+  e.transferId?"#fef9c3":
+  e.particulars==="Cont Invoice"?"#f0fdf4":
+  e.particulars==="Bank Payment"?"#eff6ff":
+  (e.particulars.includes("TDS")||e.particulars.includes("Retention"))?"#fdf4ff":
+  idx%2===0?"#fff":"#f8faff"
+,borderBottom:"1px solid #f0f4f9"}}>
                 <td style={{padding:"7px 10px",whiteSpace:"nowrap"}}>{fmtDate(e.date)}</td>
                 <td style={{padding:"7px 10px"}}>
   <div style={{fontWeight:600}}>{e.particulars}</div>
