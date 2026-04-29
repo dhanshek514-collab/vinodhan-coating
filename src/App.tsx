@@ -2136,6 +2136,7 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
   const [invDate,setInvDate]=useState(today);
   const [invSiteName,setInvSiteName]=useState("");
   const [pwModal,setPwModal]=useState(null);
+  const [statusModal,setStatusModal]=useState(null);
   const sigCanvas=useRef(null);
   const [sigMode,setSigMode]=useState("none");
   const [sigImage,setSigImage]=useState(null);
@@ -2398,17 +2399,17 @@ UPI: {editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:dispBank
           ))}
         </div>
       )}
-{statusModal&&<PwModal
-  title={statusModal.status==="accepted"?"Unmark as Accepted?":"Mark as Accepted?"}
-  onConfirm={()=>{
-    setInvoices(p=>p.map(inv=>inv.id===statusModal.id
-      ?{...inv,status:inv.status==="accepted"?"raised":"accepted"}
-      :inv
-    ));
-    setStatusModal(null);
-  }}
-  onCancel={()=>setStatusModal(null)}
-/>}
+{statusModal&&(
+  <PwModal
+    title={statusModal.status==="accepted"?"Unmark as Accepted?":"Mark as Accepted?"}
+    onConfirm={()=>{
+      const newStatus=statusModal.status==="accepted"?"raised":"accepted";
+      setInvoices(p=>p.map(inv=>inv.id===statusModal.id?{...inv,status:newStatus}:inv));
+      setStatusModal(null);
+    }}
+    onCancel={()=>setStatusModal(null)}
+  />
+)}
       
       {/* Password modal for invoice delete */}
       {pwModal&&<PwModal
@@ -2539,7 +2540,6 @@ function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
   const [showAdd,setShowAdd]=useState(false);
   const [entryForm,setEntryForm]=useState({date:today,particulars:"Bank Payment",customParticulars:"",debit:"",credit:"",note:""});
   const [pwModal,setPwModal]=useState(null);
-const [statusModal,setStatusModal]=useState(null);
 const [delEntryModal,setDelEntryModal]=useState(null);
   const [editEntryModal,setEditEntryModal]=useState(null);
   const [editPwModal,setEditPwModal]=useState(null);
