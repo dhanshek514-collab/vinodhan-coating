@@ -2167,7 +2167,7 @@ useEffect(()=>{
 
   const saveInv=()=>{
   if(allWorks.length===0)return;
-  setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks,siteName:invSiteName,measureNo:client.measureNo,snapshot:{company:{...company},client:{...client},bank:{...bank}}}]);
+  setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks,siteName:invSiteName,measureNo:client.measureNo,status:"raised",snapshot:{company:{...company},client:{...client},bank:{...bank}}}]);
   setSelWorks([]);setTab("history");
 };
 
@@ -2373,23 +2373,43 @@ UPI: {editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:dispBank
   </div>
           {invoices.length===0?<p style={{color:"#9db3cc",fontSize:"13px"}}>No invoices saved yet.</p>
           :[...invoices].sort((a,b)=>b.number.localeCompare(a.number,undefined,{numeric:true})).map((inv,idx)=>(
-            <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:"#f8faff",borderRadius:"9px",marginBottom:"6px"}}>
+            <div key={inv.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 13px",background:inv.status==="accepted"?"#f0fdf4":"#f8faff",borderRadius:"9px",marginBottom:"6px",border:inv.status==="accepted"?"1.5px solid #bbf7d0":"1.5px solid transparent"}}>
   <div>
-    <div style={{fontWeight:600,fontSize:"13px"}}>{invoices.length-idx}. {inv.flagged&&<span style={{color:"#dc2626",fontSize:"11px"}}>⚠️ Incomplete</span>}</div>
-    <span style={{background:"#dbeafe",color:"#1e40af",fontWeight:700,borderRadius:"6px",padding:"2px 8px",fontSize:"12px"}}>{inv.number}</span>
-    <div style={{fontSize:"11px",color:"#6b84a3",marginTop:"4px"}}>{fmtD(inv.date)} — {inv.siteName||"—"}</div>
+    <div style={{display:"flex",alignItems:"center",gap:"7px",marginBottom:"4px"}}>
+      <span style={{background:"#dbeafe",color:"#1e40af",fontWeight:700,borderRadius:"6px",padding:"2px 8px",fontSize:"12px"}}>{inv.number}</span>
+      {inv.status==="accepted"
+        ?<span style={{background:"#dcfce7",color:"#166534",fontWeight:700,borderRadius:"6px",padding:"2px 8px",fontSize:"10px"}}>🔒 Accepted</span>
+        :<span style={{background:"#fef9c3",color:"#d97706",fontWeight:700,borderRadius:"6px",padding:"2px 8px",fontSize:"10px"}}>🟡 Raised</span>
+      }
+      {inv.flagged&&<span style={{color:"#dc2626",fontSize:"11px"}}>⚠️ Incomplete</span>}
+    </div>
+    <div style={{fontSize:"11px",color:"#6b84a3"}}>{fmtD(inv.date)} — {inv.siteName||"—"}</div>
     {inv.measureNo&&<div style={{fontSize:"10px",fontWeight:600,color:"#1e50a0",marginTop:"2px"}}>📋 {inv.measureNo}</div>}
   </div>
-              <div style={{display:"flex",gap:"7px",alignItems:"center"}}>
-                <div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{inv.total?.toLocaleString()}</div>
-                <button onClick={()=>setViewInv(inv)} style={{...S.btn(),padding:"5px 11px",fontSize:"12px"}}>View</button>
-                <button onClick={()=>deleteInv(inv)} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️</button>
-              </div>
-            </div>
+  <div style={{display:"flex",gap:"7px",alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}>
+    <div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{inv.total?.toLocaleString()}</div>
+    <button onClick={()=>setViewInv(inv)} style={{...S.btn(),padding:"5px 11px",fontSize:"12px"}}>View</button>
+    <button onClick={()=>setStatusModal(inv)} style={{...S.btn(inv.status==="accepted"?"#fee2e2":"#166534"),padding:"5px 11px",fontSize:"12px"}}>
+      {inv.status==="accepted"?"🔓 Unmark":"🔒 Accept"}
+    </button>
+    {inv.status!=="accepted"&&<button onClick={()=>deleteInv(inv)} style={{...S.btn("#fee2e2","#991b1b"),padding:"5px 11px",fontSize:"12px"}}>🗑️</button>}
+  </div>
+</div>
           ))}
         </div>
       )}
-
+{statusModal&&<PwModal
+  title={statusModal.status==="accepted"?"Unmark as Accepted?":"Mark as Accepted?"}
+  onConfirm={()=>{
+    setInvoices(p=>p.map(inv=>inv.id===statusModal.id
+      ?{...inv,status:inv.status==="accepted"?"raised":"accepted"}
+      :inv
+    ));
+    setStatusModal(null);
+  }}
+  onCancel={()=>setStatusModal(null)}
+/>}
+      
       {/* Password modal for invoice delete */}
       {pwModal&&<PwModal
         title="Move to Recycle Bin?"
@@ -2519,6 +2539,7 @@ function LedgerDetail({ledger,ledgers,setLedgers,invoices,onBack}){
   const [showAdd,setShowAdd]=useState(false);
   const [entryForm,setEntryForm]=useState({date:today,particulars:"Bank Payment",customParticulars:"",debit:"",credit:"",note:""});
   const [pwModal,setPwModal]=useState(null);
+const [statusModal,setStatusModal]=useState(null);
 const [delEntryModal,setDelEntryModal]=useState(null);
   const [editEntryModal,setEditEntryModal]=useState(null);
   const [editPwModal,setEditPwModal]=useState(null);
