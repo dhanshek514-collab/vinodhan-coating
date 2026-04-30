@@ -2256,7 +2256,7 @@ const dispBank=snap?snap.bank:bank;
       ))}
     </div>
   </div>
-  <div style={{textAlign:"right"}}>
+  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}>
     <div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",marginBottom:"8px"}}>INVOICE</div>
     <div style={{fontSize:"11px"}}>
       {[
