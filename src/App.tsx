@@ -2262,7 +2262,10 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
           <div style={{fontSize:"11px",lineHeight:"2.1"}}>
             <span style={{fontWeight:600,color:"#6b84a3"}}>To: </span>{editable?<EditField value={client.sendTo} onChange={v=>upCl("sendTo",v)} placeholder="Recipient"/>:dispClient.sendTo}<br/>
 <span style={{fontWeight:600,color:"#6b84a3"}}>Company: </span>{editable?<EditField value={client.name} onChange={v=>upCl("name",v)} style={{fontWeight:700}}/>:<strong>{dispClient.name}</strong>}<br/>
-            {editable&&<><span style={{fontWeight:600,color:"#6b84a3"}}>Address: </span><EditField value={client.address||""} onChange={v=>upCl("address",v)} placeholder="Address"/><br/></>}
+            {editable
+  ?<><span style={{fontWeight:600,color:"#6b84a3"}}>Address: </span><EditField value={client.address||""} onChange={v=>upCl("address",v)} placeholder="Address"/><br/></>
+  :dispClient.address?<><span style={{fontWeight:600,color:"#6b84a3"}}>Address: </span>{dispClient.address}<br/></>:null
+}
 <span style={{fontWeight:600,color:"#6b84a3"}}>Place: </span>{editable?<EditField value={client.place} onChange={v=>upCl("place",v)}/>:dispClient.place}{" — "}{editable?<EditField value={client.pincode} onChange={v=>upCl("pincode",v)} style={{width:"70px"}}/>:dispClient.pincode}<br/>
 <span style={{fontWeight:600,color:"#6b84a3"}}>Ph: </span>{editable?<EditField value={client.phone} onChange={v=>upCl("phone",v)} placeholder="Phone"/>:dispClient.phone}
           </div>
