@@ -2273,7 +2273,7 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
   <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>SITE DETAILS</div>
   <div style={{fontSize:"11px",lineHeight:"2.1"}}>
     <span style={{fontWeight:600,color:"#6b84a3"}}>Site Name: </span>
-    {editable?<EditField value={invSiteName} onChange={v=>setInvSiteName(v)} placeholder="Site name"/>:displaySiteName||"—"}<br/>
+    {editable?<EditField value={invSiteName} onChange={v=>setInvSiteName(v)} placeholder="Site name"/>:displaySiteName||"—"}
     {editable&&<>
   <br/>
   <span style={{fontWeight:600,color:"#6b84a3"}}>Place: </span>
