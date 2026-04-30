@@ -2292,6 +2292,7 @@ const dispBank=snap?snap.bank:bank;
     </div>
   ))}
 </div>
+</div>
           <div style={{marginTop:"10px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe",display:"flex",gap:"4px",alignItems:"flex-start"}}>
   <span style={{fontWeight:600,color:"#6b84a3",fontSize:"11px",flexShrink:0}}>Measurement Job No</span>
   <span style={{color:"#6b84a3",fontWeight:600,paddingRight:"6px",fontSize:"11px"}}>:</span>
