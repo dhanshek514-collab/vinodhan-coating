@@ -2259,16 +2259,20 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
 <div style={{display:"flex",gap:"12px",marginBottom:"16px",flexWrap:"wrap"}}>
 <div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
           <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>BILL TO</div>
-          <div style={{fontSize:"11px",lineHeight:"2.1"}}>
-            <span style={{fontWeight:600,color:"#6b84a3"}}>To: </span>{editable?<EditField value={client.sendTo} onChange={v=>upCl("sendTo",v)} placeholder="Recipient"/>:dispClient.sendTo}<br/>
-<span style={{fontWeight:600,color:"#6b84a3"}}>Company: </span>{editable?<EditField value={client.name} onChange={v=>upCl("name",v)} style={{fontWeight:700}}/>:<strong>{dispClient.name}</strong>}<br/>
-            {editable
-  ?<div style={{display:"flex",gap:"4px",alignItems:"flex-start"}}><span style={{fontWeight:600,color:"#6b84a3",whiteSpace:"nowrap"}}>Address: </span><EditField value={client.address||""} onChange={v=>upCl("address",v)} placeholder="Address"/></div>
-  :dispClient.address?<div style={{display:"flex",gap:"4px",alignItems:"flex-start"}}><span style={{fontWeight:600,color:"#6b84a3",whiteSpace:"nowrap"}}>Address: </span><span>{dispClient.address}</span></div>:null
-}
-<span style={{fontWeight:600,color:"#6b84a3"}}>Place: </span>{editable?<EditField value={client.place} onChange={v=>upCl("place",v)}/>:dispClient.place}{" — "}{editable?<EditField value={client.pincode} onChange={v=>upCl("pincode",v)} style={{width:"70px"}}/>:dispClient.pincode}<br/>
-<span style={{fontWeight:600,color:"#6b84a3"}}>Ph: </span>{editable?<EditField value={client.phone} onChange={v=>upCl("phone",v)} placeholder="Phone"/>:dispClient.phone}
-          </div>
+          <div style={{fontSize:"11px"}}>
+  {[
+    ["To", editable?<EditField value={client.sendTo} onChange={v=>upCl("sendTo",v)} placeholder="Recipient"/>:dispClient.sendTo],
+    ["Company", editable?<EditField value={client.name} onChange={v=>upCl("name",v)} style={{fontWeight:700}}/>:<strong>{dispClient.name}</strong>],
+    ...(editable||(dispClient.address)?[["Address", editable?<EditField value={client.address||""} onChange={v=>upCl("address",v)} placeholder="Address"/>:dispClient.address]]:[] ),
+    ["Place", <>{editable?<EditField value={client.place} onChange={v=>upCl("place",v)}/>:dispClient.place}{" — "}{editable?<EditField value={client.pincode} onChange={v=>upCl("pincode",v)} style={{width:"70px"}}/>:dispClient.pincode}</>],
+    ["Ph", editable?<EditField value={client.phone} onChange={v=>upCl("phone",v)} placeholder="Phone"/>:dispClient.phone],
+  ].map(([lbl,val])=>(
+    <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"flex-start",marginBottom:"4px"}}>
+      <span style={{fontWeight:600,color:"#6b84a3",minWidth:"70px",flexShrink:0}}>{lbl}:</span>
+      <span style={{flex:1}}>{val}</span>
+    </div>
+  ))}
+</div>
           <div style={{marginTop:"10px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe"}}>
             <span style={{fontWeight:600,color:"#6b84a3",fontSize:"11px"}}>Measurement Job No: </span>
             {editable?<EditField value={client.measureNo} onChange={v=>upCl("measureNo",v)} placeholder="Sheet no."/>:<strong>{displayMeasureNo||"—"}</strong>}
@@ -2276,15 +2280,16 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
 </div>
 <div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
   <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>SITE DETAILS</div>
-  <div style={{fontSize:"11px",lineHeight:"2.1"}}>
-    <span style={{fontWeight:600,color:"#6b84a3"}}>Site Name: </span>
-    {editable?<EditField value={invSiteName} onChange={v=>setInvSiteName(v)} placeholder="Site name"/>:displaySiteName||"—"}
-    <br/>
-    <span style={{fontWeight:600,color:"#6b84a3"}}>Place: </span>
-    {editable
-      ?<EditField value={invSitePlace} onChange={v=>setInvSitePlace(v)} placeholder="Site place"/>
-      :inv?.sitePlace||"—"
-    }
+  <div style={{fontSize:"11px"}}>
+    {[
+      ["Site Name", editable?<EditField value={invSiteName} onChange={v=>setInvSiteName(v)} placeholder="Site name"/>:displaySiteName||"—"],
+      ...(editable||(inv?.sitePlace)?[["Place", editable?<EditField value={invSitePlace} onChange={v=>setInvSitePlace(v)} placeholder="Site place"/>:inv?.sitePlace||"—"]]:[] ),
+    ].map(([lbl,val])=>(
+      <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"flex-start",marginBottom:"4px"}}>
+        <span style={{fontWeight:600,color:"#6b84a3",minWidth:"70px",flexShrink:0}}>{lbl}:</span>
+        <span style={{flex:1}}>{val}</span>
+      </div>
+    ))}
   </div>
 </div>
 </div>
