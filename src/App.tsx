@@ -2287,18 +2287,16 @@ const dispBank=snap?snap.bank:bank;
   ].map(([lbl,val])=>(
     <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"flex-start",marginBottom:"4px"}}>
       <span style={{fontWeight:600,color:"#6b84a3",minWidth:"70px",flexShrink:0}}>{lbl}</span>
-<span style={{color:"#6b84a3",fontWeight:600,paddingRight:"6px"}}>:</span>
-<span style={{flex:1}}>{val}</span>
+      <span style={{color:"#6b84a3",fontWeight:600,paddingRight:"6px"}}>:</span>
+      <span style={{flex:1}}>{val}</span>
     </div>
   ))}
 </div>
-</div>
-          <div style={{marginTop:"10px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe",display:"flex",gap:"4px",alignItems:"flex-start"}}>
+<div style={{marginTop:"10px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe",display:"flex",gap:"4px",alignItems:"flex-start"}}>
   <span style={{fontWeight:600,color:"#6b84a3",fontSize:"11px",flexShrink:0}}>Measurement Job No</span>
   <span style={{color:"#6b84a3",fontWeight:600,paddingRight:"6px",fontSize:"11px"}}>:</span>
   <span style={{flex:1,fontSize:"11px"}}>{editable?<EditField value={client.measureNo} onChange={v=>upCl("measureNo",v)} placeholder="Sheet no."/>:<strong>{displayMeasureNo||"—"}</strong>}</span>
 </div>
-         </div>
 </div>
 <div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
   <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>SITE DETAILS</div>
