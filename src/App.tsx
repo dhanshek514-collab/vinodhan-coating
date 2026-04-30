@@ -1434,9 +1434,9 @@ return bMax.localeCompare(aMax);
           <div key={site.id} style={{...S.card,marginBottom:"12px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"9px"}}>
               <div>
-                <h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700,display:"flex",alignItems:"center",gap:"8px"}}>
+                <h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>
   {sites.length-idx}. {site.name}
-  <span onClick={()=>{setEditSiteForm({name:site.name,client:site.client});setEditSiteModal(site);}} style={{fontSize:"11px",color:"#1e50a0",cursor:"pointer",fontWeight:600,background:"#eff6ff",borderRadius:"6px",padding:"2px 7px"}}>✏️ Edit</span>
+  <span onClick={()=>{setEditSiteForm({name:site.name,client:site.client});setEditSiteModal(site);}} style={{fontSize:"11px",color:"#1e50a0",cursor:"pointer",fontWeight:600,background:"#eff6ff",borderRadius:"6px",padding:"2px 7px",marginLeft:"8px"}}>✏️ Edit</span>
 </h3>
                 <div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div>
                 <div style={{fontSize:"13px",fontWeight:700,color:"#166534",marginTop:"3px"}}>₹{rev.toLocaleString()}</div>
@@ -1671,7 +1671,7 @@ const [reportDelModal,setReportDelModal]=useState(null);
         ))}
       </div>
       {tab==="mark"&&<>
-        <div style={{display:"flex",gap:"12px",marginBottom:"16px",flexWrap:"wrap"}}>
+        <div style={{display:"flex",gap:"12px",marginBottom:"16px",flexWrap:"wrap",maxWidth:"100%",boxSizing:"border-box"}}>
           <div style={{flex:1,minWidth:"140px"}}><label style={S.lbl}>Site</label><select value={selSite} onChange={e=>setSelSite(Number(e.target.value))} style={S.inp}>{sites.map(st=><option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
           <div style={{flex:1,minWidth:"140px"}}><label style={S.lbl}>Date</label><input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={S.inp}/></div>
         </div>
@@ -2275,7 +2275,7 @@ const dispBank=snap?snap.bank:bank;
 
         {/* Bill To + Site Name */}
 <div style={{display:"flex",gap:"12px",marginBottom:"16px",flexWrap:"wrap"}}>
-<div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
+<div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"0",width:"100%",boxSizing:"border-box"}}>
           <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>BILL TO</div>
           <div style={{fontSize:"11px"}}>
   {[
@@ -2298,7 +2298,7 @@ const dispBank=snap?snap.bank:bank;
   <span style={{flex:1,fontSize:"11px"}}>{editable?<EditField value={client.measureNo} onChange={v=>upCl("measureNo",v)} placeholder="Sheet no."/>:<strong>{displayMeasureNo||"—"}</strong>}</span>
 </div>
 </div>
-<div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
+<div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"0",width:"100%",boxSizing:"border-box"}}>
   <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>SITE DETAILS</div>
   <div style={{fontSize:"11px"}}>
     {[
@@ -2343,7 +2343,7 @@ const dispBank=snap?snap.bank:bank;
 
         {/* Bank + Signature */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"14px",marginTop:"20px"}}>
-          <div style={{padding:"12px 14px",background:"#f8faff",borderRadius:"9px",fontSize:"11px",flex:1,minWidth:"180px"}}>
+          <div style={{padding:"12px 14px",background:"#f8faff",borderRadius:"9px",fontSize:"11px",flex:1,minWidth:"0",width:"100%",boxSizing:"border-box"}}>
   <div style={{fontWeight:700,marginBottom:"6px"}}>Bank Details</div>
   {[
     ["Acc Name", editable?<EditField value={bank.accName} onChange={v=>upB("accName",v)}/>:dispBank.accName],
