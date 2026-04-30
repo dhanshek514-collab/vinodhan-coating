@@ -2235,7 +2235,7 @@ const dispCompany=snap?snap.company:company;
 const dispClient=snap?snap.client:client;
 const dispBank=snap?snap.bank:bank;
     return(
-      <div style={{width:"210mm",maxWidth:"100%",minHeight:"auto",margin:"0 auto",background:"#fff",padding:"clamp(8px,5vw,20mm)",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px",border:"2px solid #0f3172",outline:"4px solid #e8f0fe",outlineOffset:"-8px",boxSizing:"border-box",overflowX:"hidden"}}>
+      <div style={{width:"210mm",maxWidth:"100%",minHeight:"auto",margin:"0 auto",background:"#fff",padding:"20mm",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px",border:"2px solid #0f3172",outline:"4px solid #e8f0fe",outlineOffset:"-8px",boxSizing:"border-box"}}>
         {/* Header */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"12px",paddingBottom:"16px",borderBottom:"2px solid #0f3172",marginBottom:"16px"}}>
   <div style={{flex:1,minWidth:"180px"}}>
@@ -2436,7 +2436,7 @@ const dispBank=snap?snap.bank:bank;
             <button onClick={saveInv} style={{...S.btn("#166534"),opacity:allWorks.length===0?0.5:1}} disabled={allWorks.length===0}>💾 Save Invoice</button>
           </div>
         </div>
-        <div id="invoice-doc"><InvDoc inv={null}/></div>
+        <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><div id="invoice-doc"><InvDoc inv={null}/></div></div>
       </>}
 
       {tab==="history"&&(viewInv
@@ -2444,7 +2444,7 @@ const dispBank=snap?snap.bank:bank;
             <button onClick={()=>setViewInv(null)} style={S.btn("#f0f4f9","#1a2b4a")}>← Back</button>
             <button onClick={()=>printSection("invoice-history-doc")} style={S.btn()}>🖨️ Print</button>
           </div>
-          <div id="invoice-history-doc"><InvDoc inv={viewInv}/></div>
+          <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><div id="invoice-history-doc"><InvDoc inv={viewInv}/></div></div>
         </>
         :<div style={S.card}>
   <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>Saved Invoices</h3>
