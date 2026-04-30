@@ -2274,8 +2274,11 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
   <div style={{fontSize:"11px",lineHeight:"2.1"}}>
     <span style={{fontWeight:600,color:"#6b84a3"}}>Site Name: </span>
     {editable?<EditField value={invSiteName} onChange={v=>setInvSiteName(v)} placeholder="Site name"/>:displaySiteName||"—"}<br/>
-    <span style={{fontWeight:600,color:"#6b84a3"}}>Place: </span>
-    {editable?<EditField value={client.place} onChange={v=>upCl("place",v)} placeholder="Place"/>:dispClient.place||"—"}
+    {editable&&<>
+  <br/>
+  <span style={{fontWeight:600,color:"#6b84a3"}}>Place: </span>
+  <EditField value={client.place} onChange={v=>upCl("place",v)} placeholder="Place"/>
+</>}
   </div>
 </div>
 </div>
