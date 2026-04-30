@@ -2043,7 +2043,7 @@ const [permitDelModal,setPermitDelModal]=useState(null);
   <div style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"1px solid #f0f4f9"}}><span style={{fontWeight:700,color:"#6b84a3",minWidth:"100px",fontSize:"12px"}}>Valid To</span><span style={{color:"#1a2b4a",fontWeight:600}}>: {fmtDate(toDate)}</span></div>
 </div>
           <div className="worker-grid">
-  {permitWorkers.map(w=>(
+  {permitWorkers.slice(0,-2).map(w=>(
     <div key={w.id} className="worker-tile" style={{border:"1.5px solid #e5e7eb",borderRadius:"10px",overflow:"hidden",display:"flex",minHeight:"130px"}}>
                 <div style={{width:"100px",flexShrink:0,background:"#f0f4f9",display:"flex",alignItems:"center",justifyContent:"center",borderRight:"1px solid #e5e7eb"}}>
                   {w.photo?<img src={w.photo} style={{width:"100px",height:"130px",objectFit:"cover"}}/>:<div style={{textAlign:"center",padding:"10px"}}><div style={{fontSize:"32px"}}>👤</div><div style={{fontSize:"9px",color:"#9db3cc",marginTop:"4px"}}>No Photo</div></div>}
@@ -2056,8 +2056,24 @@ const [permitDelModal,setPermitDelModal]=useState(null);
                 </div>
               </div>
             ))}
-          </div>
-          <div className="sig-section" style={{marginTop:"40px",display:"flex",justifyContent:"flex-end",alignItems:"flex-end",flexWrap:"wrap",gap:"12px"}}>
+</div>
+<div style={{pageBreakInside:"avoid"}}>
+<div className="worker-grid" style={{marginBottom:"14px"}}>
+  {permitWorkers.slice(-2).map(w=>(
+    <div key={w.id} className="worker-tile" style={{border:"1.5px solid #e5e7eb",borderRadius:"10px",overflow:"hidden",display:"flex",minHeight:"130px"}}>
+      <div style={{width:"100px",flexShrink:0,background:"#f0f4f9",display:"flex",alignItems:"center",justifyContent:"center",borderRight:"1px solid #e5e7eb"}}>
+        {w.photo?<img src={w.photo} style={{width:"100px",height:"130px",objectFit:"cover"}}/>:<div style={{textAlign:"center",padding:"10px"}}><div style={{fontSize:"32px"}}>👤</div><div style={{fontSize:"9px",color:"#9db3cc",marginTop:"4px"}}>No Photo</div></div>}
+      </div>
+      <div style={{flex:1,padding:"12px 14px",fontSize:"12px"}}>
+        <div style={{fontWeight:800,fontSize:"14px",color:"#0f3172",marginBottom:"8px"}}>{w.name}</div>
+        {[["Category",sa[w.id]||w.category],["Aadhaar",w.aadhaar||"—"],["Phone",w.phone||"—"],["DOB",w.dob?fmtDate(w.dob):"—"]].map(([lbl,val])=>(
+          <div key={lbl} style={{display:"flex",gap:"6px",marginBottom:"5px"}}><span style={{color:"#6b84a3",fontWeight:600,minWidth:"65px"}}>{lbl}</span><span style={{color:"#1a2b4a"}}>: {val}</span></div>
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+<div className="sig-section" style={{marginTop:"40px",display:"flex",justifyContent:"flex-end",alignItems:"flex-end",flexWrap:"wrap",gap:"12px"}}>
   <div className="no-print" style={{position:"absolute",bottom:"20mm",left:"15mm"}}>
     <label style={{display:"flex",alignItems:"center",gap:"8px",fontSize:"12px",color:"#6b84a3",cursor:"pointer"}}>
       <input type="checkbox" checked={showExecSign} onChange={e=>setShowExecSign(e.target.checked)}/>
@@ -2070,8 +2086,9 @@ const [permitDelModal,setPermitDelModal]=useState(null);
     <div style={{fontSize:"11px",color:"#6b84a3"}}>Site Executive — VinoDhan Coating</div>
   </div>}
 </div>
-        </div>
-      ):(
+</div>
+</div>
+):(
         <div style={{...S.card,textAlign:"center",color:"#9db3cc",padding:"40px"}}><div style={{fontSize:"32px",marginBottom:"10px"}}>🪪</div><div>Select workers above to preview the entry permit</div></div>
       )}
 
