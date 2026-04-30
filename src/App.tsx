@@ -1224,7 +1224,10 @@ return bMax.localeCompare(aMax);
           return(
             <div key={site.id} style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"10px",marginBottom:"8px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div><h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>{sites.length-idx}. {site.name}</h3><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div></div>
+                <div><h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700,display:"flex",alignItems:"center",gap:"8px"}}>
+  {sites.length-idx}. {site.name}
+  <span onClick={()=>{setEditSiteForm({name:site.name,client:site.client});setEditSiteModal(site);}} style={{fontSize:"11px",color:"#1e50a0",cursor:"pointer",fontWeight:600,background:"#eff6ff",borderRadius:"6px",padding:"2px 7px"}}>✏️ Edit</span>
+</h3><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div></div>
                 <div style={{textAlign:"right"}}><div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{rev.toLocaleString()}</div><span style={{background:site.status==="Active"?"#dcfce7":"#fee2e2",color:site.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{site.status}</span></div>
               </div>
               {(site.works||[]).length>0&&<DashSiteWorks works={site.works}/>}
@@ -1286,6 +1289,9 @@ function Sites({sites,setSites,workers,assignments,setAssignments,recycleBin,set
   const addSite=()=>{if(!siteForm.name.trim())return;const ns={id:Date.now(),...siteForm,works:[]};setSites(p=>[...p,ns]);setAssignments(p=>({...p,[ns.id]:{}}));setSiteForm({name:"",client:"Swathi Engineering Agency",status:"Active"});setShowAdd(false);};
   const [delSiteModal,setDelSiteModal]=useState(null);
   const [delWorkModal,setDelWorkModal]=useState(null);
+  const [editSiteModal,setEditSiteModal]=useState(null);
+const [editSiteForm,setEditSiteForm]=useState({name:"",client:""});
+const [editSitePwModal,setEditSitePwModal]=useState(false);
   const [orphanWarning,setOrphanWarning]=useState(null);
 const deleteSite=id=>{
   const site=sites.find(s=>s.id===id);
@@ -1355,6 +1361,35 @@ const confirmDeleteWork=()=>{setSites(p=>p.map(s=>s.id===delWorkModal.siteId?{..
   onConfirm={confirmDeleteWork}
   onCancel={()=>setDelWorkModal(null)}
 />}
+      {editSitePwModal&&<PwModal
+  title="Edit Site Details?"
+  onConfirm={()=>{
+    setSites(p=>p.map(s=>s.id===editSiteModal.id?{...s,name:editSiteForm.name,client:editSiteForm.client}:s));
+    setEditSitePwModal(false);
+    setEditSiteModal(null);
+  }}
+  onCancel={()=>setEditSitePwModal(false)}
+/>}
+
+{editSiteModal&&!editSitePwModal&&(
+  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
+    <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"320px"}}>
+      <h3 style={{margin:"0 0 14px",fontSize:"14px",fontWeight:700}}>✏️ Edit Site</h3>
+      <div style={{marginBottom:"10px"}}>
+        <label style={S.lbl}>Site Name</label>
+        <input value={editSiteForm.name} onChange={e=>setEditSiteForm(p=>({...p,name:e.target.value}))} style={S.inp}/>
+      </div>
+      <div style={{marginBottom:"16px"}}>
+        <label style={S.lbl}>Client</label>
+        <input value={editSiteForm.client} onChange={e=>setEditSiteForm(p=>({...p,client:e.target.value}))} style={S.inp}/>
+      </div>
+      <div style={{display:"flex",gap:"9px",justifyContent:"center"}}>
+        <button onClick={()=>setEditSitePwModal(true)} style={S.btn()}>🔐 Save</button>
+        <button onClick={()=>setEditSiteModal(null)} style={S.btn("#f0f4f9","#1a2b4a")}>Cancel</button>
+      </div>
+    </div>
+  </div>
+)}
 {orphanWarning&&(
   <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000}}>
     <div style={{background:"#fff",borderRadius:"16px",padding:"28px",width:"320px",textAlign:"center"}}>
