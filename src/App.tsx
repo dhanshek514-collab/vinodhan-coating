@@ -2238,38 +2238,40 @@ const dispBank=snap?snap.bank:bank;
       <div style={{width:"210mm",maxWidth:"100%",minHeight:"auto",margin:"0 auto",background:"#fff",padding:"20mm",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px",border:"2px solid #0f3172",outline:"4px solid #e8f0fe",outlineOffset:"-8px",boxSizing:"border-box"}}>
         {/* Header */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"12px",paddingBottom:"16px",borderBottom:"2px solid #0f3172",marginBottom:"16px"}}>
-          <div style={{flex:1,minWidth:"180px"}}>
-  <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172",marginBottom:"6px"}}>
-    {editable?<EditField value={company.name} onChange={v=>upC("name",v)} style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}/>:dispCompany.name}
-  </div>
-  <div style={{fontSize:"11px"}}>
-    {[
-      ["Address", editable?<EditField value={company.address} onChange={v=>upC("address",v)}/>:dispCompany.address],
-      ["Ph", editable?<EditField value={company.phone} onChange={v=>upC("phone",v)}/>:dispCompany.phone],
-      ["Udyam", editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>:dispCompany.gstin],
-    ].map(([lbl,val])=>(
-      <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"flex-start",marginBottom:"4px"}}>
-        <span style={{fontWeight:600,color:"#6b84a3",minWidth:"55px",flexShrink:0}}>{lbl}:</span>
-        <span style={{flex:1}}>{val}</span>
-      </div>
-    ))}
-  </div>
-</div>
-<div style={{textAlign:"right"}}>
-  <div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",marginBottom:"8px"}}>INVOICE</div>
-  <div style={{fontSize:"11px"}}>
-    {[
-      ["No", editable?<input value={invNum} onChange={e=>setInvNum(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"120px",color:"#1a2b4a",fontFamily:"inherit"}}/>:num],
-      ["Date", editable?<input type="date" value={invDate} onChange={e=>setInvDate(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"130px",color:"#1a2b4a",fontFamily:"inherit"}}/>:dt],
-    ].map(([lbl,val])=>(
-      <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"center",justifyContent:"flex-end",marginBottom:"4px"}}>
-        <span style={{fontWeight:600,color:"#6b84a3",minWidth:"35px",textAlign:"right",flexShrink:0}}>{lbl}:</span>
-        <span style={{minWidth:"140px",textAlign:"left"}}>{val}</span>
-      </div>
-    ))}
-  </div>
-</div>
+  <div style={{flex:1,minWidth:"180px"}}>
+    <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172",marginBottom:"6px"}}>
+      {editable?<EditField value={company.name} onChange={v=>upC("name",v)} style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}/>:dispCompany.name}
+    </div>
+    <div style={{fontSize:"11px"}}>
+      {[
+        ["Address", editable?<EditField value={company.address} onChange={v=>upC("address",v)}/>:dispCompany.address],
+        ["Ph", editable?<EditField value={company.phone} onChange={v=>upC("phone",v)}/>:dispCompany.phone],
+        ["Udyam", editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>:dispCompany.gstin],
+      ].map(([lbl,val])=>(
+        <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"flex-start",marginBottom:"4px"}}>
+          <span style={{fontWeight:600,color:"#6b84a3",minWidth:"55px",flexShrink:0}}>{lbl}</span>
+<span style={{color:"#6b84a3",fontWeight:600,paddingRight:"6px"}}>:</span>
+<span style={{flex:1}}>{val}</span>
         </div>
+      ))}
+    </div>
+  </div>
+  <div style={{textAlign:"right"}}>
+    <div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",marginBottom:"8px"}}>INVOICE</div>
+    <div style={{fontSize:"11px"}}>
+      {[
+        ["No", editable?<input value={invNum} onChange={e=>setInvNum(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"120px",color:"#1a2b4a",fontFamily:"inherit"}}/>:num],
+        ["Date", editable?<input type="date" value={invDate} onChange={e=>setInvDate(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"130px",color:"#1a2b4a",fontFamily:"inherit"}}/>:dt],
+      ].map(([lbl,val])=>(
+        <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"center",justifyContent:"flex-end",marginBottom:"4px"}}>
+          <span style={{fontWeight:600,color:"#6b84a3",minWidth:"35px",flexShrink:0}}>{lbl}</span>
+<span style={{color:"#6b84a3",fontWeight:600,paddingRight:"6px"}}>:</span>
+<span style={{minWidth:"140px",textAlign:"left"}}>{val}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
 
         {/* Bill To + Site Name */}
 <div style={{display:"flex",gap:"12px",marginBottom:"16px",flexWrap:"wrap"}}>
@@ -2284,14 +2286,17 @@ const dispBank=snap?snap.bank:bank;
     ["Ph", editable?<EditField value={client.phone} onChange={v=>upCl("phone",v)} placeholder="Phone"/>:dispClient.phone],
   ].map(([lbl,val])=>(
     <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"flex-start",marginBottom:"4px"}}>
-      <span style={{fontWeight:600,color:"#6b84a3",minWidth:"70px",flexShrink:0}}>{lbl}:</span>
-      <span style={{flex:1}}>{val}</span>
+      <span style={{fontWeight:600,color:"#6b84a3",minWidth:"70px",flexShrink:0}}>{lbl}</span>
+<span style={{color:"#6b84a3",fontWeight:600,paddingRight:"6px"}}>:</span>
+<span style={{flex:1}}>{val}</span>
     </div>
   ))}
 </div>
-          <div style={{marginTop:"10px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe"}}>
-            <span style={{fontWeight:600,color:"#6b84a3",fontSize:"11px"}}>Measurement Job No: </span>
-            {editable?<EditField value={client.measureNo} onChange={v=>upCl("measureNo",v)} placeholder="Sheet no."/>:<strong>{displayMeasureNo||"—"}</strong>}
+          <div style={{marginTop:"10px",paddingTop:"8px",borderTop:"1px dashed #bfdbfe",display:"flex",gap:"4px",alignItems:"flex-start"}}>
+  <span style={{fontWeight:600,color:"#6b84a3",fontSize:"11px",flexShrink:0}}>Measurement Job No</span>
+  <span style={{color:"#6b84a3",fontWeight:600,paddingRight:"6px",fontSize:"11px"}}>:</span>
+  <span style={{flex:1,fontSize:"11px"}}>{editable?<EditField value={client.measureNo} onChange={v=>upCl("measureNo",v)} placeholder="Sheet no."/>:<strong>{displayMeasureNo||"—"}</strong>}</span>
+</div>
          </div>
 </div>
 <div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
@@ -2302,8 +2307,9 @@ const dispBank=snap?snap.bank:bank;
       ...(editable||(inv?.sitePlace)?[["Place", editable?<EditField value={invSitePlace} onChange={v=>setInvSitePlace(v)} placeholder="Site place"/>:inv?.sitePlace||"—"]]:[] ),
     ].map(([lbl,val])=>(
       <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"flex-start",marginBottom:"4px"}}>
-        <span style={{fontWeight:600,color:"#6b84a3",minWidth:"70px",flexShrink:0}}>{lbl}:</span>
-        <span style={{flex:1}}>{val}</span>
+        <span style={{fontWeight:600,color:"#6b84a3",minWidth:"70px",flexShrink:0}}>{lbl}</span>
+<span style={{color:"#6b84a3",fontWeight:600,paddingRight:"6px"}}>:</span>
+<span style={{flex:1}}>{val}</span>
       </div>
     ))}
   </div>
@@ -2348,8 +2354,9 @@ const dispBank=snap?snap.bank:bank;
     ["UPI", editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:dispBank.upi],
   ].map(([lbl,val])=>(
     <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"flex-start",marginBottom:"4px"}}>
-      <span style={{fontWeight:600,color:"#6b84a3",minWidth:"60px",flexShrink:0}}>{lbl}:</span>
-      <span style={{flex:1}}>{val}</span>
+      <span style={{fontWeight:600,color:"#6b84a3",minWidth:"60px",flexShrink:0}}>{lbl}</span>
+<span style={{color:"#6b84a3",fontWeight:600,paddingRight:"6px"}}>:</span>
+<span style={{flex:1}}>{val}</span>
     </div>
   ))}
 </div>
