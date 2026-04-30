@@ -1433,23 +1433,21 @@ return bMax.localeCompare(aMax);
         return(
           <div key={site.id} style={{...S.card,marginBottom:"12px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"9px"}}>
-              <div>
-                <h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>
-  {sites.length-idx}. {site.name}
-  <span onClick={()=>{setEditSiteForm({name:site.name,client:site.client});setEditSiteModal(site);}} style={{fontSize:"11px",color:"#1e50a0",cursor:"pointer",fontWeight:600,background:"#eff6ff",borderRadius:"6px",padding:"2px 7px",marginLeft:"8px"}}>✏️ Edit</span>
-</h3>
-                <div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div>
-                <div style={{fontSize:"13px",fontWeight:700,color:"#166534",marginTop:"3px"}}>₹{rev.toLocaleString()}</div>
-              </div>
-              <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
-                <select value={site.status} onChange={e=>setSites(p=>p.map(s=>s.id===site.id?{...s,status:e.target.value}:s))} style={{padding:"3px 8px",borderRadius:"20px",border:"none",fontSize:"11px",fontWeight:600,outline:"none",cursor:"pointer",background:site.status==="Active"?"#dcfce7":site.status==="On Hold"?"#fef9c3":"#fee2e2",color:site.status==="Active"?"#166534":site.status==="On Hold"?"#d97706":"#991b1b"}}>
-  <option value="Active">Active</option>
-  <option value="On Hold">On Hold</option>
-  <option value="Completed">Completed</option>
-</select>
-                <button onClick={()=>deleteSite(site.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"4px 9px",fontSize:"12px"}}>🗑️</button>
-              </div>
-            </div>
+  <div style={{flex:1,minWidth:0,marginRight:"8px"}}>
+    <h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>{sites.length-idx}. {site.name}</h3>
+    <div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div>
+    <div style={{fontSize:"13px",fontWeight:700,color:"#166534",marginTop:"3px"}}>₹{rev.toLocaleString()}</div>
+  </div>
+  <div style={{display:"flex",flexDirection:"column",gap:"5px",alignItems:"flex-end",flexShrink:0}}>
+    <select value={site.status} onChange={e=>setSites(p=>p.map(s=>s.id===site.id?{...s,status:e.target.value}:s))} style={{padding:"3px 8px",borderRadius:"20px",border:"none",fontSize:"11px",fontWeight:600,outline:"none",cursor:"pointer",background:site.status==="Active"?"#dcfce7":site.status==="On Hold"?"#fef9c3":"#fee2e2",color:site.status==="Active"?"#166534":site.status==="On Hold"?"#d97706":"#991b1b"}}>
+      <option value="Active">Active</option>
+      <option value="On Hold">On Hold</option>
+      <option value="Completed">Completed</option>
+    </select>
+    <button onClick={()=>{setEditSiteForm({name:site.name,client:site.client});setEditSiteModal(site);}} style={{...S.btn("#eff6ff","#1e50a0"),padding:"4px 12px",fontSize:"11px",fontWeight:600}}>✏️ Edit</button>
+    <button onClick={()=>deleteSite(site.id)} style={{...S.btn("#fee2e2","#991b1b"),padding:"4px 9px",fontSize:"12px"}}>🗑️</button>
+  </div>
+</div>
             {(site.works||[]).length>0&&<SiteWorksDropdown works={site.works} siteId={site.id} isExp={isExp} tab={tab} startEdit={startEdit} deleteWork={deleteWork}/>}
             <button onClick={()=>setExpandSite(isExp?null:site.id)} style={S.btn("#f0f6ff","#1e50a0")}>{isExp?"Close ▲":"Manage ▼"}</button>
             {isExp&&<div style={{marginTop:"12px"}}>
