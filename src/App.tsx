@@ -2274,8 +2274,8 @@ const dispBank=snap?snap.bank:bank;
 </div>
 
         {/* Bill To + Site Details */}
-<div style={{display:"flex",gap:"12px",marginBottom:"16px",flexDirection:"column"}}>
-<div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",boxSizing:"border-box"}}>
+<div style={{display:"flex",gap:"12px",marginBottom:"16px",flexWrap:"wrap"}}>
+<div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
   <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>BILL TO</div>
   <div style={{fontSize:"11px"}}>
     {[
@@ -2298,7 +2298,7 @@ const dispBank=snap?snap.bank:bank;
     <span style={{flex:1,fontSize:"11px"}}>{editable?<EditField value={client.measureNo} onChange={v=>upCl("measureNo",v)} placeholder="Sheet no."/>:<strong>{displayMeasureNo||"—"}</strong>}</span>
   </div>
   </div>
-<div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",boxSizing:"border-box"}}>
+<div style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"9px",flex:1,minWidth:"200px"}}>
     <div style={{fontSize:"10px",fontWeight:700,color:"#6b84a3",marginBottom:"6px"}}>SITE DETAILS</div>
     <div style={{fontSize:"11px"}}>
       {[
