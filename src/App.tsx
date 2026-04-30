@@ -2263,8 +2263,8 @@ const dispBank=snap?snap.bank:bank;
       ["Date", editable?<input type="date" value={invDate} onChange={e=>setInvDate(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"130px",color:"#1a2b4a",fontFamily:"inherit"}}/>:dt],
     ].map(([lbl,val])=>(
       <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"center",justifyContent:"flex-end",marginBottom:"4px"}}>
-        <span style={{fontWeight:600,color:"#6b84a3",flexShrink:0}}>{lbl}:</span>
-        <span>{val}</span>
+        <span style={{fontWeight:600,color:"#6b84a3",minWidth:"35px",textAlign:"right",flexShrink:0}}>{lbl}:</span>
+        <span style={{minWidth:"140px",textAlign:"left"}}>{val}</span>
       </div>
     ))}
   </div>
