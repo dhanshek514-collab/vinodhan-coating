@@ -771,7 +771,7 @@ const tallyOk=Math.abs(tallyDiff)<1;
   {/* Workers */}
   <div style={{...S.card,background:"#dbeafe",boxShadow:"none",padding:"16px",minWidth:"160px",flexShrink:0}}>
     <div style={{fontSize:"22px",marginBottom:"6px"}}>👷</div>
-    <div style={{fontSize:"11px",fontWeight:700,color:"#1e40af",marginBottom:"6px"}}>WORKERS</div>
+    <div style={{fontSize:"11px",fontWeight:700,color:"#1e40af",marginBottom:"6px"}}>WORKERS & EXECUTIVES</div>
     <div style={{display:"flex",flexDirection:"column",gap:"3px"}}>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#1e40af"}}>Applicators</span><span style={{fontWeight:800,color:"#0f3172"}}>{applicators}</span></div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#5b21b6"}}>Semi-App</span><span style={{fontWeight:800,color:"#0f3172"}}>{semiApplicators}</span></div>
