@@ -2235,7 +2235,7 @@ const dispCompany=snap?snap.company:company;
 const dispClient=snap?snap.client:client;
 const dispBank=snap?snap.bank:bank;
     return(
-      <div style={{width:"210mm",maxWidth:"100%",minHeight:"auto",margin:"0 auto",background:"#fff",padding:"20mm",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px",border:"2px solid #0f3172",outline:"4px solid #e8f0fe",outlineOffset:"-8px",boxSizing:"border-box"}}>
+      <div style={{width:"210mm",maxWidth:"100%",minHeight:"auto",margin:"0 auto",background:"#fff",padding:"clamp(8px,5vw,20mm)",borderRadius:"12px",boxShadow:"0 2px 20px rgba(0,0,0,0.08)",fontSize:"13px",border:"2px solid #0f3172",outline:"4px solid #e8f0fe",outlineOffset:"-8px",boxSizing:"border-box",overflowX:"hidden"}}>
         {/* Header */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"12px",paddingBottom:"16px",borderBottom:"2px solid #0f3172",marginBottom:"16px"}}>
   <div style={{flex:1,minWidth:"180px"}}>
