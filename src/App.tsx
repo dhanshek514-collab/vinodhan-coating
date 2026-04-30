@@ -1224,10 +1224,7 @@ return bMax.localeCompare(aMax);
           return(
             <div key={site.id} style={{padding:"12px 14px",background:"#f0f6ff",borderRadius:"10px",marginBottom:"8px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div><h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700,display:"flex",alignItems:"center",gap:"8px"}}>
-  {sites.length-idx}. {site.name}
-  <span onClick={()=>{setEditSiteForm({name:site.name,client:site.client});setEditSiteModal(site);}} style={{fontSize:"11px",color:"#1e50a0",cursor:"pointer",fontWeight:600,background:"#eff6ff",borderRadius:"6px",padding:"2px 7px"}}>✏️ Edit</span>
-</h3><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div></div>
+               <div><h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>{sites.length-idx}. {site.name}</h3><div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div></div>
                 <div style={{textAlign:"right"}}><div style={{fontWeight:700,color:"#166534",fontSize:"13px"}}>₹{rev.toLocaleString()}</div><span style={{background:site.status==="Active"?"#dcfce7":"#fee2e2",color:site.status==="Active"?"#166534":"#991b1b",fontSize:"10px",fontWeight:600,borderRadius:"20px",padding:"2px 9px"}}>{site.status}</span></div>
               </div>
               {(site.works||[]).length>0&&<DashSiteWorks works={site.works}/>}
@@ -1437,7 +1434,10 @@ return bMax.localeCompare(aMax);
           <div key={site.id} style={{...S.card,marginBottom:"12px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"9px"}}>
               <div>
-                <h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700}}>{sites.length-idx}. {site.name}</h3>
+                <h3 style={{margin:"0 0 2px",fontSize:"15px",fontWeight:700,display:"flex",alignItems:"center",gap:"8px"}}>
+  {sites.length-idx}. {site.name}
+  <span onClick={()=>{setEditSiteForm({name:site.name,client:site.client});setEditSiteModal(site);}} style={{fontSize:"11px",color:"#1e50a0",cursor:"pointer",fontWeight:600,background:"#eff6ff",borderRadius:"6px",padding:"2px 7px"}}>✏️ Edit</span>
+</h3>
                 <div style={{fontSize:"11px",color:"#6b84a3"}}>{site.client}</div>
                 <div style={{fontSize:"13px",fontWeight:700,color:"#166534",marginTop:"3px"}}>₹{rev.toLocaleString()}</div>
               </div>
