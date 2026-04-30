@@ -100,7 +100,7 @@ const EMPTY_WORKER = { id:0, name:"", category:"Applicator", phone:"", aadhaar:"
 const EMPTY_EXEC = { name:"Vinoth Kumar. N", phone:"", aadhaar:"", doj:"", dob:"", photo:"" };
 const INIT_WORKERS = Array.from({length:12},(_,i)=>({ id:i+1, name:`Worker ${i+1}`, category:i<4?"Applicator":i<8?"Semi-Applicator":"Helper", phone:"",aadhaar:"",doj:"",dob:"",photo:"" }));
 const INIT_COMPANY = { name:"VinoDhan Coating", address:"Chennai, Tamil Nadu", phone:"+91 XXXXX XXXXX", gstin:"XX-XXXXXXXXX" };
-const INIT_CLIENT  = { name:"Swathi Engineering Agency", sendTo:"", place:"Chennai", pincode:"600037", phone:"", measureNo:"" };
+const INIT_CLIENT  = { name:"Swathi Engineering Agency", sendTo:"", address:"", place:"Chennai", pincode:"600037", phone:"", measureNo:"" };
 const INIT_BANK    = { accName:"VinoDhan Coating", bank:"Indian Bank", accNo:"XXXXXXXXXXXX", ifsc:"IDIB000XXXX", upi:"vinodhan@upi" };
 
 const S = {
@@ -2170,6 +2170,7 @@ function Invoice({sites,invoices,setInvoices,company,setCompany,client,setClient
   const [invNum,setInvNum]=useState(`INV-${new Date().getFullYear()}-001`);
   const [invDate,setInvDate]=useState(today);
   const [invSiteName,setInvSiteName]=useState("");
+  const [invSitePlace,setInvSitePlace]=useState("");
   const [pwModal,setPwModal]=useState(null);
   const [statusModal,setStatusModal]=useState(null);
   const sigCanvas=useRef(null);
@@ -2203,7 +2204,7 @@ useEffect(()=>{
 
   const saveInv=()=>{
   if(allWorks.length===0)return;
-  setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks,siteName:invSiteName,measureNo:client.measureNo,status:"raised",snapshot:{company:{...company},client:{...client},bank:{...bank}}}]);
+  setInvoices(p=>[...p,{id:Date.now(),number:invNum,date:invDate,total,works:allWorks,siteName:invSiteName,sitePlace:invSitePlace,measureNo:client.measureNo,status:"raised",snapshot:{company:{...company},client:{...client},bank:{...bank}}}]);
   setSelWorks([]);setTab("history");
 };
 
@@ -2261,6 +2262,7 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
           <div style={{fontSize:"11px",lineHeight:"2.1"}}>
             <span style={{fontWeight:600,color:"#6b84a3"}}>To: </span>{editable?<EditField value={client.sendTo} onChange={v=>upCl("sendTo",v)} placeholder="Recipient"/>:dispClient.sendTo}<br/>
 <span style={{fontWeight:600,color:"#6b84a3"}}>Company: </span>{editable?<EditField value={client.name} onChange={v=>upCl("name",v)} style={{fontWeight:700}}/>:<strong>{dispClient.name}</strong>}<br/>
+            <span style={{fontWeight:600,color:"#6b84a3"}}>Address: </span>{editable?<EditField value={client.address||""} onChange={v=>upCl("address",v)} placeholder="Address"/>:dispClient.address||"—"}<br/>
 <span style={{fontWeight:600,color:"#6b84a3"}}>Place: </span>{editable?<EditField value={client.place} onChange={v=>upCl("place",v)}/>:dispClient.place}{" — "}{editable?<EditField value={client.pincode} onChange={v=>upCl("pincode",v)} style={{width:"70px"}}/>:dispClient.pincode}<br/>
 <span style={{fontWeight:600,color:"#6b84a3"}}>Ph: </span>{editable?<EditField value={client.phone} onChange={v=>upCl("phone",v)} placeholder="Phone"/>:dispClient.phone}
           </div>
@@ -2277,8 +2279,8 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
     <br/>
     <span style={{fontWeight:600,color:"#6b84a3"}}>Place: </span>
     {editable
-      ?<EditField value={client.place} onChange={v=>upCl("place",v)} placeholder="Place"/>
-      :dispClient.place||"—"
+      ?<EditField value={invSitePlace} onChange={v=>setInvSitePlace(v)} placeholder="Site place"/>
+      :inv?.sitePlace||"—"
     }
   </div>
 </div>
