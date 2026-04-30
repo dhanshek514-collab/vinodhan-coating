@@ -2436,9 +2436,7 @@ const dispBank=snap?snap.bank:bank;
             <button onClick={saveInv} style={{...S.btn("#166534"),opacity:allWorks.length===0?0.5:1}} disabled={allWorks.length===0}>💾 Save Invoice</button>
           </div>
         </div>
-        <div style={{overflowX:"hidden",width:"100%"}}>
-  <div style={{transform:`scale(${Math.min(1,window.innerWidth/800)})`,transformOrigin:"top left",width:"800px"}} id="invoice-doc"><InvDoc inv={null}/></div>
-</div>
+        <div id="invoice-doc"><InvDoc inv={null}/></div>
       </>}
 
       {tab==="history"&&(viewInv
@@ -2446,9 +2444,7 @@ const dispBank=snap?snap.bank:bank;
             <button onClick={()=>setViewInv(null)} style={S.btn("#f0f4f9","#1a2b4a")}>← Back</button>
             <button onClick={()=>printSection("invoice-history-doc")} style={S.btn()}>🖨️ Print</button>
           </div>
-          <div style={{overflowX:"hidden",width:"100%"}}>
-  <div style={{transform:`scale(${Math.min(1,window.innerWidth/800)})`,transformOrigin:"top left",width:"800px"}} id="invoice-history-doc"><InvDoc inv={viewInv}/></div>
-</div>
+          <div id="invoice-history-doc"><InvDoc inv={viewInv}/></div>
         </>
         :<div style={S.card}>
   <h3 style={{margin:"0 0 12px",fontSize:"14px",fontWeight:700}}>Saved Invoices</h3>
