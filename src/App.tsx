@@ -2239,20 +2239,36 @@ const dispBank=snap?snap.bank:bank;
         {/* Header */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"12px",paddingBottom:"16px",borderBottom:"2px solid #0f3172",marginBottom:"16px"}}>
           <div style={{flex:1,minWidth:"180px"}}>
-            <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172",marginBottom:"4px"}}>{editable?<EditField value={company.name} onChange={v=>upC("name",v)} style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}/>:dispCompany.name}</div>
-            <div style={{fontSize:"11px",color:"#6b84a3",lineHeight:"1.9"}}>
-              {editable?<EditField value={company.address} onChange={v=>upC("address",v)}/>:dispCompany.address}<br/>
-              Ph: {editable?<EditField value={company.phone} onChange={v=>upC("phone",v)}/>:dispCompany.phone}<br/>
-Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>:dispCompany.gstin}
-            </div>
-          </div>
-          <div style={{textAlign:"right"}}>
-            <div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",marginBottom:"6px"}}>INVOICE</div>
-            <div style={{fontSize:"11px",color:"#6b84a3",lineHeight:"2.2"}}>
-              <strong>No: </strong>{editable?<input value={invNum} onChange={e=>setInvNum(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"120px",color:"#1a2b4a",fontFamily:"inherit"}}/>:num}<br/>
-              <strong>Date: </strong>{editable?<input type="date" value={invDate} onChange={e=>setInvDate(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"130px",color:"#1a2b4a",fontFamily:"inherit"}}/>:dt}
-            </div>
-          </div>
+  <div style={{fontSize:"18px",fontWeight:800,color:"#0f3172",marginBottom:"6px"}}>
+    {editable?<EditField value={company.name} onChange={v=>upC("name",v)} style={{fontSize:"18px",fontWeight:800,color:"#0f3172"}}/>:dispCompany.name}
+  </div>
+  <div style={{fontSize:"11px"}}>
+    {[
+      ["Address", editable?<EditField value={company.address} onChange={v=>upC("address",v)}/>:dispCompany.address],
+      ["Ph", editable?<EditField value={company.phone} onChange={v=>upC("phone",v)}/>:dispCompany.phone],
+      ["Udyam", editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>:dispCompany.gstin],
+    ].map(([lbl,val])=>(
+      <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"flex-start",marginBottom:"4px"}}>
+        <span style={{fontWeight:600,color:"#6b84a3",minWidth:"55px",flexShrink:0}}>{lbl}:</span>
+        <span style={{flex:1}}>{val}</span>
+      </div>
+    ))}
+  </div>
+</div>
+<div style={{textAlign:"right"}}>
+  <div style={{fontSize:"22px",fontWeight:800,color:"#0f3172",marginBottom:"8px"}}>INVOICE</div>
+  <div style={{fontSize:"11px"}}>
+    {[
+      ["No", editable?<input value={invNum} onChange={e=>setInvNum(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"120px",color:"#1a2b4a",fontFamily:"inherit"}}/>:num],
+      ["Date", editable?<input type="date" value={invDate} onChange={e=>setInvDate(e.target.value)} style={{border:"1.5px solid #bfdbfe",borderRadius:"5px",padding:"2px 6px",fontSize:"11px",outline:"none",width:"130px",color:"#1a2b4a",fontFamily:"inherit"}}/>:dt],
+    ].map(([lbl,val])=>(
+      <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"center",justifyContent:"flex-end",marginBottom:"4px"}}>
+        <span style={{fontWeight:600,color:"#6b84a3",flexShrink:0}}>{lbl}:</span>
+        <span>{val}</span>
+      </div>
+    ))}
+  </div>
+</div>
         </div>
 
         {/* Bill To + Site Name */}
@@ -2322,14 +2338,21 @@ Udyam: {editable?<EditField value={company.gstin} onChange={v=>upC("gstin",v)}/>
 
         {/* Bank + Signature */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"14px",marginTop:"20px"}}>
-          <div style={{padding:"12px 14px",background:"#f8faff",borderRadius:"9px",fontSize:"11px",lineHeight:"2",flex:1,minWidth:"180px"}}>
-            <div style={{fontWeight:700,marginBottom:"3px"}}>Bank Details</div>
-            Acc Name: {editable?<EditField value={bank.accName} onChange={v=>upB("accName",v)}/>:dispBank.accName}<br/>
-Bank: {editable?<EditField value={bank.bank} onChange={v=>upB("bank",v)}/>:dispBank.bank}<br/>
-A/C No: {editable?<EditField value={bank.accNo} onChange={v=>upB("accNo",v)}/>:dispBank.accNo}<br/>
-IFSC: {editable?<EditField value={bank.ifsc} onChange={v=>upB("ifsc",v)}/>:dispBank.ifsc}<br/>
-UPI: {editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:dispBank.upi}
-          </div>
+          <div style={{padding:"12px 14px",background:"#f8faff",borderRadius:"9px",fontSize:"11px",flex:1,minWidth:"180px"}}>
+  <div style={{fontWeight:700,marginBottom:"6px"}}>Bank Details</div>
+  {[
+    ["Acc Name", editable?<EditField value={bank.accName} onChange={v=>upB("accName",v)}/>:dispBank.accName],
+    ["Bank", editable?<EditField value={bank.bank} onChange={v=>upB("bank",v)}/>:dispBank.bank],
+    ["A/C No", editable?<EditField value={bank.accNo} onChange={v=>upB("accNo",v)}/>:dispBank.accNo],
+    ["IFSC", editable?<EditField value={bank.ifsc} onChange={v=>upB("ifsc",v)}/>:dispBank.ifsc],
+    ["UPI", editable?<EditField value={bank.upi} onChange={v=>upB("upi",v)}/>:dispBank.upi],
+  ].map(([lbl,val])=>(
+    <div key={lbl} style={{display:"flex",gap:"4px",alignItems:"flex-start",marginBottom:"4px"}}>
+      <span style={{fontWeight:600,color:"#6b84a3",minWidth:"60px",flexShrink:0}}>{lbl}:</span>
+      <span style={{flex:1}}>{val}</span>
+    </div>
+  ))}
+</div>
           <div style={{textAlign:"center"}}>
             {/* Signature box */}
             <div style={{width:"180px",height:"90px",border:"1.5px dashed #bfdbfe",borderRadius:"8px",marginBottom:"6px",overflow:"hidden",background:"#fafcff",display:"flex",alignItems:"center",justifyContent:"center"}}>
