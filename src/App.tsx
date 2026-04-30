@@ -776,7 +776,8 @@ const tallyOk=Math.abs(tallyDiff)<1;
       <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#1e40af"}}>Applicators</span><span style={{fontWeight:800,color:"#0f3172"}}>{applicators}</span></div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#5b21b6"}}>Semi-App</span><span style={{fontWeight:800,color:"#0f3172"}}>{semiApplicators}</span></div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#166534"}}>Helpers</span><span style={{fontWeight:800,color:"#0f3172"}}>{helpers}</span></div>
-      <div style={{borderTop:"1px solid #bfdbfe",marginTop:"3px",paddingTop:"3px",display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#6b84a3"}}>Total</span><span style={{fontWeight:800,color:"#0f3172"}}>{workers.length}</span></div>
+<div style={{display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#0f3172"}}>Executive</span><span style={{fontWeight:800,color:"#0f3172"}}>1</span></div>
+      <div style={{borderTop:"1px solid #bfdbfe",marginTop:"3px",paddingTop:"3px",display:"flex",justifyContent:"space-between",fontSize:"12px"}}><span style={{color:"#6b84a3"}}>Total</span><span style={{fontWeight:800,color:"#0f3172"}}>{workers.length+1}</span></div>
     </div>
   </div>
   {/* Sites */}
