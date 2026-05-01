@@ -350,10 +350,47 @@ export default function App() {
   useEffect(() => {
     console.log("🔵 SIMPLIFIED EFFECT RUNNING");
 
-    const loadAllData = () => {
+    const loadAllData = async () => {
       try {
-        console.log("📤 Loading from localStorage...");
+        console.log("📥 Loading from Firebase...");
 
+        const projectId = "vinodhan-coating";
+        const apiKey = "AIzaSyAz13tZTrb-qRfIui_6Q_X0U4NNm0mxtfE";
+
+        try {
+          const response = await fetch(
+            `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/data?key=${apiKey}`
+          );
+          const firebaseData = await response.json();
+
+          if (firebaseData.fields?.data?.stringValue) {
+            const backupData = JSON.parse(firebaseData.fields.data.stringValue);
+            console.log("✅ Data loaded from Firebase!");
+
+            setWorkers(backupData.workers || INIT_WORKERS);
+            setExecProfile(backupData.exec || EMPTY_EXEC);
+            setSites(backupData.sites || [{ id: 1, name: "Site A", client: "Swathi Engineering Agency", status: "Active", works: [] }]);
+            setAttendance(backupData.attendance || {});
+            setAssignments(backupData.assignments || {});
+            setInvoices(backupData.invoices || []);
+            setCompany(backupData.company || INIT_COMPANY);
+            setClient(backupData.client || INIT_CLIENT);
+            setBank(backupData.bank || INIT_BANK);
+            setPasswords(backupData.passwords || {});
+            setRecycleBin(backupData.recycleBin || { sites: [], invoices: [] });
+            setLedgers(backupData.ledgers || []);
+            setSavedReports(backupData.savedReports || []);
+            setSavedPermits(backupData.savedPermits || []);
+
+            setReady(true);
+            return;
+          }
+        } catch (firebaseError) {
+          console.log("⚠️ Firebase fetch failed, using localStorage...");
+        }
+
+        // Fallback: Load from localStorage
+        console.log("📤 Loading from localStorage...");
         setWorkers(loadS("vd_workers", INIT_WORKERS));
         setExecProfile(loadS("vd_exec", EMPTY_EXEC));
         setSites(loadS("vd_sites", [{ id: 1, name: "Site A", client: "Swathi Engineering Agency", status: "Active", works: [] }]));
