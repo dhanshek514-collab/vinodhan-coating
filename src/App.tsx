@@ -359,7 +359,7 @@ export default function App() {
 
         try {
           const response = await fetch(
-            `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/backup_2026-05-01/backup_2026-05-01?key=${apiKey}`
+            `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/backup_2026-05-01?key=${apiKey}`
           );
           const firebaseData = await response.json();
 
