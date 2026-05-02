@@ -416,6 +416,64 @@ export default function App() {
 
     loadAllData();
   }, []);
+  // EFFECT 2: Sync data to Firebase whenever it changes
+  useEffect(() => {
+    if (!ready) return; // Don't sync until initial load is done
+
+    const syncToFirebase = async () => {
+      try {
+        console.log("☁️ Syncing to Firebase...");
+
+        const allData = {
+          workers,
+          sites,
+          invoices,
+          ledgers,
+          attendance,
+          assignments,
+          company,
+          client,
+          bank,
+          passwords,
+          recycleBin,
+          savedReports,
+          savedPermits,
+          exec: execProfile,
+        };
+
+        const projectId = "vinodhan-coating";
+        const apiKey = "AIzaSyAz13tZTrb-qRfIui_6Q_X0U4NNm0mxtfE";
+
+        const response = await fetch(
+          `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/backup_2026-05-01?key=${apiKey}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fields: {
+                data: { stringValue: JSON.stringify(allData) },
+              },
+            }),
+          }
+        );
+
+        if (response.ok) {
+          console.log("✅ Synced to Firebase!");
+        } else {
+          console.error("❌ Sync failed:", response.status);
+        }
+      } catch (error) {
+        console.error("⚠️ Firebase sync error:", error);
+      }
+    };
+
+    // Debounce: sync after 2 seconds of no changes
+    const timer = setTimeout(() => {
+      syncToFirebase();
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [workers, sites, invoices, ledgers, attendance, assignments, company, client, bank, passwords, recycleBin, savedReports, savedPermits, execProfile, ready]);
 
   // ════════════════════════════════════════════════════════════════════════════════
   // EFFECT 3-16: Auto-sync individual data to Firebase & localStorage
