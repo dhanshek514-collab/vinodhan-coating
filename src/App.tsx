@@ -318,11 +318,7 @@ export default function App() {
   const [client, setClient] = useState(INIT_CLIENT);
   const [bank, setBank] = useState(INIT_BANK);
   const [passwords, setPasswords] = useState({ "DHANS1416": "Riseup1416", "Site Executive": "Vinoth1024" });
-<<<<<<< HEAD
   const [recycleBin, setRecycleBin] = useState({ sites: [], invoices: [], attendanceReports: [] });
-=======
-  const [recycleBin, setRecycleBin] = useState({ sites: [], invoices: [] });
->>>>>>> 95009c00ac5696fa855bbecf188ec0836e8b2406
   const [ledgers, setLedgers] = useState([]);
   const [savedReports, setSavedReports] = useState([]);
   const [savedPermits, setSavedPermits] = useState([]);
@@ -2129,7 +2125,6 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
   const [repWork, setRepWork] = useState("");
   const [saveReportModal, setSaveReportModal] = useState(false);
   const [reportDelModal, setReportDelModal] = useState(null);
-<<<<<<< HEAD
   const [viewReportId, setViewReportId] = useState(null);
 
   // ── Mark tab derived ──
@@ -2448,27 +2443,6 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
   // ═══════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════
-=======
-  const mark = (wid, status) => setAttendance(p => {
-    const key = `${selDate}_${selSite}_${wid}`;
-    if (status === null) { const n = { ...p }; delete n[key]; return n; }
-    return { ...p, [key]: status };
-  });
-  const getStatus = wid => attendance[`${selDate}_${selSite}_${wid}`] || null;
-  const sa = selSite ? (assignments[selSite] || {}) : {};
-  const aids = Object.keys(sa).map(Number);
-  const present = aids.filter(w => getStatus(w) === "Present").length;
-  const absent = aids.filter(w => getStatus(w) === "Absent").length;
-  const half = aids.filter(w => getStatus(w) === "Half").length;
-  const daysInMonth = getDaysInMonth(repMonth, repYear);
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  const repSiteObj = sites.find(s => s.id === repSite);
-  const repAssign = assignments[repSite] || {};
-  const repWorkers = workers.filter(w => repAssign[w.id]);
-  const getAttVal = (wid, day) => { const dd = String(day).padStart(2, "0"); const mm = String(repMonth + 1).padStart(2, "0"); return attendance[`${repYear}-${mm}-${dd}_${repSite}_${wid}`] || ""; };
-  const getTotalDays = wid => days.reduce((acc, d) => { const v = getAttVal(wid, d); if (v === "Present") return acc + 1; if (v === "Half") return acc + 0.5; return acc; }, 0);
-  const fromDate = fmtDate(repFromDate); const toDate = fmtDate(repToDate);
->>>>>>> 95009c00ac5696fa855bbecf188ec0836e8b2406
   return (
     <div>
       <h2 style={{ margin: "0 0 16px", fontSize: "20px", fontWeight: 800 }}>✅ Attendance</h2>
@@ -2480,7 +2454,6 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
             style={{ ...S.btn(tab === t ? "#1e50a0" : "#e5e7eb", tab === t ? "#fff" : "#374151"), flexShrink: 0 }}>{lbl}</button>
         ))}
       </div>
-<<<<<<< HEAD
 
   {/* ════════════════ MARK TAB ════════════════ */ }
   {
@@ -2503,60 +2476,8 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
           <label style={S.lbl}>Date</label>
           <input type="date" value={selDate} min={minDate} max={maxDate}
             onChange={e => setSelDate(e.target.value)} style={S.inp} disabled={!selWork} />
-=======
-      {tab === "mark" && <>
-            <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap", maxWidth: "100%", boxSizing: "border-box" }}>
-              <div style={{ flex: 1, minWidth: "140px" }}><label style={S.lbl}>Site</label><select value={selSite} onChange={e => setSelSite(Number(e.target.value))} style={S.inp}>{sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
-              <div style={{ flex: 1, minWidth: "140px" }}><label style={S.lbl}>Date</label><input type="date" value={selDate} onChange={e => setSelDate(e.target.value)} style={S.inp} /></div>
-            </div>
-            <div style={{ ...S.card, marginBottom: "16px", display: "flex", gap: "18px", flexWrap: "wrap" }}>
-              {[["Present", present, "#166534"], ["Half", half, "#d97706"], ["Absent", absent, "#991b1b"], ["Unmarked", aids.length - present - absent - half, "#6b84a3"], ["Total", aids.length, "#1e50a0"]].map(([lbl, val, color]) => (
-                <div key={lbl}><span style={{ fontSize: "19px", fontWeight: 800, color }}>{val}</span><div style={{ fontSize: "10px", color: "#6b84a3" }}>{lbl}</div></div>
-              ))}
-            </div>
-            {aids.length === 0 ? <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "32px" }}>No workers assigned to this site.</div>
-              : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "10px" }}>
-                {aids.map((wid: any) => {
-                  const w = workers.find(x => x.id === wid); if (!w) return null;
-                  const desig = sa[wid] || w.category; const status = getStatus(wid);
-                  return (
-                    <div key={wid} style={{ ...S.card, padding: "13px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                        {w.photo ? <img src={w.photo} style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }} /> : <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: CAT_COLOR[w.category].bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: CAT_COLOR[w.category].color }}>{w.name[0]}</div>}
-                        <div><div style={{ fontWeight: 600, fontSize: "13px" }}>{w.name}</div><span style={S.badge(desig)}>{desig}</span></div>
-                      </div>
-                      <div style={{ display: "flex", gap: "5px" }}>
-                        {[["Present", "✓ P", "#166534"], ["Half", "½ H", "#d97706"], ["Absent", "✗ A", "#991b1b"]].map(([st, lbl, ac]) => (
-                          <button key={st} onClick={() => {
-                            if (status === st) {
-                              setUnmarkConfirm({ wid, st });
-                            } else {
-                              mark(wid, st);
-                            }
-                          }} style={{ flex: 1, padding: "6px 4px", borderRadius: "6px", border: "none", fontSize: "11px", fontWeight: 600, cursor: "pointer", background: status === st ? ac : "#e5e7eb", color: status === st ? "#fff" : "#6b7280" }}>{lbl}</button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>}
-          </>}
-          {tab === "report" && <>
-            <div style={{ ...S.card, marginBottom: "16px" }}>
-              <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>Report Settings</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: "10px", marginBottom: "12px" }}>
-                <div><label style={S.lbl}>Site</label><select value={repSite} onChange={e => setRepSite(Number(e.target.value))} style={S.inp}>{sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
-                <div><label style={S.lbl}>Month</label><select value={repMonth} onChange={e => setRepMonth(Number(e.target.value))} style={S.inp}>{MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}</select></div>
-                <div><label style={S.lbl}>Year</label><select value={repYear} onChange={e => setRepYear(Number(e.target.value))} style={S.inp}>{Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((y: any) => <option key={y}>{y}</option>)}</select></div>
-                <div><label style={S.lbl}>Client Name</label><input value={repClient} onChange={e => setRepClient(e.target.value)} style={S.inp} /></div>
-                <div><label style={S.lbl}>Name of Work</label><input value={repNameOfWork} onChange={e => setRepNameOfWork(e.target.value)} placeholder="e.g. Epoxy Floor Coating" style={S.inp} /></div>
-                <div><label style={S.lbl}>Place</label><input value={repPlace} onChange={e => setRepPlace(e.target.value)} style={S.inp} /></div>
-                <div><label style={S.lbl}>Work From Date</label><input type="date" value={repFromDate} onChange={e => setRepFromDate(e.target.value)} style={S.inp} /></div>
-                <div><label style={S.lbl}>Work To Date</label><input type="date" value={repToDate} onChange={e => setRepToDate(e.target.value)} style={S.inp} /></div>
->>>>>>> 95009c00ac5696fa855bbecf188ec0836e8b2406
               </div>
             </div>
-<<<<<<< HEAD
 
     {
       markWorkObj && (
@@ -2573,55 +2494,6 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
         <div style={{ ...S.card, marginBottom: "16px", display: "flex", gap: "18px", flexWrap: "wrap" }}>
           {[["Present", present, "#166534"], ["Half", half, "#d97706"], ["Absent", absent, "#991b1b"], ["Unmarked", aids.length - present - absent - half, "#6b84a3"], ["Total", aids.length, "#1e50a0"]].map(([lbl, val, color]) => (
             <div key={lbl}><span style={{ fontSize: "19px", fontWeight: 800, color }}>{val}</span><div style={{ fontSize: "10px", color: "#6b84a3" }}>{lbl}</div></div>
-=======
-        {saveReportModal && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
-            <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
-              <div style={{ fontSize: "32px", marginBottom: "8px" }}>💾</div>
-              <h3 style={{ margin: "0 0 7px" }}>Save Report?</h3>
-              <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>
-                Save attendance report for <strong>{repSiteObj?.name}</strong> — <strong>{MONTHS[repMonth]} {repYear}</strong>
-              </p>
-              <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
-                <button onClick={() => {
-                  const report = {
-                    id: Date.now(),
-                    siteId: repSite,
-                    siteName: repSiteObj?.name || "—",
-                    month: repMonth,
-                    year: repYear,
-                    client: repClient,
-                    place: repPlace,
-                    nameOfWork: repNameOfWork,
-                    fromDate: repFromDate,
-                    toDate: repToDate,
-                    savedAt: today,
-                    workers: repWorkers.map((w: any) => ({
-                      id: w.id,
-                      name: w.name,
-                      category: repAssign[w.id] || w.category,
-                      attendance: days.map((d: any) => ({ day: d, val: getAttVal(w.id, d) }))
-                    }))
-                  };
-                  setSavedReports(p => [...p, report]);
-                  setSaveReportModal(false);
-                  alert("✅ Report saved successfully!");
-                }} style={S.btn("#166534")}>💾 Save</button>
-                <button onClick={() => setSaveReportModal(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
-              </div>
-            </div>
-          </div>
-        )}
-        <div id="att-report" style={{ background: "#fff", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)", overflowX: "auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "20px", borderBottom: "2px solid #0f3172", paddingBottom: "14px" }}>
-            <div style={{ fontSize: "22px", fontWeight: 800, color: "#0f3172", marginBottom: "6px" }}>VinoDhan Coating</div>
-            <div style={{ fontSize: "18px", fontWeight: 800, color: "#0f3172" }}>ATTENDANCE REPORT</div>
-            <div style={{ fontSize: "12px", color: "#6b84a3", marginTop: "4px" }}>{MONTHS[repMonth]} {repYear}</div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 20px", marginBottom: "20px", fontSize: "13px" }}>
-            {[["Client", repClient], ["Site Name", repSiteObj?.name || "—"], ["Name of Work", repNameOfWork || "—"], ["Place", repPlace], ["Duration", `${fromDate} to ${toDate}`]].map(([lbl, val]) => (
-              <div key={lbl} style={{ display: "flex", gap: "8px", padding: "4px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "90px" }}>{lbl}</span><span style={{ color: "#1a2b4a" }}>: {val}</span></div>
->>>>>>> 95009c00ac5696fa855bbecf188ec0836e8b2406
           ))}
         </div>
         {aids.length === 0 ? (
@@ -2653,7 +2525,6 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
       </>
     }
       </>}
-<<<<<<< HEAD
 
   {/* ════════════════ REPORT TAB ════════════════ */ }
   {
@@ -2704,79 +2575,9 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
               style={{ ...S.btn(), opacity: (!repWork || repWorkers.length === 0) ? 0.5 : 1 }}>🖨️ Print / PDF</button>
             <button onClick={() => setSaveReportModal(true)} disabled={!repWork || repWorkers.length === 0}
               style={{ ...S.btn("#166534"), opacity: (!repWork || repWorkers.length === 0) ? 0.5 : 1 }}>💾 Save Report</button>
-=======
-      {/* Saved Reports List */}
-            {savedReports.length > 0 && <div style={{ ...S.card, marginTop: "20px" }}>
-              <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📁 Saved Reports</h3>
-              {[...savedReports].sort((a, b) => b.id - a.id).map((r: any) => (
-                <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 13px", background: "#f8faff", borderRadius: "9px", marginBottom: "6px" }}>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: "13px" }}>{r.siteName}</div>
-                    <div style={{ fontSize: "11px", color: "#6b84a3" }}>{MONTHS[r.month]} {r.year} — Saved {fmtDate(r.savedAt)}</div>
-                  </div>
-                  <div style={{ display: "flex", gap: "7px" }}>
-                    <button onClick={() => {
-                      const daysInM = getDaysInMonth(r.month, r.year);
-                      const daysArr = Array.from({ length: daysInM }, (_, i) => i + 1);
-                      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:6mm;margin:0;font-size:11px;}table{border-collapse:collapse;width:100%;table-layout:fixed;}th,td{padding:3px 2px;font-size:9px;overflow:hidden;}th:first-child,td:first-child{width:100px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}th:not(:first-child),td:not(:first-child){width:18px;text-align:center;}h1,h2,h3,div{font-size:11px;}</style></head><body onload="window.print();">
-          <div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #0f3172;padding-bottom:14px;">
-            <div style="font-size:22px;font-weight:800;color:#0f3172;">VinoDhan Coating</div>
-            <div style="font-size:18px;font-weight:800;color:#0f3172;">ATTENDANCE REPORT</div>
-            <div style="font-size:12px;color:#6b84a3;margin-top:4px;">${MONTHS[r.month]} ${r.year}</div>
-          </div>
-          <table>
-            <thead><tr style="background:#0f3172;color:#fff;">
-              <th style="padding:8px 10px;text-align:left;">Worker Name</th>
-              ${daysArr.map((d: any) => `<th>${d}</th>`).join("")}
-              <th>Total</th>
-            </tr></thead>
-            <tbody>
-              ${r.workers.map((w, idx) => {
-                        const total = w.attendance.reduce((a, d) => d.val === "Present" ? a + 1 : d.val === "Half" ? a + 0.5 : a, 0);
-                        return `<tr style="background:${idx % 2 === 0 ? "#fff" : "#f8faff"};">
-                  <td style="padding:7px 10px;font-weight:600;">${w.name}</td>
-                  ${daysArr.map((d: any) => { const v = w.attendance.find(a => a.day === d)?.val || ""; const bg = v === "Present" ? "#dcfce7" : v === "Half" ? "#fef9c3" : v === "Absent" ? "#fee2e2" : "transparent"; const col = v === "Present" ? "#166534" : v === "Half" ? "#d97706" : v === "Absent" ? "#991b1b" : "#d1d5db"; return `<td style="background:${bg};color:${col};font-weight:600;">${v === "Present" ? "P" : v === "Half" ? "H" : v === "Absent" ? "A" : ""}</td>`; }).join("")}
-                  <td style="text-align:center;font-weight:800;color:#1e50a0;">${total}</td>
-                </tr>`;
-                      }).join("")}
-            </tbody>
-          </table>
-          </body></html>`;
-                      const existing = document.getElementById("print-overlay");
-                      if (existing) document.body.removeChild(existing);
-                      const overlay = document.createElement("div");
-                      overlay.id = "print-overlay";
-                      overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;";
-                      const bar = document.createElement("div");
-                      bar.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;";
-                      const backBtn = document.createElement("button");
-                      backBtn.innerText = "← Back";
-                      backBtn.style.cssText = "background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
-                      backBtn.onclick = () => document.body.removeChild(overlay);
-                      const dlBtn = document.createElement("button");
-                      dlBtn.innerText = "⬇️ Download & Print";
-                      dlBtn.style.cssText = "background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
-                      dlBtn.onclick = () => {
-                        const a = document.createElement("a");
-                        a.href = "data:text/html;charset=utf-8," + encodeURIComponent(html);
-                        a.download = `Attendance-${r.siteName}-${MONTHS[r.month]}-${r.year}.html`;
-                        a.style.display = "none"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                      };
-                      bar.appendChild(backBtn); bar.appendChild(dlBtn);
-                      const iframe = document.createElement("iframe");
-                      iframe.style.cssText = "flex:1;width:100%;border:none;";
-                      overlay.appendChild(bar); overlay.appendChild(iframe);
-                      document.body.appendChild(overlay);
-                      iframe.contentDocument.open();
-                      iframe.contentDocument.write(html);
-                      iframe.contentDocument.close();
-                    }} style={{ ...S.btn(), padding: "5px 11px", fontSize: "12px" }}>🖨️ Print</button>
-                    <button onClick={() => setReportDelModal(r.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "5px 11px", fontSize: "12px" }}>🗑️</button>
->>>>>>> 95009c00ac5696fa855bbecf188ec0836e8b2406
                   </div>
                 </div>
 
-<<<<<<< HEAD
           { repWork && repWorkObj ? (
                   <div style={{ background: "#fff", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)", overflowX: "auto" }}>
                     <ReportHeader
@@ -2898,13 +2699,6 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
           {saveReportModal && <PwModal title="Save Attendance Report?" onConfirm={doSave} onCancel={() => setSaveReportModal(false)} />}
           {reportDelModal && <PwModal title="Delete Report?" onConfirm={() => softDelete(reportDelModal)} onCancel={() => setReportDelModal(null)} />}
 
-=======
-      {reportDelModal && <PwModal
-            title="Delete Saved Report?"
-            onConfirm={() => { setSavedReports(p => p.filter(r => r.id !== reportDelModal)); setReportDelModal(null); }}
-            onCancel={() => setReportDelModal(null)}
-          />}
->>>>>>> 95009c00ac5696fa855bbecf188ec0836e8b2406
           {unmarkConfirm && (
             <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
               <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
@@ -4130,8 +3924,5 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
           />}
         </div>
   );
-<<<<<<< HEAD
   }
-=======
-}
->>>>>>> 95009c00ac5696fa855bbecf188ec0836e8b2406
+
