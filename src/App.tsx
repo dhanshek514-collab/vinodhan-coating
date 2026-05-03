@@ -2455,469 +2455,469 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
         ))}
       </div>
 
-  {/* ════════════════ MARK TAB ════════════════ */ }
-  {
-    tab === "mark" && <>
-      <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: "wrap", boxSizing: "border-box" }}>
-        <div style={{ flex: 1, minWidth: "140px" }}>
-          <label style={S.lbl}>Site</label>
-          <select value={selSite} onChange={e => { setSelSite(Number(e.target.value)); setSelWork(""); }} style={S.inp}>
-            {sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}
-          </select>
-        </div>
-        <div style={{ flex: 1, minWidth: "140px" }}>
-          <label style={S.lbl}>Work</label>
-          <select value={selWork} onChange={e => setSelWork(e.target.value)} style={S.inp}>
-            <option value="">— Select Work —</option>
-            {markWorks.map((w: any) => <option key={w.id} value={w.id}>{w.place}</option>)}
-          </select>
-        </div>
-        <div style={{ flex: 1, minWidth: "140px" }}>
-          <label style={S.lbl}>Date</label>
-          <input type="date" value={selDate} min={minDate} max={maxDate}
-            onChange={e => setSelDate(e.target.value)} style={S.inp} disabled={!selWork} />
-              </div>
-            </div>
-
-    {
-      markWorkObj && (
-        <div style={{ fontSize: "11px", color: "#6b84a3", marginBottom: "12px", padding: "6px 10px", background: "#f0f6ff", borderRadius: "7px" }}>
-          📅 Work period: <strong>{fmtDate(markWorkObj.fromDate)}</strong> → <strong>{markWorkObj.toDate ? fmtDate(markWorkObj.toDate) : "Ongoing"}</strong>
-        </div>
-      )
-    }
-
-    {
-      !selWork ? (
-        <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "32px" }}>Select a site and work to mark attendance.</div>
-      ) : <>
-        <div style={{ ...S.card, marginBottom: "16px", display: "flex", gap: "18px", flexWrap: "wrap" }}>
-          {[["Present", present, "#166534"], ["Half", half, "#d97706"], ["Absent", absent, "#991b1b"], ["Unmarked", aids.length - present - absent - half, "#6b84a3"], ["Total", aids.length, "#1e50a0"]].map(([lbl, val, color]) => (
-            <div key={lbl}><span style={{ fontSize: "19px", fontWeight: 800, color }}>{val}</span><div style={{ fontSize: "10px", color: "#6b84a3" }}>{lbl}</div></div>
-          ))}
-        </div>
-        {aids.length === 0 ? (
-          <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "32px" }}>No workers assigned to this site.</div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "10px" }}>
-            {aids.map((wid: any) => {
-              const w = workers.find((x: any) => x.id === wid); if (!w) return null;
-              const desig = sa[wid] || w.category; const status = getStatus(wid);
-              return (
-                <div key={wid} style={{ ...S.card, padding: "13px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                    {w.photo
-                      ? <img src={w.photo} style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }} />
-                      : <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: CAT_COLOR[w.category].bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: CAT_COLOR[w.category].color }}>{w.name[0]}</div>}
-                    <div><div style={{ fontWeight: 600, fontSize: "13px" }}>{w.name}</div><span style={S.badge(desig)}>{desig}</span></div>
-                  </div>
-                  <div style={{ display: "flex", gap: "5px" }}>
-                    {[["Present", "✓ P", "#166534"], ["Half", "½ H", "#d97706"], ["Absent", "✗ A", "#991b1b"]].map(([st, lbl, ac]) => (
-                      <button key={st} onClick={() => { if (status === st) setUnmarkConfirm({ wid, st }); else mark(wid, st); }}
-                        style={{ flex: 1, padding: "6px 4px", borderRadius: "6px", border: "none", fontSize: "11px", fontWeight: 600, cursor: "pointer", background: status === st ? ac : "#e5e7eb", color: status === st ? "#fff" : "#6b7280" }}>{lbl}</button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </>
-    }
-      </>}
-
-  {/* ════════════════ REPORT TAB ════════════════ */ }
-  {
-    tab === "report" && <>
-      <div style={{ display: "flex", gap: "7px", marginBottom: "16px" }}>
-        {[["report", "📋 Report"], ["history", "📁 History"]].map(([t, lbl]) => (
-          <button key={t} onClick={() => setReportTab(t)}
-            style={{ ...S.btn(reportTab === t ? "#0f3172" : "#e5e7eb", reportTab === t ? "#fff" : "#374151"), flexShrink: 0 }}>{lbl}</button>
-        ))}
-      </div>
-
-      {/* ── Report sub-tab ── */}
-      {reportTab === "report" && <>
-        <div style={{ ...S.card, marginBottom: "16px" }}>
-          <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>Report Settings</h3>
-          <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
+      {/* ════════════════ MARK TAB ════════════════ */}
+      {
+        tab === "mark" && <>
+          <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: "wrap", boxSizing: "border-box" }}>
             <div style={{ flex: 1, minWidth: "140px" }}>
               <label style={S.lbl}>Site</label>
-              <select value={repSite} onChange={e => { setRepSite(Number(e.target.value)); setRepWork(""); }} style={S.inp}>
+              <select value={selSite} onChange={e => { setSelSite(Number(e.target.value)); setSelWork(""); }} style={S.inp}>
                 {sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}
               </select>
             </div>
             <div style={{ flex: 1, minWidth: "140px" }}>
               <label style={S.lbl}>Work</label>
-              <select value={repWork} onChange={e => setRepWork(e.target.value)} style={S.inp}>
+              <select value={selWork} onChange={e => setSelWork(e.target.value)} style={S.inp}>
                 <option value="">— Select Work —</option>
-                {repWorks.map((w: any) => <option key={w.id} value={w.id}>{w.place}</option>)}
+                {markWorks.map((w: any) => <option key={w.id} value={w.id}>{w.place}</option>)}
               </select>
+            </div>
+            <div style={{ flex: 1, minWidth: "140px" }}>
+              <label style={S.lbl}>Date</label>
+              <input type="date" value={selDate} min={minDate} max={maxDate}
+                onChange={e => setSelDate(e.target.value)} style={S.inp} disabled={!selWork} />
             </div>
           </div>
 
-          {repWork && repWorkObj && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "14px", padding: "12px", background: "#f0f6ff", borderRadius: "9px", fontSize: "12px" }}>
-              {[["Site Name", repSiteObj?.name || "—"], ["Client", linkedInv?.snapshot?.client?.name || repSiteObj?.client || "—"], ["Place", linkedInv?.sitePlace || "—"], ["Invoice #", linkedInv?.number || "No invoice linked"], ["Duration", `${fmtDate(repWorkObj.fromDate)} → ${repWorkObj.toDate ? fmtDate(repWorkObj.toDate) : "Ongoing"}`]].map(([lbl, val]) => (
-                <div key={lbl}><span style={{ color: "#6b84a3", fontWeight: 600, fontSize: "11px" }}>{lbl}: </span><span style={{ color: "#1e50a0", fontWeight: 600 }}>{val}</span></div>
-              ))}
-              <div style={{ gridColumn: "1/-1" }}>
-                <span style={{ color: "#6b84a3", fontWeight: 600, fontSize: "11px" }}>Name of Work: </span>
-                {(linkedInv?.works || [repWorkObj]).map((w: any, i: number) => (
-                  <div key={i} style={{ color: "#1e50a0", fontWeight: 600, paddingLeft: "98px" }}>{w.place}</div>
+          {
+            markWorkObj && (
+              <div style={{ fontSize: "11px", color: "#6b84a3", marginBottom: "12px", padding: "6px 10px", background: "#f0f6ff", borderRadius: "7px" }}>
+                📅 Work period: <strong>{fmtDate(markWorkObj.fromDate)}</strong> → <strong>{markWorkObj.toDate ? fmtDate(markWorkObj.toDate) : "Ongoing"}</strong>
+              </div>
+            )
+          }
+
+          {
+            !selWork ? (
+              <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "32px" }}>Select a site and work to mark attendance.</div>
+            ) : <>
+              <div style={{ ...S.card, marginBottom: "16px", display: "flex", gap: "18px", flexWrap: "wrap" }}>
+                {[["Present", present, "#166534"], ["Half", half, "#d97706"], ["Absent", absent, "#991b1b"], ["Unmarked", aids.length - present - absent - half, "#6b84a3"], ["Total", aids.length, "#1e50a0"]].map(([lbl, val, color]) => (
+                  <div key={lbl}><span style={{ fontSize: "19px", fontWeight: 800, color }}>{val}</span><div style={{ fontSize: "10px", color: "#6b84a3" }}>{lbl}</div></div>
                 ))}
               </div>
-            </div>
-          )}
-
-          <div style={{ display: "flex", gap: "9px" }}>
-            <button onClick={printLive} disabled={!repWork || repWorkers.length === 0}
-              style={{ ...S.btn(), opacity: (!repWork || repWorkers.length === 0) ? 0.5 : 1 }}>🖨️ Print / PDF</button>
-            <button onClick={() => setSaveReportModal(true)} disabled={!repWork || repWorkers.length === 0}
-              style={{ ...S.btn("#166534"), opacity: (!repWork || repWorkers.length === 0) ? 0.5 : 1 }}>💾 Save Report</button>
-                  </div>
-                </div>
-
-          { repWork && repWorkObj ? (
-                  <div style={{ background: "#fff", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)", overflowX: "auto" }}>
-                    <ReportHeader
-                      invoiceNumber={linkedInv?.number}
-                      client={linkedInv?.snapshot?.client?.name || repSiteObj?.client || "—"}
-                      siteName={repSiteObj?.name || "—"}
-                      nameOfWork={(linkedInv?.works || [repWorkObj]).map((w: any) => w.place)}
-                      place={linkedInv?.sitePlace || "—"}
-                      fromDate={repWorkObj.fromDate}
-                      toDate={repWorkObj.toDate || today}
-                    />
-                    {Object.entries(monthGroups).map(([mk, dates]) => (
-                      <div key={mk} style={{ marginBottom: "20px" }}>
-                        <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f3172", marginBottom: "8px", padding: "5px 0", borderBottom: "1px solid #0f3172" }}>{fmtMK(mk)}</div>
-                        <MonthTable dates={dates} workers={repWorkers} getAtt={(d: string, wid: any) => getRepAtt(d, wid)} />
-                      </div>
-                    ))}
-                    {Object.keys(monthGroups).length > 1 && (
-                      <div style={{ background: "#f0f6ff", borderRadius: "9px", padding: "12px 14px", marginTop: "4px" }}>
-                        <div style={{ fontSize: "12px", fontWeight: 700, color: "#0f3172", marginBottom: "8px" }}>Grand Total (All Months)</div>
-                        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-                          {repWorkers.map((w: any) => (
-                            <div key={w.id} style={{ fontSize: "12px" }}>
-                              <span style={{ color: "#6b84a3" }}>{w.name}: </span>
-                              <span style={{ fontWeight: 800, color: "#1e50a0" }}>{getGrandTotal(w.id)} days</span>
-                            </div>
+              {aids.length === 0 ? (
+                <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "32px" }}>No workers assigned to this site.</div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "10px" }}>
+                  {aids.map((wid: any) => {
+                    const w = workers.find((x: any) => x.id === wid); if (!w) return null;
+                    const desig = sa[wid] || w.category; const status = getStatus(wid);
+                    return (
+                      <div key={wid} style={{ ...S.card, padding: "13px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                          {w.photo
+                            ? <img src={w.photo} style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }} />
+                            : <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: CAT_COLOR[w.category].bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: CAT_COLOR[w.category].color }}>{w.name[0]}</div>}
+                          <div><div style={{ fontWeight: 600, fontSize: "13px" }}>{w.name}</div><span style={S.badge(desig)}>{desig}</span></div>
+                        </div>
+                        <div style={{ display: "flex", gap: "5px" }}>
+                          {[["Present", "✓ P", "#166534"], ["Half", "½ H", "#d97706"], ["Absent", "✗ A", "#991b1b"]].map(([st, lbl, ac]) => (
+                            <button key={st} onClick={() => { if (status === st) setUnmarkConfirm({ wid, st }); else mark(wid, st); }}
+                              style={{ flex: 1, padding: "6px 4px", borderRadius: "6px", border: "none", fontSize: "11px", fontWeight: 600, cursor: "pointer", background: status === st ? ac : "#e5e7eb", color: status === st ? "#fff" : "#6b7280" }}>{lbl}</button>
                           ))}
                         </div>
-                      </div>
-                    )}
-                    <div style={{ display: "flex", gap: "16px", marginTop: "14px", fontSize: "11px" }}>
-                      {[["P", "Present", "#dcfce7", "#166534"], ["H", "Half Day", "#fef9c3", "#d97706"], ["A", "Absent", "#fee2e2", "#991b1b"]].map(([sym, lbl, bg, col]) => (
-                        <div key={sym} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                          <span style={{ background: bg, color: col, fontWeight: 700, padding: "2px 6px", borderRadius: "4px", fontSize: "10px" }}>{sym}</span>
-                          <span style={{ color: "#6b84a3" }}>{lbl}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "40px" }}>
-                    <div style={{ fontSize: "28px", marginBottom: "10px" }}>📊</div>
-                    Select a site and work to generate the report.
-                  </div>
-                )}
-            </>}
-
-            {/* ── History sub-tab ── */}
-            {reportTab === "history" && (
-              viewReportId && viewReport ? (
-                <div>
-                  <div style={{ display: "flex", gap: "9px", marginBottom: "16px", alignItems: "center" }}>
-                    <button onClick={() => setViewReportId(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
-                    <button onClick={() => printSaved(viewReport)} style={S.btn()}>🖨️ Print / PDF</button>
-                    <span style={{ background: "#dbeafe", color: "#1e40af", borderRadius: "6px", padding: "4px 10px", fontWeight: 700, fontSize: "12px", marginLeft: "auto" }}>{viewReport.invoiceNumber}</span>
-                  </div>
-                  <div style={{ background: "#fff", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)", overflowX: "auto" }}>
-                    <ReportHeader
-                      invoiceNumber={viewReport.invoiceNumber}
-                      client={viewReport.client}
-                      siteName={viewReport.siteName}
-                      nameOfWork={viewReport.nameOfWork || [viewReport.workName]}
-                      place={viewReport.place}
-                      fromDate={viewReport.fromDate}
-                      toDate={viewReport.toDate}
-                    />
-                    {Object.entries(buildMonthGroups(viewReport.fromDate, viewReport.toDate)).map(([mk, dates]) => {
-                      const [y, m] = mk.split("-");
-                      return (
-                        <div key={mk} style={{ marginBottom: "20px" }}>
-                          <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f3172", marginBottom: "8px", padding: "5px 0", borderBottom: "1px solid #0f3172" }}>{MONTHS[parseInt(m) - 1]} {y}</div>
-                          <MonthTable
-                            dates={dates}
-                            workers={viewReport.workers}
-                            getAtt={(d: string, wid: any) => {
-                              const wk = viewReport.workers.find((x: any) => x.id === wid);
-                              return wk?.attendance.find((a: any) => a.date === d)?.val || "";
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div style={S.card}>
-                  <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📁 Attendance History</h3>
-                  <div style={{ fontSize: "11px", color: "#6b84a3", marginBottom: "10px" }}>All invoiced works — newest first</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 110px 100px", gap: "8px", padding: "6px 10px", background: "#f0f4f9", borderRadius: "7px", marginBottom: "6px", fontSize: "11px", fontWeight: 700, color: "#6b84a3" }}>
-                    <span>#</span><span>Site</span><span>Work</span><span>Invoice</span><span>Status</span>
-                  </div>
-                  {historyRows.length === 0 ? (
-                    <div style={{ textAlign: "center", color: "#9db3cc", padding: "30px" }}>No invoiced works yet.</div>
-                  ) : historyRows.map((row: any, idx: number) => {
-                    const saved = savedReports.find((r: any) => r.workId === row.workId);
-                    return (
-                      <div key={`${row.workId}-${idx}`} style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 110px 100px", gap: "8px", padding: "8px 10px", borderRadius: "8px", background: saved ? "#f0fdf4" : "#f8faff", border: `0.5px solid ${saved ? "#bbf7d0" : "transparent"}`, marginBottom: "5px", alignItems: "center", fontSize: "12px" }}>
-                        <span style={{ color: "#6b84a3", fontWeight: 600 }}>{idx + 1}</span>
-                        <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.siteName}>{row.siteName}</span>
-                        <span style={{ color: "#6b84a3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.workName}>{row.workName}</span>
-                        <span style={{ background: "#dbeafe", color: "#1e40af", borderRadius: "6px", padding: "2px 7px", fontWeight: 700, fontSize: "11px", display: "inline-block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.invoiceNumber}</span>
-                        {saved ? (
-                          <div style={{ display: "flex", gap: "4px" }}>
-                            <button onClick={() => setViewReportId(saved.id)} style={{ ...S.btn(), padding: "4px 8px", fontSize: "11px" }}>🖨️</button>
-                            <button onClick={() => setReportDelModal(saved.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 8px", fontSize: "11px" }}>🗑️</button>
-                          </div>
-                        ) : (
-                          <span style={{ background: "#f0f4f9", color: "#9db3cc", borderRadius: "6px", padding: "3px 7px", fontSize: "10px", fontWeight: 600 }}>Not available</span>
-                        )}
                       </div>
                     );
                   })}
                 </div>
-              )
+              )}
+            </>
+          }
+        </>}
+
+      {/* ════════════════ REPORT TAB ════════════════ */}
+      {
+        tab === "report" && <>
+          <div style={{ display: "flex", gap: "7px", marginBottom: "16px" }}>
+            {[["report", "📋 Report"], ["history", "📁 History"]].map(([t, lbl]) => (
+              <button key={t} onClick={() => setReportTab(t)}
+                style={{ ...S.btn(reportTab === t ? "#0f3172" : "#e5e7eb", reportTab === t ? "#fff" : "#374151"), flexShrink: 0 }}>{lbl}</button>
+            ))}
+          </div>
+
+          {/* ── Report sub-tab ── */}
+          {reportTab === "report" && <>
+            <div style={{ ...S.card, marginBottom: "16px" }}>
+              <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>Report Settings</h3>
+              <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: "140px" }}>
+                  <label style={S.lbl}>Site</label>
+                  <select value={repSite} onChange={e => { setRepSite(Number(e.target.value)); setRepWork(""); }} style={S.inp}>
+                    {sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}
+                  </select>
+                </div>
+                <div style={{ flex: 1, minWidth: "140px" }}>
+                  <label style={S.lbl}>Work</label>
+                  <select value={repWork} onChange={e => setRepWork(e.target.value)} style={S.inp}>
+                    <option value="">— Select Work —</option>
+                    {repWorks.map((w: any) => <option key={w.id} value={w.id}>{w.place}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {repWork && repWorkObj && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "14px", padding: "12px", background: "#f0f6ff", borderRadius: "9px", fontSize: "12px" }}>
+                  {[["Site Name", repSiteObj?.name || "—"], ["Client", linkedInv?.snapshot?.client?.name || repSiteObj?.client || "—"], ["Place", linkedInv?.sitePlace || "—"], ["Invoice #", linkedInv?.number || "No invoice linked"], ["Duration", `${fmtDate(repWorkObj.fromDate)} → ${repWorkObj.toDate ? fmtDate(repWorkObj.toDate) : "Ongoing"}`]].map(([lbl, val]) => (
+                    <div key={lbl}><span style={{ color: "#6b84a3", fontWeight: 600, fontSize: "11px" }}>{lbl}: </span><span style={{ color: "#1e50a0", fontWeight: 600 }}>{val}</span></div>
+                  ))}
+                  <div style={{ gridColumn: "1/-1" }}>
+                    <span style={{ color: "#6b84a3", fontWeight: 600, fontSize: "11px" }}>Name of Work: </span>
+                    {(linkedInv?.works || [repWorkObj]).map((w: any, i: number) => (
+                      <div key={i} style={{ color: "#1e50a0", fontWeight: 600, paddingLeft: "98px" }}>{w.place}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "9px" }}>
+                <button onClick={printLive} disabled={!repWork || repWorkers.length === 0}
+                  style={{ ...S.btn(), opacity: (!repWork || repWorkers.length === 0) ? 0.5 : 1 }}>🖨️ Print / PDF</button>
+                <button onClick={() => setSaveReportModal(true)} disabled={!repWork || repWorkers.length === 0}
+                  style={{ ...S.btn("#166534"), opacity: (!repWork || repWorkers.length === 0) ? 0.5 : 1 }}>💾 Save Report</button>
+              </div>
+            </div>
+
+            {repWork && repWorkObj ? (
+              <div style={{ background: "#fff", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)", overflowX: "auto" }}>
+                <ReportHeader
+                  invoiceNumber={linkedInv?.number}
+                  client={linkedInv?.snapshot?.client?.name || repSiteObj?.client || "—"}
+                  siteName={repSiteObj?.name || "—"}
+                  nameOfWork={(linkedInv?.works || [repWorkObj]).map((w: any) => w.place)}
+                  place={linkedInv?.sitePlace || "—"}
+                  fromDate={repWorkObj.fromDate}
+                  toDate={repWorkObj.toDate || today}
+                />
+                {Object.entries(monthGroups).map(([mk, dates]) => (
+                  <div key={mk} style={{ marginBottom: "20px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f3172", marginBottom: "8px", padding: "5px 0", borderBottom: "1px solid #0f3172" }}>{fmtMK(mk)}</div>
+                    <MonthTable dates={dates} workers={repWorkers} getAtt={(d: string, wid: any) => getRepAtt(d, wid)} />
+                  </div>
+                ))}
+                {Object.keys(monthGroups).length > 1 && (
+                  <div style={{ background: "#f0f6ff", borderRadius: "9px", padding: "12px 14px", marginTop: "4px" }}>
+                    <div style={{ fontSize: "12px", fontWeight: 700, color: "#0f3172", marginBottom: "8px" }}>Grand Total (All Months)</div>
+                    <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+                      {repWorkers.map((w: any) => (
+                        <div key={w.id} style={{ fontSize: "12px" }}>
+                          <span style={{ color: "#6b84a3" }}>{w.name}: </span>
+                          <span style={{ fontWeight: 800, color: "#1e50a0" }}>{getGrandTotal(w.id)} days</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: "16px", marginTop: "14px", fontSize: "11px" }}>
+                  {[["P", "Present", "#dcfce7", "#166534"], ["H", "Half Day", "#fef9c3", "#d97706"], ["A", "Absent", "#fee2e2", "#991b1b"]].map(([sym, lbl, bg, col]) => (
+                    <div key={sym} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                      <span style={{ background: bg, color: col, fontWeight: 700, padding: "2px 6px", borderRadius: "4px", fontSize: "10px" }}>{sym}</span>
+                      <span style={{ color: "#6b84a3" }}>{lbl}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "40px" }}>
+                <div style={{ fontSize: "28px", marginBottom: "10px" }}>📊</div>
+                Select a site and work to generate the report.
+              </div>
             )}
           </>}
 
-          {/* ════════ MODALS ════════ */}
-          {saveReportModal && <PwModal title="Save Attendance Report?" onConfirm={doSave} onCancel={() => setSaveReportModal(false)} />}
-          {reportDelModal && <PwModal title="Delete Report?" onConfirm={() => softDelete(reportDelModal)} onCancel={() => setReportDelModal(null)} />}
-
-          {unmarkConfirm && (
-            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
-              <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
-                <div style={{ fontSize: "32px", marginBottom: "8px" }}>⚠️</div>
-                <h3 style={{ margin: "0 0 7px" }}>Remove Attendance?</h3>
-                <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>Remove <strong>{unmarkConfirm.st}</strong> mark?</p>
-                <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
-                  <button onClick={() => { mark(unmarkConfirm.wid, null); setUnmarkConfirm(null); }} style={S.btn("#dc2626")}>Yes, Remove</button>
-                  <button onClick={() => setUnmarkConfirm(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+          {/* ── History sub-tab ── */}
+          {reportTab === "history" && (
+            viewReportId && viewReport ? (
+              <div>
+                <div style={{ display: "flex", gap: "9px", marginBottom: "16px", alignItems: "center" }}>
+                  <button onClick={() => setViewReportId(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
+                  <button onClick={() => printSaved(viewReport)} style={S.btn()}>🖨️ Print / PDF</button>
+                  <span style={{ background: "#dbeafe", color: "#1e40af", borderRadius: "6px", padding: "4px 10px", fontWeight: 700, fontSize: "12px", marginLeft: "auto" }}>{viewReport.invoiceNumber}</span>
+                </div>
+                <div style={{ background: "#fff", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)", overflowX: "auto" }}>
+                  <ReportHeader
+                    invoiceNumber={viewReport.invoiceNumber}
+                    client={viewReport.client}
+                    siteName={viewReport.siteName}
+                    nameOfWork={viewReport.nameOfWork || [viewReport.workName]}
+                    place={viewReport.place}
+                    fromDate={viewReport.fromDate}
+                    toDate={viewReport.toDate}
+                  />
+                  {Object.entries(buildMonthGroups(viewReport.fromDate, viewReport.toDate)).map(([mk, dates]) => {
+                    const [y, m] = mk.split("-");
+                    return (
+                      <div key={mk} style={{ marginBottom: "20px" }}>
+                        <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f3172", marginBottom: "8px", padding: "5px 0", borderBottom: "1px solid #0f3172" }}>{MONTHS[parseInt(m) - 1]} {y}</div>
+                        <MonthTable
+                          dates={dates}
+                          workers={viewReport.workers}
+                          getAtt={(d: string, wid: any) => {
+                            const wk = viewReport.workers.find((x: any) => x.id === wid);
+                            return wk?.attendance.find((a: any) => a.date === d)?.val || "";
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
+            ) : (
+              <div style={S.card}>
+                <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📁 Attendance History</h3>
+                <div style={{ fontSize: "11px", color: "#6b84a3", marginBottom: "10px" }}>All invoiced works — newest first</div>
+                <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 110px 100px", gap: "8px", padding: "6px 10px", background: "#f0f4f9", borderRadius: "7px", marginBottom: "6px", fontSize: "11px", fontWeight: 700, color: "#6b84a3" }}>
+                  <span>#</span><span>Site</span><span>Work</span><span>Invoice</span><span>Status</span>
+                </div>
+                {historyRows.length === 0 ? (
+                  <div style={{ textAlign: "center", color: "#9db3cc", padding: "30px" }}>No invoiced works yet.</div>
+                ) : historyRows.map((row: any, idx: number) => {
+                  const saved = savedReports.find((r: any) => r.workId === row.workId);
+                  return (
+                    <div key={`${row.workId}-${idx}`} style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 110px 100px", gap: "8px", padding: "8px 10px", borderRadius: "8px", background: saved ? "#f0fdf4" : "#f8faff", border: `0.5px solid ${saved ? "#bbf7d0" : "transparent"}`, marginBottom: "5px", alignItems: "center", fontSize: "12px" }}>
+                      <span style={{ color: "#6b84a3", fontWeight: 600 }}>{historyRows.length - idx}</span>
+                      <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.siteName}>{row.siteName}</span>
+                      <span style={{ color: "#6b84a3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.workName}>{row.workName}</span>
+                      <span style={{ background: "#dbeafe", color: "#1e40af", borderRadius: "6px", padding: "2px 7px", fontWeight: 700, fontSize: "11px", display: "inline-block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.invoiceNumber}</span>
+                      {saved ? (
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          <button onClick={() => setViewReportId(saved.id)} style={{ ...S.btn(), padding: "4px 8px", fontSize: "11px" }}>🖨️</button>
+                          <button onClick={() => setReportDelModal(saved.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 8px", fontSize: "11px" }}>🗑️</button>
+                        </div>
+                      ) : (
+                        <span style={{ background: "#f0f4f9", color: "#9db3cc", borderRadius: "6px", padding: "3px 7px", fontSize: "10px", fontWeight: 600 }}>Not available</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )
           )}
+        </>}
+
+      {/* ════════ MODALS ════════ */}
+      {saveReportModal && <PwModal title="Save Attendance Report?" onConfirm={doSave} onCancel={() => setSaveReportModal(false)} />}
+      {reportDelModal && <PwModal title="Delete Report?" onConfirm={() => softDelete(reportDelModal)} onCancel={() => setReportDelModal(null)} />}
+
+      {unmarkConfirm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
+            <div style={{ fontSize: "32px", marginBottom: "8px" }}>⚠️</div>
+            <h3 style={{ margin: "0 0 7px" }}>Remove Attendance?</h3>
+            <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>Remove <strong>{unmarkConfirm.st}</strong> mark?</p>
+            <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
+              <button onClick={() => { mark(unmarkConfirm.wid, null); setUnmarkConfirm(null); }} style={S.btn("#dc2626")}>Yes, Remove</button>
+              <button onClick={() => setUnmarkConfirm(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+            </div>
+          </div>
         </div>
-        );
+      )}
+    </div>
+  );
 }
-        // ── ENTRY PERMIT ──────────────────────────────────────
-        function EntryPermit({workers, sites, assignments, setWorkers, savedPermits, setSavedPermits}) {
+// ── ENTRY PERMIT ──────────────────────────────────────
+function EntryPermit({ workers, sites, assignments, setWorkers, savedPermits, setSavedPermits }) {
   const [siteMode, setSiteMode] = useState("existing");
-        const [selSite, setSelSite] = useState(sites[0]?.id || 0);
-        const [manualSiteName, setManualSiteName] = useState("");
-        const [manualClient, setManualClient] = useState("");
-        const [manualPlace, setManualPlace] = useState("");
-        const [selectedWorkers, setSelectedWorkers] = useState([]);
-        const [fromDate, setFromDate] = useState(today);
-        const [toDate, setToDate] = useState(today);
-        const [showExecSign, setShowExecSign] = useState(true);
-        const [permitPlaceOfWork, setPermitPlaceOfWork] = useState("");
-        const [savePermitModal, setSavePermitModal] = useState(false);
-        const [permitDelModal, setPermitDelModal] = useState(null);
+  const [selSite, setSelSite] = useState(sites[0]?.id || 0);
+  const [manualSiteName, setManualSiteName] = useState("");
+  const [manualClient, setManualClient] = useState("");
+  const [manualPlace, setManualPlace] = useState("");
+  const [selectedWorkers, setSelectedWorkers] = useState([]);
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate, setToDate] = useState(today);
+  const [showExecSign, setShowExecSign] = useState(true);
+  const [permitPlaceOfWork, setPermitPlaceOfWork] = useState("");
+  const [savePermitModal, setSavePermitModal] = useState(false);
+  const [permitDelModal, setPermitDelModal] = useState(null);
 
   const siteObj = sites.find(s => s.id === selSite);
-        const permitSiteName = siteMode === "existing" ? (siteObj?.name || "") : manualSiteName;
-        const permitClient = siteMode === "existing" ? (siteObj?.client || "") : manualClient;
-        const permitPlace = siteMode === "existing" ? "Chennai" : manualPlace;
+  const permitSiteName = siteMode === "existing" ? (siteObj?.name || "") : manualSiteName;
+  const permitClient = siteMode === "existing" ? (siteObj?.client || "") : manualClient;
+  const permitPlace = siteMode === "existing" ? "Chennai" : manualPlace;
 
-        const sa = siteMode === "existing" ? (assignments[selSite] || { }) : { };
+  const sa = siteMode === "existing" ? (assignments[selSite] || {}) : {};
   const assignedWorkers = siteMode === "existing" ? workers.filter(w => sa[w.id]) : workers;
   const toggleWorker = wid => setSelectedWorkers(p => p.includes(wid) ? p.filter(x => x !== wid) : [...p, wid]);
   const selectAll = () => setSelectedWorkers(assignedWorkers.map((w: any) => w.id));
   const clearAll = () => setSelectedWorkers([]);
   const permitWorkers = workers.filter(w => selectedWorkers.includes(w.id));
-  const updateWorkerPhoto = (wid, photo) => setWorkers(p => p.map((w: any) => w.id === wid ? {...w, photo} : w));
+  const updateWorkerPhoto = (wid, photo) => setWorkers(p => p.map((w: any) => w.id === wid ? { ...w, photo } : w));
 
-        return (
-        <div>
-          <h2 style={{ margin: "0 0 16px", fontSize: "20px", fontWeight: 800 }}>🪪 Entry Permit</h2>
-          <div style={{ ...S.card, marginBottom: "16px" }}>
-            <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>Permit Settings</h3>
-            {/* Mode Toggle */}
-            <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
-              <button onClick={() => setSiteMode("existing")} style={{ ...S.btn(siteMode === "existing" ? "#1e50a0" : "#e5e7eb", siteMode === "existing" ? "#fff" : "#374151"), fontSize: "12px", padding: "7px 14px" }}>📋 Existing Site</button>
-              <button onClick={() => setSiteMode("manual")} style={{ ...S.btn(siteMode === "manual" ? "#1e50a0" : "#e5e7eb", siteMode === "manual" ? "#fff" : "#374151"), fontSize: "12px", padding: "7px 14px" }}>✏️ Manual Entry</button>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: "10px", marginBottom: "14px" }}>
-              {siteMode === "existing"
-                ? <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Select Site</label><select value={selSite} onChange={e => { setSelSite(Number(e.target.value)); setSelectedWorkers([]); }} style={S.inp}>{sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
-                : <><div><label style={S.lbl}>Site Name</label><input value={manualSiteName} onChange={e => setManualSiteName(e.target.value)} placeholder="Enter site name" style={S.inp} /></div>
-                  <div><label style={S.lbl}>Client</label><input value={manualClient} onChange={e => setManualClient(e.target.value)} placeholder="Client name" style={S.inp} /></div>
-                  <div><label style={S.lbl}>Place</label><input value={manualPlace} onChange={e => setManualPlace(e.target.value)} placeholder="Location" style={S.inp} /></div></>
-              }
-              {siteMode === "existing" && <>
-                <div><label style={S.lbl}>Site Name</label><input value={permitSiteName} readOnly style={{ ...S.inp, background: "#f0f4f9", color: "#6b84a3" }} /></div>
-                <div><label style={S.lbl}>Client</label><input value={permitClient} readOnly style={{ ...S.inp, background: "#f0f4f9", color: "#6b84a3" }} /></div>
-                <div><label style={S.lbl}>Place</label><input value={permitPlace} readOnly style={{ ...S.inp, background: "#f0f4f9", color: "#6b84a3" }} /></div>
-              </>}
-              <div><label style={S.lbl}>Valid From</label><input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} style={S.inp} /></div>
-              <div><label style={S.lbl}>Valid To</label><input type="date" value={toDate} onChange={e => setToDate(e.target.value)} style={S.inp} /></div>
-            </div>
-            <div style={{ marginBottom: "14px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                <label style={S.lbl}>Select Workers ({selectedWorkers.length} selected)</label>
-                <div style={{ display: "flex", gap: "7px" }}>
-                  <button onClick={selectAll} style={{ ...S.btn("#f0f6ff", "#1e50a0"), padding: "5px 10px", fontSize: "11px" }}>Select All</button>
-                  <button onClick={clearAll} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "5px 10px", fontSize: "11px" }}>Clear</button>
-                </div>
-              </div>
-              {assignedWorkers.length === 0 ? <div style={{ color: "#9db3cc", fontSize: "13px", padding: "12px", background: "#f8faff", borderRadius: "8px" }}>No workers assigned to this site.</div>
-                : <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {assignedWorkers.map((w: any) => {
-                    const sel = selectedWorkers.includes(w.id); const desig = sa[w.id] || w.category;
-                    return (
-                      <div key={w.id} style={{ borderRadius: "10px", border: sel ? `1.5px solid ${CAT_COLOR[desig].color}` : "1.5px solid #e5e7eb", overflow: "hidden", background: sel ? CAT_COLOR[desig].bg : "#f8faff" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px" }}>
-                          <div onClick={() => toggleWorker(w.id)} style={{ width: "22px", height: "22px", borderRadius: "5px", flexShrink: 0, background: sel ? "#1e50a0" : "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", fontSize: "13px", fontWeight: 700 }}>{sel ? "✓" : ""}</div>
-                          {w.photo ? <img src={w.photo} style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, color: "#9ca3af", flexShrink: 0 }}>{w.name[0]}</div>}
-                          <div style={{ flex: 1 }}><div style={{ fontWeight: 600, fontSize: "13px", color: sel ? CAT_COLOR[desig].color : "#1a2b4a" }}>{w.name}</div><span style={S.badge(desig)}>{desig}</span></div>
-                          <div onClick={e => e.stopPropagation()}>
-                            <label style={{ ...S.btn("#fff", "#1e50a0"), padding: "5px 10px", fontSize: "11px", cursor: "pointer", border: "1.5px solid #bfdbfe", display: "inline-block" }}>
-                              📷 {w.photo ? "Change" : "Add"} Photo
-                              <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => { e.stopPropagation(); const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ev => updateWorkerPhoto(w.id, ev.target.result); r.readAsDataURL(f); }} />
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>}
-            </div>
-            <div style={{ display: "flex", gap: "9px", flexWrap: "wrap" }}>
-              <button onClick={() => printSection("entry-permit")} style={{ ...S.btn(), opacity: selectedWorkers.length === 0 ? 0.5 : 1 }} disabled={selectedWorkers.length === 0}>🖨️ Print Entry Permit ({selectedWorkers.length} workers)</button>
-              <button onClick={() => setSavePermitModal(true)} style={{ ...S.btn("#166534"), opacity: selectedWorkers.length === 0 ? 0.5 : 1 }} disabled={selectedWorkers.length === 0}>💾 Save Permit</button>
+  return (
+    <div>
+      <h2 style={{ margin: "0 0 16px", fontSize: "20px", fontWeight: 800 }}>🪪 Entry Permit</h2>
+      <div style={{ ...S.card, marginBottom: "16px" }}>
+        <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>Permit Settings</h3>
+        {/* Mode Toggle */}
+        <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
+          <button onClick={() => setSiteMode("existing")} style={{ ...S.btn(siteMode === "existing" ? "#1e50a0" : "#e5e7eb", siteMode === "existing" ? "#fff" : "#374151"), fontSize: "12px", padding: "7px 14px" }}>📋 Existing Site</button>
+          <button onClick={() => setSiteMode("manual")} style={{ ...S.btn(siteMode === "manual" ? "#1e50a0" : "#e5e7eb", siteMode === "manual" ? "#fff" : "#374151"), fontSize: "12px", padding: "7px 14px" }}>✏️ Manual Entry</button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: "10px", marginBottom: "14px" }}>
+          {siteMode === "existing"
+            ? <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Select Site</label><select value={selSite} onChange={e => { setSelSite(Number(e.target.value)); setSelectedWorkers([]); }} style={S.inp}>{sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
+            : <><div><label style={S.lbl}>Site Name</label><input value={manualSiteName} onChange={e => setManualSiteName(e.target.value)} placeholder="Enter site name" style={S.inp} /></div>
+              <div><label style={S.lbl}>Client</label><input value={manualClient} onChange={e => setManualClient(e.target.value)} placeholder="Client name" style={S.inp} /></div>
+              <div><label style={S.lbl}>Place</label><input value={manualPlace} onChange={e => setManualPlace(e.target.value)} placeholder="Location" style={S.inp} /></div></>
+          }
+          {siteMode === "existing" && <>
+            <div><label style={S.lbl}>Site Name</label><input value={permitSiteName} readOnly style={{ ...S.inp, background: "#f0f4f9", color: "#6b84a3" }} /></div>
+            <div><label style={S.lbl}>Client</label><input value={permitClient} readOnly style={{ ...S.inp, background: "#f0f4f9", color: "#6b84a3" }} /></div>
+            <div><label style={S.lbl}>Place</label><input value={permitPlace} readOnly style={{ ...S.inp, background: "#f0f4f9", color: "#6b84a3" }} /></div>
+          </>}
+          <div><label style={S.lbl}>Valid From</label><input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} style={S.inp} /></div>
+          <div><label style={S.lbl}>Valid To</label><input type="date" value={toDate} onChange={e => setToDate(e.target.value)} style={S.inp} /></div>
+        </div>
+        <div style={{ marginBottom: "14px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <label style={S.lbl}>Select Workers ({selectedWorkers.length} selected)</label>
+            <div style={{ display: "flex", gap: "7px" }}>
+              <button onClick={selectAll} style={{ ...S.btn("#f0f6ff", "#1e50a0"), padding: "5px 10px", fontSize: "11px" }}>Select All</button>
+              <button onClick={clearAll} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "5px 10px", fontSize: "11px" }}>Clear</button>
             </div>
           </div>
-          {savePermitModal && (
-            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
-              <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
-                <div style={{ fontSize: "32px", marginBottom: "8px" }}>💾</div>
-                <h3 style={{ margin: "0 0 7px" }}>Save Entry Permit?</h3>
-                <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>
-                  Save permit for <strong>{permitSiteName}</strong> with <strong>{permitWorkers.length} workers</strong>
-                </p>
-                <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
-                  <button onClick={() => {
-                    const permit = {
-                      id: Date.now(),
-                      siteName: permitSiteName,
-                      client: permitClient,
-                      place: permitPlaceOfWork,
-                      fromDate,
-                      toDate,
-                      savedAt: today,
-                      workers: permitWorkers.map((w: any) => ({
-                        id: w.id,
-                        name: w.name,
-                        category: sa[w.id] || w.category,
-                        aadhaar: w.aadhaar || "",
-                        phone: w.phone || "",
-                        dob: w.dob || "",
-                        photo: w.photo || ""
-                      }))
-                    };
-                    setSavedPermits(p => [...p, permit]);
-                    setSavePermitModal(false);
-                    alert("✅ Permit saved successfully!");
-                  }} style={S.btn("#166534")}>💾 Save</button>
-                  <button onClick={() => setSavePermitModal(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
-                </div>
-              </div>
-            </div>
-          )}
-          {permitWorkers.length > 0 ? (
-            <div id="entry-permit" style={{ background: "#fff", padding: "28px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)" }}>
-              <div style={{ textAlign: "center", marginBottom: "20px", paddingBottom: "14px", borderBottom: "2px solid #0f3172" }}><div style={{ fontSize: "22px", fontWeight: 800, color: "#0f3172", letterSpacing: "2px" }}>ENTRY PERMIT</div></div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 30px", marginBottom: "24px", fontSize: "13px" }}>
-                <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Site Name</span><span style={{ color: "#1a2b4a", fontWeight: 600 }}>: {permitSiteName}</span></div>
-                <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Contractor</span><span style={{ color: "#1a2b4a", fontWeight: 600 }}>: VinoDhan Coating</span></div>
-                <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9", alignItems: "center" }}>
-                  <span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Place of Work</span>
-                  <span className="no-print" style={{ flex: 1 }}><input value={permitPlaceOfWork} onChange={e => setPermitPlaceOfWork(e.target.value)} placeholder="Enter place of work" style={{ ...S.inp, padding: "2px 8px", fontSize: "12px", width: "100%" }} /></span>
-                  <span className="print-only" style={{ color: "#1a2b4a", fontWeight: 600, display: "none" }}>: {permitPlaceOfWork || "—"}</span>
-                </div>
-                <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Client</span><span style={{ color: "#1a2b4a", fontWeight: 600 }}>: {permitClient}</span></div>
-                <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Valid From</span><span style={{ color: "#1a2b4a", fontWeight: 600 }}>: {fmtDate(fromDate)}</span></div>
-                <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Valid To</span><span style={{ color: "#1a2b4a", fontWeight: 600 }}>: {fmtDate(toDate)}</span></div>
-              </div>
-              <div className="worker-grid">
-                {permitWorkers.slice(0, -2).map((w: any) => (
-                  <div key={w.id} className="worker-tile" style={{ border: "1.5px solid #e5e7eb", borderRadius: "10px", overflow: "hidden", display: "flex", minHeight: "130px" }}>
-                    <div style={{ width: "100px", flexShrink: 0, background: "#f0f4f9", display: "flex", alignItems: "center", justifyContent: "center", borderRight: "1px solid #e5e7eb" }}>
-                      {w.photo ? <img src={w.photo} style={{ width: "100px", height: "130px", objectFit: "cover" }} /> : <div style={{ textAlign: "center", padding: "10px" }}><div style={{ fontSize: "32px" }}>👤</div><div style={{ fontSize: "9px", color: "#9db3cc", marginTop: "4px" }}>No Photo</div></div>}
-                    </div>
-                    <div style={{ flex: 1, padding: "12px 14px", fontSize: "12px" }}>
-                      <div style={{ fontWeight: 800, fontSize: "14px", color: "#0f3172", marginBottom: "8px" }}>{w.name}</div>
-                      {[["Category", sa[w.id] || w.category], ["Aadhaar", w.aadhaar || "—"], ["Phone", w.phone || "—"], ["DOB", w.dob ? fmtDate(w.dob) : "—"]].map(([lbl, val]) => (
-                        <div key={lbl} style={{ display: "flex", gap: "6px", marginBottom: "5px" }}><span style={{ color: "#6b84a3", fontWeight: 600, minWidth: "65px" }}>{lbl}</span><span style={{ color: "#1a2b4a" }}>: {val}</span></div>
-                      ))}
+          {assignedWorkers.length === 0 ? <div style={{ color: "#9db3cc", fontSize: "13px", padding: "12px", background: "#f8faff", borderRadius: "8px" }}>No workers assigned to this site.</div>
+            : <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {assignedWorkers.map((w: any) => {
+                const sel = selectedWorkers.includes(w.id); const desig = sa[w.id] || w.category;
+                return (
+                  <div key={w.id} style={{ borderRadius: "10px", border: sel ? `1.5px solid ${CAT_COLOR[desig].color}` : "1.5px solid #e5e7eb", overflow: "hidden", background: sel ? CAT_COLOR[desig].bg : "#f8faff" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px" }}>
+                      <div onClick={() => toggleWorker(w.id)} style={{ width: "22px", height: "22px", borderRadius: "5px", flexShrink: 0, background: sel ? "#1e50a0" : "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", fontSize: "13px", fontWeight: 700 }}>{sel ? "✓" : ""}</div>
+                      {w.photo ? <img src={w.photo} style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, color: "#9ca3af", flexShrink: 0 }}>{w.name[0]}</div>}
+                      <div style={{ flex: 1 }}><div style={{ fontWeight: 600, fontSize: "13px", color: sel ? CAT_COLOR[desig].color : "#1a2b4a" }}>{w.name}</div><span style={S.badge(desig)}>{desig}</span></div>
+                      <div onClick={e => e.stopPropagation()}>
+                        <label style={{ ...S.btn("#fff", "#1e50a0"), padding: "5px 10px", fontSize: "11px", cursor: "pointer", border: "1.5px solid #bfdbfe", display: "inline-block" }}>
+                          📷 {w.photo ? "Change" : "Add"} Photo
+                          <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => { e.stopPropagation(); const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ev => updateWorkerPhoto(w.id, ev.target.result); r.readAsDataURL(f); }} />
+                        </label>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-              <div style={{ pageBreakInside: "avoid" }}>
-                <div className="worker-grid" style={{ marginBottom: "14px" }}>
-                  {permitWorkers.slice(-2).map((w: any) => (
-                    <div key={w.id} className="worker-tile" style={{ border: "1.5px solid #e5e7eb", borderRadius: "10px", overflow: "hidden", display: "flex", minHeight: "130px" }}>
-                      <div style={{ width: "100px", flexShrink: 0, background: "#f0f4f9", display: "flex", alignItems: "center", justifyContent: "center", borderRight: "1px solid #e5e7eb" }}>
-                        {w.photo ? <img src={w.photo} style={{ width: "100px", height: "130px", objectFit: "cover" }} /> : <div style={{ textAlign: "center", padding: "10px" }}><div style={{ fontSize: "32px" }}>👤</div><div style={{ fontSize: "9px", color: "#9db3cc", marginTop: "4px" }}>No Photo</div></div>}
-                      </div>
-                      <div style={{ flex: 1, padding: "12px 14px", fontSize: "12px" }}>
-                        <div style={{ fontWeight: 800, fontSize: "14px", color: "#0f3172", marginBottom: "8px" }}>{w.name}</div>
-                        {[["Category", sa[w.id] || w.category], ["Aadhaar", w.aadhaar || "—"], ["Phone", w.phone || "—"], ["DOB", w.dob ? fmtDate(w.dob) : "—"]].map(([lbl, val]) => (
-                          <div key={lbl} style={{ display: "flex", gap: "6px", marginBottom: "5px" }}><span style={{ color: "#6b84a3", fontWeight: 600, minWidth: "65px" }}>{lbl}</span><span style={{ color: "#1a2b4a" }}>: {val}</span></div>
-                        ))}
-                      </div>
-                    </div>
+                );
+              })}
+            </div>}
+        </div>
+        <div style={{ display: "flex", gap: "9px", flexWrap: "wrap" }}>
+          <button onClick={() => printSection("entry-permit")} style={{ ...S.btn(), opacity: selectedWorkers.length === 0 ? 0.5 : 1 }} disabled={selectedWorkers.length === 0}>🖨️ Print Entry Permit ({selectedWorkers.length} workers)</button>
+          <button onClick={() => setSavePermitModal(true)} style={{ ...S.btn("#166534"), opacity: selectedWorkers.length === 0 ? 0.5 : 1 }} disabled={selectedWorkers.length === 0}>💾 Save Permit</button>
+        </div>
+      </div>
+      {savePermitModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
+            <div style={{ fontSize: "32px", marginBottom: "8px" }}>💾</div>
+            <h3 style={{ margin: "0 0 7px" }}>Save Entry Permit?</h3>
+            <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>
+              Save permit for <strong>{permitSiteName}</strong> with <strong>{permitWorkers.length} workers</strong>
+            </p>
+            <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
+              <button onClick={() => {
+                const permit = {
+                  id: Date.now(),
+                  siteName: permitSiteName,
+                  client: permitClient,
+                  place: permitPlaceOfWork,
+                  fromDate,
+                  toDate,
+                  savedAt: today,
+                  workers: permitWorkers.map((w: any) => ({
+                    id: w.id,
+                    name: w.name,
+                    category: sa[w.id] || w.category,
+                    aadhaar: w.aadhaar || "",
+                    phone: w.phone || "",
+                    dob: w.dob || "",
+                    photo: w.photo || ""
+                  }))
+                };
+                setSavedPermits(p => [...p, permit]);
+                setSavePermitModal(false);
+                alert("✅ Permit saved successfully!");
+              }} style={S.btn("#166534")}>💾 Save</button>
+              <button onClick={() => setSavePermitModal(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {permitWorkers.length > 0 ? (
+        <div id="entry-permit" style={{ background: "#fff", padding: "28px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)" }}>
+          <div style={{ textAlign: "center", marginBottom: "20px", paddingBottom: "14px", borderBottom: "2px solid #0f3172" }}><div style={{ fontSize: "22px", fontWeight: 800, color: "#0f3172", letterSpacing: "2px" }}>ENTRY PERMIT</div></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 30px", marginBottom: "24px", fontSize: "13px" }}>
+            <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Site Name</span><span style={{ color: "#1a2b4a", fontWeight: 600 }}>: {permitSiteName}</span></div>
+            <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Contractor</span><span style={{ color: "#1a2b4a", fontWeight: 600 }}>: VinoDhan Coating</span></div>
+            <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9", alignItems: "center" }}>
+              <span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Place of Work</span>
+              <span className="no-print" style={{ flex: 1 }}><input value={permitPlaceOfWork} onChange={e => setPermitPlaceOfWork(e.target.value)} placeholder="Enter place of work" style={{ ...S.inp, padding: "2px 8px", fontSize: "12px", width: "100%" }} /></span>
+              <span className="print-only" style={{ color: "#1a2b4a", fontWeight: 600, display: "none" }}>: {permitPlaceOfWork || "—"}</span>
+            </div>
+            <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Client</span><span style={{ color: "#1a2b4a", fontWeight: 600 }}>: {permitClient}</span></div>
+            <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Valid From</span><span style={{ color: "#1a2b4a", fontWeight: 600 }}>: {fmtDate(fromDate)}</span></div>
+            <div style={{ display: "flex", gap: "8px", padding: "5px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 700, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>Valid To</span><span style={{ color: "#1a2b4a", fontWeight: 600 }}>: {fmtDate(toDate)}</span></div>
+          </div>
+          <div className="worker-grid">
+            {permitWorkers.slice(0, -2).map((w: any) => (
+              <div key={w.id} className="worker-tile" style={{ border: "1.5px solid #e5e7eb", borderRadius: "10px", overflow: "hidden", display: "flex", minHeight: "130px" }}>
+                <div style={{ width: "100px", flexShrink: 0, background: "#f0f4f9", display: "flex", alignItems: "center", justifyContent: "center", borderRight: "1px solid #e5e7eb" }}>
+                  {w.photo ? <img src={w.photo} style={{ width: "100px", height: "130px", objectFit: "cover" }} /> : <div style={{ textAlign: "center", padding: "10px" }}><div style={{ fontSize: "32px" }}>👤</div><div style={{ fontSize: "9px", color: "#9db3cc", marginTop: "4px" }}>No Photo</div></div>}
+                </div>
+                <div style={{ flex: 1, padding: "12px 14px", fontSize: "12px" }}>
+                  <div style={{ fontWeight: 800, fontSize: "14px", color: "#0f3172", marginBottom: "8px" }}>{w.name}</div>
+                  {[["Category", sa[w.id] || w.category], ["Aadhaar", w.aadhaar || "—"], ["Phone", w.phone || "—"], ["DOB", w.dob ? fmtDate(w.dob) : "—"]].map(([lbl, val]) => (
+                    <div key={lbl} style={{ display: "flex", gap: "6px", marginBottom: "5px" }}><span style={{ color: "#6b84a3", fontWeight: 600, minWidth: "65px" }}>{lbl}</span><span style={{ color: "#1a2b4a" }}>: {val}</span></div>
                   ))}
                 </div>
-                <div className="sig-section" style={{ marginTop: "40px", display: "flex", justifyContent: "flex-end", alignItems: "flex-end", flexWrap: "wrap", gap: "12px" }}>
-                  <div className="no-print" style={{ position: "absolute", bottom: "20mm", left: "15mm" }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#6b84a3", cursor: "pointer" }}>
-                      <input type="checkbox" checked={showExecSign} onChange={e => setShowExecSign(e.target.checked)} />
-                      Show Executive Signature
-                    </label>
-                  </div>
-                  {showExecSign && <div style={{ textAlign: "center", marginLeft: "auto" }}>
-                    <div style={{ width: "200px", borderBottom: "1px solid #1a2b4a", marginBottom: "6px", height: "40px" }}></div>
-                    <div style={{ fontSize: "12px", fontWeight: 700, color: "#1a2b4a" }}>Vinoth Kumar. N</div>
-                    <div style={{ fontSize: "11px", color: "#6b84a3" }}>Site Executive — VinoDhan Coating</div>
-                  </div>}
-                </div>
               </div>
-            </div>
-          ) : (
-            <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "40px" }}><div style={{ fontSize: "32px", marginBottom: "10px" }}>🪪</div><div>Select workers above to preview the entry permit</div></div>
-          )}
-
-          {/* Saved Permits List */}
-          {savedPermits.length > 0 && <div style={{ ...S.card, marginTop: "20px" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📁 Saved Permits</h3>
-            {[...savedPermits].sort((a, b) => b.id - a.id).map((p: any) => (
-              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 13px", background: "#f8faff", borderRadius: "9px", marginBottom: "6px" }}>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: "13px" }}>{p.siteName}</div>
-                  <div style={{ fontSize: "11px", color: "#6b84a3" }}>{fmtDate(p.fromDate)} → {fmtDate(p.toDate)} — {p.workers.length} workers</div>
-                  <div style={{ fontSize: "11px", color: "#6b84a3" }}>Saved {fmtDate(p.savedAt)}</div>
+            ))}
+          </div>
+          <div style={{ pageBreakInside: "avoid" }}>
+            <div className="worker-grid" style={{ marginBottom: "14px" }}>
+              {permitWorkers.slice(-2).map((w: any) => (
+                <div key={w.id} className="worker-tile" style={{ border: "1.5px solid #e5e7eb", borderRadius: "10px", overflow: "hidden", display: "flex", minHeight: "130px" }}>
+                  <div style={{ width: "100px", flexShrink: 0, background: "#f0f4f9", display: "flex", alignItems: "center", justifyContent: "center", borderRight: "1px solid #e5e7eb" }}>
+                    {w.photo ? <img src={w.photo} style={{ width: "100px", height: "130px", objectFit: "cover" }} /> : <div style={{ textAlign: "center", padding: "10px" }}><div style={{ fontSize: "32px" }}>👤</div><div style={{ fontSize: "9px", color: "#9db3cc", marginTop: "4px" }}>No Photo</div></div>}
+                  </div>
+                  <div style={{ flex: 1, padding: "12px 14px", fontSize: "12px" }}>
+                    <div style={{ fontWeight: 800, fontSize: "14px", color: "#0f3172", marginBottom: "8px" }}>{w.name}</div>
+                    {[["Category", sa[w.id] || w.category], ["Aadhaar", w.aadhaar || "—"], ["Phone", w.phone || "—"], ["DOB", w.dob ? fmtDate(w.dob) : "—"]].map(([lbl, val]) => (
+                      <div key={lbl} style={{ display: "flex", gap: "6px", marginBottom: "5px" }}><span style={{ color: "#6b84a3", fontWeight: 600, minWidth: "65px" }}>{lbl}</span><span style={{ color: "#1a2b4a" }}>: {val}</span></div>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: "flex", gap: "7px" }}>
-                  <button onClick={() => {
-                    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Entry Permit</title><style>@page{size:A4;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:15mm;margin:0;font-size:13px;}table{border-collapse:collapse;width:100%;}</style></head><body onload="window.print();">
+              ))}
+            </div>
+            <div className="sig-section" style={{ marginTop: "40px", display: "flex", justifyContent: "flex-end", alignItems: "flex-end", flexWrap: "wrap", gap: "12px" }}>
+              <div className="no-print" style={{ position: "absolute", bottom: "20mm", left: "15mm" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#6b84a3", cursor: "pointer" }}>
+                  <input type="checkbox" checked={showExecSign} onChange={e => setShowExecSign(e.target.checked)} />
+                  Show Executive Signature
+                </label>
+              </div>
+              {showExecSign && <div style={{ textAlign: "center", marginLeft: "auto" }}>
+                <div style={{ width: "200px", borderBottom: "1px solid #1a2b4a", marginBottom: "6px", height: "40px" }}></div>
+                <div style={{ fontSize: "12px", fontWeight: 700, color: "#1a2b4a" }}>Vinoth Kumar. N</div>
+                <div style={{ fontSize: "11px", color: "#6b84a3" }}>Site Executive — VinoDhan Coating</div>
+              </div>}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "40px" }}><div style={{ fontSize: "32px", marginBottom: "10px" }}>🪪</div><div>Select workers above to preview the entry permit</div></div>
+      )}
+
+      {/* Saved Permits List */}
+      {savedPermits.length > 0 && <div style={{ ...S.card, marginTop: "20px" }}>
+        <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📁 Saved Permits</h3>
+        {[...savedPermits].sort((a, b) => b.id - a.id).map((p: any) => (
+          <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 13px", background: "#f8faff", borderRadius: "9px", marginBottom: "6px" }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: "13px" }}>{p.siteName}</div>
+              <div style={{ fontSize: "11px", color: "#6b84a3" }}>{fmtDate(p.fromDate)} → {fmtDate(p.toDate)} — {p.workers.length} workers</div>
+              <div style={{ fontSize: "11px", color: "#6b84a3" }}>Saved {fmtDate(p.savedAt)}</div>
+            </div>
+            <div style={{ display: "flex", gap: "7px" }}>
+              <button onClick={() => {
+                const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Entry Permit</title><style>@page{size:A4;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:15mm;margin:0;font-size:13px;}table{border-collapse:collapse;width:100%;}</style></head><body onload="window.print();">
           <div style="text-align:center;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #0f3172;">
             <div style="font-size:22px;font-weight:800;color:#0f3172;letter-spacing:2px;">ENTRY PERMIT</div>
           </div>
@@ -2946,524 +2946,524 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
             `).join("")}
           </div>
           </body></html>`;
-                    const existing = document.getElementById("print-overlay");
-                    if (existing) document.body.removeChild(existing);
-                    const overlay = document.createElement("div");
-                    overlay.id = "print-overlay";
-                    overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;";
-                    const bar = document.createElement("div");
-                    bar.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;";
-                    const backBtn = document.createElement("button");
-                    backBtn.innerText = "← Back";
-                    backBtn.style.cssText = "background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
-                    backBtn.onclick = () => document.body.removeChild(overlay);
-                    const dlBtn = document.createElement("button");
-                    dlBtn.innerText = "⬇️ Download & Print";
-                    dlBtn.style.cssText = "background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
-                    dlBtn.onclick = () => {
-                      const a = document.createElement("a");
-                      a.href = "data:text/html;charset=utf-8," + encodeURIComponent(html);
-                      a.download = `Permit-${p.siteName}-${p.savedAt}.html`;
-                      a.style.display = "none"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                    };
-                    bar.appendChild(backBtn); bar.appendChild(dlBtn);
-                    const iframe = document.createElement("iframe");
-                    iframe.style.cssText = "flex:1;width:100%;border:none;";
-                    overlay.appendChild(bar); overlay.appendChild(iframe);
-                    document.body.appendChild(overlay);
-                    iframe.contentDocument.open();
-                    iframe.contentDocument.write(html);
-                    iframe.contentDocument.close();
-                  }} style={{ ...S.btn(), padding: "5px 11px", fontSize: "12px" }}>🖨️ Print</button>
-                  <button onClick={() => setPermitDelModal(p.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "5px 11px", fontSize: "12px" }}>🗑️</button>
-                </div>
-              </div>
-            ))}
-          </div>}
+                const existing = document.getElementById("print-overlay");
+                if (existing) document.body.removeChild(existing);
+                const overlay = document.createElement("div");
+                overlay.id = "print-overlay";
+                overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;";
+                const bar = document.createElement("div");
+                bar.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;";
+                const backBtn = document.createElement("button");
+                backBtn.innerText = "← Back";
+                backBtn.style.cssText = "background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
+                backBtn.onclick = () => document.body.removeChild(overlay);
+                const dlBtn = document.createElement("button");
+                dlBtn.innerText = "⬇️ Download & Print";
+                dlBtn.style.cssText = "background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
+                dlBtn.onclick = () => {
+                  const a = document.createElement("a");
+                  a.href = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+                  a.download = `Permit-${p.siteName}-${p.savedAt}.html`;
+                  a.style.display = "none"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                };
+                bar.appendChild(backBtn); bar.appendChild(dlBtn);
+                const iframe = document.createElement("iframe");
+                iframe.style.cssText = "flex:1;width:100%;border:none;";
+                overlay.appendChild(bar); overlay.appendChild(iframe);
+                document.body.appendChild(overlay);
+                iframe.contentDocument.open();
+                iframe.contentDocument.write(html);
+                iframe.contentDocument.close();
+              }} style={{ ...S.btn(), padding: "5px 11px", fontSize: "12px" }}>🖨️ Print</button>
+              <button onClick={() => setPermitDelModal(p.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "5px 11px", fontSize: "12px" }}>🗑️</button>
+            </div>
+          </div>
+        ))}
+      </div>}
 
-          {permitDelModal && <PwModal
-            title="Delete Saved Permit?"
-            onConfirm={() => { setSavedPermits(p => p.filter(x => x.id !== permitDelModal)); setPermitDelModal(null); }}
-            onCancel={() => setPermitDelModal(null)}
-          />}
-        </div>
-        );
+      {permitDelModal && <PwModal
+        title="Delete Saved Permit?"
+        onConfirm={() => { setSavedPermits(p => p.filter(x => x.id !== permitDelModal)); setPermitDelModal(null); }}
+        onCancel={() => setPermitDelModal(null)}
+      />}
+    </div>
+  );
 }
 
-        // ── INVOICE ───────────────────────────────────────────
-        function Invoice({sites, invoices, setInvoices, company, setCompany, client, setClient, bank, setBank, recycleBin, setRecycleBin}) {
+// ── INVOICE ───────────────────────────────────────────
+function Invoice({ sites, invoices, setInvoices, company, setCompany, client, setClient, bank, setBank, recycleBin, setRecycleBin }) {
   const [selWorks, setSelWorks] = useState([]);
-        const [openSites, setOpenSites] = useState([]);
-        const [viewInv, setViewInv] = useState(null);
-        const [tab, setTab] = useState("new");
-        const [invNum, setInvNum] = useState(`INV-${new Date().getFullYear()}-001`);
-        const [invDate, setInvDate] = useState(today);
-        const [invSiteName, setInvSiteName] = useState("");
-        const [invSitePlace, setInvSitePlace] = useState("");
-        const [pwModal, setPwModal] = useState(null);
-        const [statusModal, setStatusModal] = useState(null);
-        const sigCanvas = useRef(null);
-        const [sigMode, setSigMode] = useState("none");
-        const [sigImage, setSigImage] = useState(null);
-        const [sigDrawing, setSigDrawing] = useState(false);
-        const lastPt = useRef(null);
+  const [openSites, setOpenSites] = useState([]);
+  const [viewInv, setViewInv] = useState(null);
+  const [tab, setTab] = useState("new");
+  const [invNum, setInvNum] = useState(`INV-${new Date().getFullYear()}-001`);
+  const [invDate, setInvDate] = useState(today);
+  const [invSiteName, setInvSiteName] = useState("");
+  const [invSitePlace, setInvSitePlace] = useState("");
+  const [pwModal, setPwModal] = useState(null);
+  const [statusModal, setStatusModal] = useState(null);
+  const sigCanvas = useRef(null);
+  const [sigMode, setSigMode] = useState("none");
+  const [sigImage, setSigImage] = useState(null);
+  const [sigDrawing, setSigDrawing] = useState(false);
+  const lastPt = useRef(null);
 
   const invoicedWorkIds = new Set(invoices.flatMap(inv => (inv.works || []).map((w: any) => w.id)));
 
-        const allWorks = sites
+  const allWorks = sites
     .flatMap(s => (s.works || [])
       .filter(w => selWorks.includes(w.id) && !invoicedWorkIds.has(w.id))
-      .map((w: any) => ({...w, siteId: s.id, siteName: s.name, amount: calcWork(w) }))
-        )
+      .map((w: any) => ({ ...w, siteId: s.id, siteName: s.name, amount: calcWork(w) }))
+    )
     .sort((a, b) => (a.fromDate || "").localeCompare(b.fromDate || ""));
 
   const total = allWorks.reduce((a, w) => a + w.amount, 0);
   useEffect(() => {
     if (allWorks.length > 0) {
-          setInvSiteName(allWorks[0].siteName || "");
+      setInvSiteName(allWorks[0].siteName || "");
     } else {
-          setInvSiteName("");
+      setInvSiteName("");
     }
   }, [allWorks.length]);
-  const startDraw = e => {setSigDrawing(true); const r = sigCanvas.current.getBoundingClientRect(); const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top; lastPt.current = {x, y}; };
-  const draw = e => { if (!sigDrawing || !sigCanvas.current || !lastPt.current) return; e.preventDefault(); const r = sigCanvas.current.getBoundingClientRect(); const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top; const ctx = sigCanvas.current.getContext("2d"); ctx.strokeStyle = "#1a2b4a"; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(lastPt.current.x, lastPt.current.y); ctx.lineTo(x, y); ctx.stroke(); lastPt.current = {x, y}; };
-  const endDraw = () => {setSigDrawing(false); if (sigCanvas.current) setSigImage(sigCanvas.current.toDataURL()); };
-  const clearSig = () => {sigCanvas.current?.getContext("2d")?.clearRect(0, 0, 180, 90); setSigImage(null); };
+  const startDraw = e => { setSigDrawing(true); const r = sigCanvas.current.getBoundingClientRect(); const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top; lastPt.current = { x, y }; };
+  const draw = e => { if (!sigDrawing || !sigCanvas.current || !lastPt.current) return; e.preventDefault(); const r = sigCanvas.current.getBoundingClientRect(); const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top; const ctx = sigCanvas.current.getContext("2d"); ctx.strokeStyle = "#1a2b4a"; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(lastPt.current.x, lastPt.current.y); ctx.lineTo(x, y); ctx.stroke(); lastPt.current = { x, y }; };
+  const endDraw = () => { setSigDrawing(false); if (sigCanvas.current) setSigImage(sigCanvas.current.toDataURL()); };
+  const clearSig = () => { sigCanvas.current?.getContext("2d")?.clearRect(0, 0, 180, 90); setSigImage(null); };
   const uploadSig = e => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { if (ev.target?.result) setSigImage(ev.target.result); }; r.readAsDataURL(f); };
 
   const saveInv = () => {
     if (allWorks.length === 0) return;
-    setInvoices(p => [...p, {id: Date.now(), number: invNum, date: invDate, total, works: allWorks, siteName: invSiteName, sitePlace: invSitePlace, measureNo: client.measureNo, status: "raised", snapshot: {company: {...company}, client: {...client}, bank: {...bank} } }]);
-        setSelWorks([]); setTab("history");
+    setInvoices(p => [...p, { id: Date.now(), number: invNum, date: invDate, total, works: allWorks, siteName: invSiteName, sitePlace: invSitePlace, measureNo: client.measureNo, status: "raised", snapshot: { company: { ...company }, client: { ...client }, bank: { ...bank } } }]);
+    setSelWorks([]); setTab("history");
   };
 
   // Delete invoice → password → recycle bin
   const deleteInv = inv => {
-          setPwModal({
-            action: () => {
-              setRecycleBin(p => ({ ...p, invoices: [...(p.invoices || []), inv] }));
-              setInvoices(p => p.filter(i => i.id !== inv.id));
-              setPwModal(null);
-            }
-          });
+    setPwModal({
+      action: () => {
+        setRecycleBin(p => ({ ...p, invoices: [...(p.invoices || []), inv] }));
+        setInvoices(p => p.filter(i => i.id !== inv.id));
+        setPwModal(null);
+      }
+    });
   };
 
-  const upC = (k, v) => setCompany(p => ({...p, [k]: v }));
-  const upCl = (k, v) => setClient(p => ({...p, [k]: v }));
-  const upB = (k, v) => setBank(p => ({...p, [k]: v }));
+  const upC = (k, v) => setCompany(p => ({ ...p, [k]: v }));
+  const upCl = (k, v) => setClient(p => ({ ...p, [k]: v }));
+  const upB = (k, v) => setBank(p => ({ ...p, [k]: v }));
   const fmtD = d => { if (!d) return "—"; const [y, m, dy] = d.split("-"); return `${dy}/${m}/${y}`; };
 
-        const InvDoc = ({inv}) => {
+  const InvDoc = ({ inv }) => {
     const works = inv ? inv.works : allWorks;
-        const tot = inv ? inv.total : total;
-        const num = inv ? inv.number : invNum;
-        const dt = inv ? fmtD(inv.date) : fmtD(invDate);
-        const editable = !inv;
-        const displaySiteName = inv ? inv.siteName : invSiteName;
-        const displayMeasureNo = inv ? inv.measureNo : client.measureNo;
-        const snap = inv?.snapshot;
-        const dispCompany = snap ? snap.company : company;
-        const dispClient = snap ? snap.client : client;
-        const dispBank = snap ? snap.bank : bank;
-        return (
-        <div style={{ width: "210mm", maxWidth: "100%", minHeight: "auto", margin: "0 auto", background: "#fff", padding: "20mm", borderRadius: "12px", boxShadow: "0 2px 20px rgba(0,0,0,0.08)", fontSize: "13px", border: "2px solid #0f3172", outline: "4px solid #e8f0fe", outlineOffset: "-8px", boxSizing: "border-box" }}>
-          {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", paddingBottom: "16px", borderBottom: "2px solid #0f3172", marginBottom: "16px" }}>
-            <div style={{ flex: 1, minWidth: "180px" }}>
-              <div style={{ fontSize: "18px", fontWeight: 800, color: "#0f3172", marginBottom: "6px" }}>
-                {editable ? <EditField value={company.name} onChange={v => upC("name", v)} style={{ fontSize: "18px", fontWeight: 800, color: "#0f3172" }} /> : dispCompany.name}
-              </div>
-              <div style={{ fontSize: "11px" }}>
-                {[
-                  ["Address", editable ? <EditField value={company.address} onChange={v => upC("address", v)} /> : dispCompany.address],
-                  ["Ph", editable ? <EditField value={company.phone} onChange={v => upC("phone", v)} /> : dispCompany.phone],
-                  ["Udyam", editable ? <EditField value={company.gstin} onChange={v => upC("gstin", v)} /> : dispCompany.gstin],
-                ].map(([lbl, val]) => (
-                  <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
-                    <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "55px", flexShrink: 0 }}>{lbl}</span>
-                    <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
-                    <span style={{ flex: 1 }}>{val}</span>
-                  </div>
-                ))}
-              </div>
+    const tot = inv ? inv.total : total;
+    const num = inv ? inv.number : invNum;
+    const dt = inv ? fmtD(inv.date) : fmtD(invDate);
+    const editable = !inv;
+    const displaySiteName = inv ? inv.siteName : invSiteName;
+    const displayMeasureNo = inv ? inv.measureNo : client.measureNo;
+    const snap = inv?.snapshot;
+    const dispCompany = snap ? snap.company : company;
+    const dispClient = snap ? snap.client : client;
+    const dispBank = snap ? snap.bank : bank;
+    return (
+      <div style={{ width: "210mm", maxWidth: "100%", minHeight: "auto", margin: "0 auto", background: "#fff", padding: "20mm", borderRadius: "12px", boxShadow: "0 2px 20px rgba(0,0,0,0.08)", fontSize: "13px", border: "2px solid #0f3172", outline: "4px solid #e8f0fe", outlineOffset: "-8px", boxSizing: "border-box" }}>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", paddingBottom: "16px", borderBottom: "2px solid #0f3172", marginBottom: "16px" }}>
+          <div style={{ flex: 1, minWidth: "180px" }}>
+            <div style={{ fontSize: "18px", fontWeight: 800, color: "#0f3172", marginBottom: "6px" }}>
+              {editable ? <EditField value={company.name} onChange={v => upC("name", v)} style={{ fontSize: "18px", fontWeight: 800, color: "#0f3172" }} /> : dispCompany.name}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-              <div style={{ fontSize: "22px", fontWeight: 800, color: "#0f3172", marginBottom: "8px", alignSelf: "flex-start" }}>INVOICE</div>
-              <div style={{ fontSize: "11px" }}>
-                {[
-                  ["No", editable ? <input value={invNum} onChange={e => setInvNum(e.target.value)} style={{ border: "1.5px solid #bfdbfe", borderRadius: "5px", padding: "2px 6px", fontSize: "11px", outline: "none", width: "120px", color: "#1a2b4a", fontFamily: "inherit" }} /> : num],
-                  ["Date", editable ? <input type="date" value={invDate} onChange={e => setInvDate(e.target.value)} style={{ border: "1.5px solid #bfdbfe", borderRadius: "5px", padding: "2px 6px", fontSize: "11px", outline: "none", width: "130px", color: "#1a2b4a", fontFamily: "inherit" }} /> : dt],
-                ].map(([lbl, val]) => (
-                  <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "center", marginBottom: "4px" }}>
-                    <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "35px", flexShrink: 0 }}>{lbl}</span>
-                    <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
-                    <span>{val}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Bill To + Site Details */}
-          <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
-            <div style={{ padding: "12px 14px", background: "#f0f6ff", borderRadius: "9px", flex: 1, minWidth: "200px" }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#6b84a3", marginBottom: "6px" }}>BILL TO</div>
-              <div style={{ fontSize: "11px" }}>
-                {[
-                  ["To", editable ? <EditField value={client.sendTo} onChange={v => upCl("sendTo", v)} placeholder="Recipient" /> : dispClient.sendTo],
-                  ["Company", editable ? <EditField value={client.name} onChange={v => upCl("name", v)} style={{ fontWeight: 700 }} /> : <strong>{dispClient.name}</strong>],
-                  ...(editable || (dispClient.address) ? [["Address", editable ? <EditField value={client.address || ""} onChange={v => upCl("address", v)} placeholder="Address" /> : dispClient.address]] : []),
-                  ["Place", <>{editable ? <EditField value={client.place} onChange={v => upCl("place", v)} /> : dispClient.place}{" — "}{editable ? <EditField value={client.pincode} onChange={v => upCl("pincode", v)} style={{ width: "70px" }} /> : dispClient.pincode}</>],
-                  ["Ph", editable ? <EditField value={client.phone} onChange={v => upCl("phone", v)} placeholder="Phone" /> : dispClient.phone],
-                ].map(([lbl, val]) => (
-                  <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
-                    <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "70px", flexShrink: 0 }}>{lbl}</span>
-                    <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
-                    <span style={{ flex: 1 }}>{val}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ marginTop: "10px", paddingTop: "8px", borderTop: "1px dashed #bfdbfe", display: "flex", gap: "4px", alignItems: "flex-start" }}>
-                <span style={{ fontWeight: 600, color: "#6b84a3", fontSize: "11px", flexShrink: 0 }}>Measurement Job No</span>
-                <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px", fontSize: "11px" }}>:</span>
-                <span style={{ flex: 1, fontSize: "11px" }}>{editable ? <EditField value={client.measureNo} onChange={v => upCl("measureNo", v)} placeholder="Sheet no." /> : <strong>{displayMeasureNo || "—"}</strong>}</span>
-              </div>
-            </div>
-            <div style={{ padding: "12px 14px", background: "#f0f6ff", borderRadius: "9px", flex: 1, minWidth: "200px" }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#6b84a3", marginBottom: "6px" }}>SITE DETAILS</div>
-              <div style={{ fontSize: "11px" }}>
-                {[
-                  ["Site Name", editable ? <EditField value={invSiteName} onChange={v => setInvSiteName(v)} placeholder="Site name" /> : displaySiteName || "—"],
-                  ...(editable || (inv?.sitePlace) ? [["Place", editable ? <EditField value={invSitePlace} onChange={v => setInvSitePlace(v)} placeholder="Site place" /> : inv?.sitePlace || "—"]] : []),
-                ].map(([lbl, val]) => (
-                  <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
-                    <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "70px", flexShrink: 0 }}>{lbl}</span>
-                    <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
-                    <span style={{ flex: 1 }}>{val}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Table */}
-          <div style={{ overflowX: "auto", marginBottom: "16px" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-              <thead><tr style={{ background: "#0f3172", color: "#fff" }}>
-                {["S.No", "Description", "Unit", "Rate (₹)", "Amount (₹)"].map((h, i) => <th key={h} style={{ padding: "8px 9px", textAlign: i > 1 ? "right" : "left", fontWeight: 600, fontSize: "11px" }}>{h}</th>)}
-              </tr></thead>
-              <tbody>
-                {works.length === 0 && <tr><td colSpan={5} style={{ padding: "16px", textAlign: "center", color: "#9db3cc" }}>No work entries.</td></tr>}
-                {works.map((w, i) => {
-                  const type = w.workType || "SQM";
-                  const unitStr = type === "Manpower" ? `${w.labour} Labour` : type === "RMT" ? `${w.area} rmt` : type === "KGS" ? `${w.area} kgs` : type === "Other" ? "—" : `${w.area} m²`;
-                  return (
-                    <tr key={w.id || i} style={{ borderBottom: "1px solid #f0f4f9", background: i % 2 === 0 ? "#fff" : "#f8faff" }}>
-                      <td style={{ padding: "8px 9px", color: "#6b84a3", textAlign: "center" }}>{i + 1}</td>
-                      <td style={{ padding: "8px 9px" }}>{w.place}</td>
-                      <td style={{ padding: "8px 9px", textAlign: "right" }}>{unitStr}</td>
-                      <td style={{ padding: "8px 9px", textAlign: "right" }}>₹{w.rate}</td>
-                      <td style={{ padding: "8px 9px", fontWeight: 700, textAlign: "right" }}>₹{w.amount.toLocaleString()}</td>
-                    </tr>
-                  );
-                })}
-                <tr style={{ background: "#0f3172", color: "#fff" }}><td colSpan={4} style={{ padding: "10px 9px", fontWeight: 700, textAlign: "right" }}>TOTAL</td><td style={{ padding: "10px 9px", fontWeight: 800, fontSize: "16px", textAlign: "right", color: "#f59e0b", letterSpacing: "0.5px" }}>₹{tot.toLocaleString()}</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Bank + Signature */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "14px", marginTop: "20px" }}>
-            <div style={{ padding: "12px 14px", background: "#f8faff", borderRadius: "9px", fontSize: "11px", flex: 1, minWidth: "0", width: "100%", boxSizing: "border-box" }}>
-              <div style={{ fontWeight: 700, marginBottom: "6px" }}>Bank Details</div>
+            <div style={{ fontSize: "11px" }}>
               {[
-                ["Acc Name", editable ? <EditField value={bank.accName} onChange={v => upB("accName", v)} /> : dispBank.accName],
-                ["Bank", editable ? <EditField value={bank.bank} onChange={v => upB("bank", v)} /> : dispBank.bank],
-                ["A/C No", editable ? <EditField value={bank.accNo} onChange={v => upB("accNo", v)} /> : dispBank.accNo],
-                ["IFSC", editable ? <EditField value={bank.ifsc} onChange={v => upB("ifsc", v)} /> : dispBank.ifsc],
-                ["UPI", editable ? <EditField value={bank.upi} onChange={v => upB("upi", v)} /> : dispBank.upi],
+                ["Address", editable ? <EditField value={company.address} onChange={v => upC("address", v)} /> : dispCompany.address],
+                ["Ph", editable ? <EditField value={company.phone} onChange={v => upC("phone", v)} /> : dispCompany.phone],
+                ["Udyam", editable ? <EditField value={company.gstin} onChange={v => upC("gstin", v)} /> : dispCompany.gstin],
               ].map(([lbl, val]) => (
                 <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
-                  <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "60px", flexShrink: 0 }}>{lbl}</span>
+                  <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "55px", flexShrink: 0 }}>{lbl}</span>
                   <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
                   <span style={{ flex: 1 }}>{val}</span>
                 </div>
               ))}
             </div>
-            <div style={{ textAlign: "center" }}>
-              {/* Signature box */}
-              <div style={{ width: "180px", height: "90px", border: "1.5px dashed #bfdbfe", borderRadius: "8px", marginBottom: "6px", overflow: "hidden", background: "#fafcff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {sigImage ? <img src={sigImage} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-                  : sigMode === "draw" ? <canvas ref={sigCanvas} width={180} height={90} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw} onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} style={{ cursor: "crosshair", touchAction: "none", display: "block" }} />
-                    : <span className="no-print" style={{ fontSize: "11px", color: "#9db3cc" }}>{sigMode === "physical" ? "Physical Sign" : "Seal / Signature"}</span>}
-              </div>
-              {/* Signature controls — hidden on print */}
-              {editable && <div className="no-print" style={{ display: "flex", gap: "4px", justifyContent: "center", marginBottom: "6px", flexWrap: "wrap" }}>
-                <button onClick={() => { setSigMode("draw"); setSigImage(null); setTimeout(() => sigCanvas.current?.getContext("2d")?.clearRect(0, 0, 180, 90), 50); }} style={{ ...S.btn(sigMode === "draw" ? "#1e50a0" : "#f0f6ff", sigMode === "draw" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>✏️ Draw</button>
-                <label style={{ ...S.btn(sigMode === "upload" ? "#1e50a0" : "#f0f6ff", sigMode === "upload" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px", cursor: "pointer" }}>
-                  📁 Upload<input type="file" accept="image/*" onChange={e => { setSigMode("upload"); uploadSig(e); }} style={{ display: "none" }} />
-                </label>
-                <button onClick={() => { setSigMode("physical"); setSigImage(null); clearSig(); }} style={{ ...S.btn(sigMode === "physical" ? "#1e50a0" : "#f0f6ff", sigMode === "physical" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>🖊️ Physical</button>
-                {(sigImage || sigMode === "draw") && <button onClick={() => { clearSig(); setSigMode("none"); }} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 8px", fontSize: "10px" }}>✗</button>}
-              </div>}
-              <div style={{ borderTop: "1px solid #1a2b4a", paddingTop: "5px", fontSize: "11px", color: "#6b84a3" }}>Authorised Signatory<br /><strong>{dispCompany.name}</strong></div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+            <div style={{ fontSize: "22px", fontWeight: 800, color: "#0f3172", marginBottom: "8px", alignSelf: "flex-start" }}>INVOICE</div>
+            <div style={{ fontSize: "11px" }}>
+              {[
+                ["No", editable ? <input value={invNum} onChange={e => setInvNum(e.target.value)} style={{ border: "1.5px solid #bfdbfe", borderRadius: "5px", padding: "2px 6px", fontSize: "11px", outline: "none", width: "120px", color: "#1a2b4a", fontFamily: "inherit" }} /> : num],
+                ["Date", editable ? <input type="date" value={invDate} onChange={e => setInvDate(e.target.value)} style={{ border: "1.5px solid #bfdbfe", borderRadius: "5px", padding: "2px 6px", fontSize: "11px", outline: "none", width: "130px", color: "#1a2b4a", fontFamily: "inherit" }} /> : dt],
+              ].map(([lbl, val]) => (
+                <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "center", marginBottom: "4px" }}>
+                  <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "35px", flexShrink: 0 }}>{lbl}</span>
+                  <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
+                  <span>{val}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-        );
-  };
 
-        return (
-        <div>
-          <h2 style={{ margin: "0 0 16px", fontSize: "20px", fontWeight: 800 }}>🧾 Invoice</h2>
-          <div style={{ display: "flex", gap: "7px", marginBottom: "20px" }}>
-            {[["new", "➕ New"], ["history", "📁 History"]].map(([t, lbl]) => (
-              <button key={t} onClick={() => setTab(t)} style={S.btn(tab === t ? "#1e50a0" : "#e5e7eb", tab === t ? "#fff" : "#374151")}>{lbl}</button>
+        {/* Bill To + Site Details */}
+        <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+          <div style={{ padding: "12px 14px", background: "#f0f6ff", borderRadius: "9px", flex: 1, minWidth: "200px" }}>
+            <div style={{ fontSize: "10px", fontWeight: 700, color: "#6b84a3", marginBottom: "6px" }}>BILL TO</div>
+            <div style={{ fontSize: "11px" }}>
+              {[
+                ["To", editable ? <EditField value={client.sendTo} onChange={v => upCl("sendTo", v)} placeholder="Recipient" /> : dispClient.sendTo],
+                ["Company", editable ? <EditField value={client.name} onChange={v => upCl("name", v)} style={{ fontWeight: 700 }} /> : <strong>{dispClient.name}</strong>],
+                ...(editable || (dispClient.address) ? [["Address", editable ? <EditField value={client.address || ""} onChange={v => upCl("address", v)} placeholder="Address" /> : dispClient.address]] : []),
+                ["Place", <>{editable ? <EditField value={client.place} onChange={v => upCl("place", v)} /> : dispClient.place}{" — "}{editable ? <EditField value={client.pincode} onChange={v => upCl("pincode", v)} style={{ width: "70px" }} /> : dispClient.pincode}</>],
+                ["Ph", editable ? <EditField value={client.phone} onChange={v => upCl("phone", v)} placeholder="Phone" /> : dispClient.phone],
+              ].map(([lbl, val]) => (
+                <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
+                  <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "70px", flexShrink: 0 }}>{lbl}</span>
+                  <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
+                  <span style={{ flex: 1 }}>{val}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: "10px", paddingTop: "8px", borderTop: "1px dashed #bfdbfe", display: "flex", gap: "4px", alignItems: "flex-start" }}>
+              <span style={{ fontWeight: 600, color: "#6b84a3", fontSize: "11px", flexShrink: 0 }}>Measurement Job No</span>
+              <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px", fontSize: "11px" }}>:</span>
+              <span style={{ flex: 1, fontSize: "11px" }}>{editable ? <EditField value={client.measureNo} onChange={v => upCl("measureNo", v)} placeholder="Sheet no." /> : <strong>{displayMeasureNo || "—"}</strong>}</span>
+            </div>
+          </div>
+          <div style={{ padding: "12px 14px", background: "#f0f6ff", borderRadius: "9px", flex: 1, minWidth: "200px" }}>
+            <div style={{ fontSize: "10px", fontWeight: 700, color: "#6b84a3", marginBottom: "6px" }}>SITE DETAILS</div>
+            <div style={{ fontSize: "11px" }}>
+              {[
+                ["Site Name", editable ? <EditField value={invSiteName} onChange={v => setInvSiteName(v)} placeholder="Site name" /> : displaySiteName || "—"],
+                ...(editable || (inv?.sitePlace) ? [["Place", editable ? <EditField value={invSitePlace} onChange={v => setInvSitePlace(v)} placeholder="Site place" /> : inv?.sitePlace || "—"]] : []),
+              ].map(([lbl, val]) => (
+                <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
+                  <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "70px", flexShrink: 0 }}>{lbl}</span>
+                  <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
+                  <span style={{ flex: 1 }}>{val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div style={{ overflowX: "auto", marginBottom: "16px" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+            <thead><tr style={{ background: "#0f3172", color: "#fff" }}>
+              {["S.No", "Description", "Unit", "Rate (₹)", "Amount (₹)"].map((h, i) => <th key={h} style={{ padding: "8px 9px", textAlign: i > 1 ? "right" : "left", fontWeight: 600, fontSize: "11px" }}>{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {works.length === 0 && <tr><td colSpan={5} style={{ padding: "16px", textAlign: "center", color: "#9db3cc" }}>No work entries.</td></tr>}
+              {works.map((w, i) => {
+                const type = w.workType || "SQM";
+                const unitStr = type === "Manpower" ? `${w.labour} Labour` : type === "RMT" ? `${w.area} rmt` : type === "KGS" ? `${w.area} kgs` : type === "Other" ? "—" : `${w.area} m²`;
+                return (
+                  <tr key={w.id || i} style={{ borderBottom: "1px solid #f0f4f9", background: i % 2 === 0 ? "#fff" : "#f8faff" }}>
+                    <td style={{ padding: "8px 9px", color: "#6b84a3", textAlign: "center" }}>{i + 1}</td>
+                    <td style={{ padding: "8px 9px" }}>{w.place}</td>
+                    <td style={{ padding: "8px 9px", textAlign: "right" }}>{unitStr}</td>
+                    <td style={{ padding: "8px 9px", textAlign: "right" }}>₹{w.rate}</td>
+                    <td style={{ padding: "8px 9px", fontWeight: 700, textAlign: "right" }}>₹{w.amount.toLocaleString()}</td>
+                  </tr>
+                );
+              })}
+              <tr style={{ background: "#0f3172", color: "#fff" }}><td colSpan={4} style={{ padding: "10px 9px", fontWeight: 700, textAlign: "right" }}>TOTAL</td><td style={{ padding: "10px 9px", fontWeight: 800, fontSize: "16px", textAlign: "right", color: "#f59e0b", letterSpacing: "0.5px" }}>₹{tot.toLocaleString()}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Bank + Signature */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "14px", marginTop: "20px" }}>
+          <div style={{ padding: "12px 14px", background: "#f8faff", borderRadius: "9px", fontSize: "11px", flex: 1, minWidth: "0", width: "100%", boxSizing: "border-box" }}>
+            <div style={{ fontWeight: 700, marginBottom: "6px" }}>Bank Details</div>
+            {[
+              ["Acc Name", editable ? <EditField value={bank.accName} onChange={v => upB("accName", v)} /> : dispBank.accName],
+              ["Bank", editable ? <EditField value={bank.bank} onChange={v => upB("bank", v)} /> : dispBank.bank],
+              ["A/C No", editable ? <EditField value={bank.accNo} onChange={v => upB("accNo", v)} /> : dispBank.accNo],
+              ["IFSC", editable ? <EditField value={bank.ifsc} onChange={v => upB("ifsc", v)} /> : dispBank.ifsc],
+              ["UPI", editable ? <EditField value={bank.upi} onChange={v => upB("upi", v)} /> : dispBank.upi],
+            ].map(([lbl, val]) => (
+              <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
+                <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "60px", flexShrink: 0 }}>{lbl}</span>
+                <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
+                <span style={{ flex: 1 }}>{val}</span>
+              </div>
             ))}
           </div>
-
-          {tab === "new" && <>
-            <div style={{ ...S.card, marginBottom: "16px" }}>
-              <h3 style={{ margin: "0 0 11px", fontSize: "13px", fontWeight: 700 }}>Invoice Settings</h3>
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "12px" }}>
-                <div style={{ flex: 1, minWidth: "140px" }}><label style={S.lbl}>Invoice No</label><input value={invNum} onChange={e => setInvNum(e.target.value)} style={S.inp} /></div>
-                <div style={{ flex: 1, minWidth: "140px" }}><label style={S.lbl}>Invoice Date</label><input type="date" value={invDate} onChange={e => setInvDate(e.target.value)} style={S.inp} /></div>
-              </div>
-              <label style={S.lbl}>Select Sites & Works to Invoice</label>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "6px", marginBottom: "12px" }}>
-                {sites.map((s: any) => {
-                  const uninvoiced = (s.works || []).filter(w => !invoicedWorkIds.has(w.id));
-                  if (uninvoiced.length === 0) return null;
-                  const selAll = uninvoiced.every(w => selWorks.includes(w.id));
-                  const siteOpen = openSites.includes(s.id);
-                  return (
-                    <div key={s.id} style={{ border: "1.5px solid #bfdbfe", borderRadius: "10px", overflow: "hidden" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: "#1e50a0" }}>
-                        <div onClick={() => { if (selAll) setSelWorks(p => p.filter(id => !uninvoiced.map((w: any) => w.id).includes(id))); else setSelWorks(p => [...new Set([...p, ...uninvoiced.map((w: any) => w.id)])]); }} style={{ width: "20px", height: "20px", borderRadius: "5px", flexShrink: 0, background: selAll ? "#f59e0b" : "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>{selAll ? "✓" : ""}</div>
-                        <div onClick={() => setOpenSites(p => siteOpen ? p.filter(x => x !== s.id) : [...p, s.id])} style={{ flex: 1, cursor: "pointer" }}>
-                          <div style={{ fontWeight: 700, fontSize: "13px", color: "#fff" }}>{s.name}</div>
-                        </div>
-                        <span style={{ background: "rgba(255,255,255,0.15)", color: "#fff", fontSize: "10px", fontWeight: 600, borderRadius: "20px", padding: "2px 9px" }}>{uninvoiced.length} work{uninvoiced.length !== 1 ? "s" : ""}</span>
-                        <span style={{ background: s.status === "Active" ? "#dcfce7" : "#fee2e2", color: s.status === "Active" ? "#166534" : "#991b1b", fontSize: "10px", fontWeight: 600, borderRadius: "20px", padding: "2px 9px" }}>{s.status}</span>
-                        <span onClick={() => setOpenSites(p => siteOpen ? p.filter(x => x !== s.id) : [...p, s.id])} style={{ color: "#fff", fontSize: "12px", cursor: "pointer" }}>{siteOpen ? "▲" : "▼"}</span>
-                      </div>
-                      {siteOpen && uninvoiced.map((w: any) => {
-                        const wsel = selWorks.includes(w.id);
-                        return (
-                          <div key={w.id} onClick={() => setSelWorks(p => wsel ? p.filter(id => id !== w.id) : [...p, w.id])} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px 8px 20px", background: wsel ? "#eff6ff" : "#fff", borderTop: "1px solid #e5e7eb", cursor: "pointer" }}>
-                            <div style={{ width: "16px", height: "16px", borderRadius: "4px", flexShrink: 0, background: wsel ? "#1e50a0" : "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "10px", fontWeight: 700 }}>{wsel ? "✓" : ""}</div>
-                            <span style={S.wbadge(w.workType || "SQM")}>{w.workType || "SQM"}</span>
-                            <div style={{ flex: 1, fontSize: "12px", fontWeight: 500 }}>{w.place}</div>
-                            <div style={{ fontSize: "12px", fontWeight: 700, color: "#166534" }}>₹{calcWork(w).toLocaleString()}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{ display: "flex", gap: "9px" }}>
-                <button onClick={() => printSection("invoice-doc")} style={{ ...S.btn(), opacity: allWorks.length === 0 ? 0.5 : 1 }} disabled={allWorks.length === 0}>🖨️ Print / PDF</button>
-                <button onClick={saveInv} style={{ ...S.btn("#166534"), opacity: allWorks.length === 0 ? 0.5 : 1 }} disabled={allWorks.length === 0}>💾 Save Invoice</button>
-              </div>
+          <div style={{ textAlign: "center" }}>
+            {/* Signature box */}
+            <div style={{ width: "180px", height: "90px", border: "1.5px dashed #bfdbfe", borderRadius: "8px", marginBottom: "6px", overflow: "hidden", background: "#fafcff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {sigImage ? <img src={sigImage} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                : sigMode === "draw" ? <canvas ref={sigCanvas} width={180} height={90} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw} onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} style={{ cursor: "crosshair", touchAction: "none", display: "block" }} />
+                  : <span className="no-print" style={{ fontSize: "11px", color: "#9db3cc" }}>{sigMode === "physical" ? "Physical Sign" : "Seal / Signature"}</span>}
             </div>
-            <div id="invoice-doc"><InvDoc inv={null} /></div>
-          </>}
-
-          {tab === "history" && (viewInv
-            ? <><div style={{ display: "flex", gap: "9px", marginBottom: "16px" }}>
-              <button onClick={() => setViewInv(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
-              <button onClick={() => printSection("invoice-history-doc")} style={S.btn()}>🖨️ Print</button>
-            </div>
-              <div id="invoice-history-doc"><InvDoc inv={viewInv} /></div>
-            </>
-            : <div style={S.card}>
-              <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>Saved Invoices</h3>
-              <div style={{ display: "flex", gap: "16px", marginBottom: "14px", padding: "12px 14px", background: "#f0f6ff", borderRadius: "10px", flexWrap: "wrap" }}>
-                <div><span style={{ fontSize: "20px", fontWeight: 800, color: "#0f3172" }}>{invoices.length}</span><div style={{ fontSize: "11px", color: "#6b84a3" }}>Total Invoices</div></div>
-                <div><span style={{ fontSize: "20px", fontWeight: 800, color: "#166534" }}>₹{invoices.reduce((a, inv) => a + (inv.total || 0), 0).toLocaleString()}</span><div style={{ fontSize: "11px", color: "#6b84a3" }}>Total Billed</div></div>
-              </div>
-              {invoices.length === 0 ? <p style={{ color: "#9db3cc", fontSize: "13px" }}>No invoices saved yet.</p>
-                : [...invoices].sort((a, b) => b.number.localeCompare(a.number, undefined, { numeric: true })).map((inv, idx) => (
-                  <div key={inv.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 13px", background: inv.status === "accepted" ? "#f0fdf4" : "#f8faff", borderRadius: "9px", marginBottom: "6px", border: inv.status === "accepted" ? "1.5px solid #bbf7d0" : "1.5px solid transparent" }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "4px" }}>
-                        <span style={{ background: "#dbeafe", color: "#1e40af", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "12px" }}>{inv.number}</span>
-                        {inv.status === "accepted"
-                          ? <span style={{ background: "#dcfce7", color: "#166534", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "10px" }}>🔒 Accepted</span>
-                          : <span style={{ background: "#fef9c3", color: "#d97706", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "10px" }}>🟡 Raised</span>
-                        }
-                        {inv.flagged && <span style={{ color: "#dc2626", fontSize: "11px" }}>⚠️ Incomplete</span>}
-                      </div>
-                      <div style={{ fontSize: "11px", color: "#6b84a3" }}>{fmtD(inv.date)} — {inv.siteName || "—"}</div>
-                      {inv.measureNo && <div style={{ fontSize: "10px", fontWeight: 600, color: "#1e50a0", marginTop: "2px" }}>📋 {inv.measureNo}</div>}
-                    </div>
-                    <div style={{ display: "flex", gap: "7px", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
-                      <div style={{ fontWeight: 700, color: "#166534", fontSize: "13px" }}>₹{inv.total?.toLocaleString()}</div>
-                      <button onClick={() => setViewInv(inv)} style={{ ...S.btn(), padding: "5px 11px", fontSize: "12px" }}>View</button>
-                      <button onClick={() => setStatusModal(inv)} style={{ ...S.btn(inv.status === "accepted" ? "#fee2e2" : "#166534"), padding: "5px 11px", fontSize: "12px" }}>
-                        {inv.status === "accepted" ? "🔓 Unmark" : "🔒 Accept"}
-                      </button>
-                      {inv.status !== "accepted" && <button onClick={() => deleteInv(inv)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "5px 11px", fontSize: "12px" }}>🗑️</button>}
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-          {statusModal && (
-            <PwModal
-              title={statusModal.status === "accepted" ? "Unmark as Accepted?" : "Mark as Accepted?"}
-              onConfirm={() => {
-                const newStatus = statusModal.status === "accepted" ? "raised" : "accepted";
-                setInvoices(p => p.map((inv: any) => inv.id === statusModal.id ? { ...inv, status: newStatus } : inv));
-                setStatusModal(null);
-              }}
-              onCancel={() => setStatusModal(null)}
-            />
-          )}
-
-          {/* Password modal for invoice delete */}
-          {pwModal && <PwModal
-            title="Move to Recycle Bin?"
-            onConfirm={pwModal.action}
-            onCancel={() => setPwModal(null)}
-          />}
+            {/* Signature controls — hidden on print */}
+            {editable && <div className="no-print" style={{ display: "flex", gap: "4px", justifyContent: "center", marginBottom: "6px", flexWrap: "wrap" }}>
+              <button onClick={() => { setSigMode("draw"); setSigImage(null); setTimeout(() => sigCanvas.current?.getContext("2d")?.clearRect(0, 0, 180, 90), 50); }} style={{ ...S.btn(sigMode === "draw" ? "#1e50a0" : "#f0f6ff", sigMode === "draw" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>✏️ Draw</button>
+              <label style={{ ...S.btn(sigMode === "upload" ? "#1e50a0" : "#f0f6ff", sigMode === "upload" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px", cursor: "pointer" }}>
+                📁 Upload<input type="file" accept="image/*" onChange={e => { setSigMode("upload"); uploadSig(e); }} style={{ display: "none" }} />
+              </label>
+              <button onClick={() => { setSigMode("physical"); setSigImage(null); clearSig(); }} style={{ ...S.btn(sigMode === "physical" ? "#1e50a0" : "#f0f6ff", sigMode === "physical" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>🖊️ Physical</button>
+              {(sigImage || sigMode === "draw") && <button onClick={() => { clearSig(); setSigMode("none"); }} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 8px", fontSize: "10px" }}>✗</button>}
+            </div>}
+            <div style={{ borderTop: "1px solid #1a2b4a", paddingTop: "5px", fontSize: "11px", color: "#6b84a3" }}>Authorised Signatory<br /><strong>{dispCompany.name}</strong></div>
+          </div>
         </div>
-        );
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      <h2 style={{ margin: "0 0 16px", fontSize: "20px", fontWeight: 800 }}>🧾 Invoice</h2>
+      <div style={{ display: "flex", gap: "7px", marginBottom: "20px" }}>
+        {[["new", "➕ New"], ["history", "📁 History"]].map(([t, lbl]) => (
+          <button key={t} onClick={() => setTab(t)} style={S.btn(tab === t ? "#1e50a0" : "#e5e7eb", tab === t ? "#fff" : "#374151")}>{lbl}</button>
+        ))}
+      </div>
+
+      {tab === "new" && <>
+        <div style={{ ...S.card, marginBottom: "16px" }}>
+          <h3 style={{ margin: "0 0 11px", fontSize: "13px", fontWeight: 700 }}>Invoice Settings</h3>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "12px" }}>
+            <div style={{ flex: 1, minWidth: "140px" }}><label style={S.lbl}>Invoice No</label><input value={invNum} onChange={e => setInvNum(e.target.value)} style={S.inp} /></div>
+            <div style={{ flex: 1, minWidth: "140px" }}><label style={S.lbl}>Invoice Date</label><input type="date" value={invDate} onChange={e => setInvDate(e.target.value)} style={S.inp} /></div>
+          </div>
+          <label style={S.lbl}>Select Sites & Works to Invoice</label>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "6px", marginBottom: "12px" }}>
+            {sites.map((s: any) => {
+              const uninvoiced = (s.works || []).filter(w => !invoicedWorkIds.has(w.id));
+              if (uninvoiced.length === 0) return null;
+              const selAll = uninvoiced.every(w => selWorks.includes(w.id));
+              const siteOpen = openSites.includes(s.id);
+              return (
+                <div key={s.id} style={{ border: "1.5px solid #bfdbfe", borderRadius: "10px", overflow: "hidden" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: "#1e50a0" }}>
+                    <div onClick={() => { if (selAll) setSelWorks(p => p.filter(id => !uninvoiced.map((w: any) => w.id).includes(id))); else setSelWorks(p => [...new Set([...p, ...uninvoiced.map((w: any) => w.id)])]); }} style={{ width: "20px", height: "20px", borderRadius: "5px", flexShrink: 0, background: selAll ? "#f59e0b" : "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>{selAll ? "✓" : ""}</div>
+                    <div onClick={() => setOpenSites(p => siteOpen ? p.filter(x => x !== s.id) : [...p, s.id])} style={{ flex: 1, cursor: "pointer" }}>
+                      <div style={{ fontWeight: 700, fontSize: "13px", color: "#fff" }}>{s.name}</div>
+                    </div>
+                    <span style={{ background: "rgba(255,255,255,0.15)", color: "#fff", fontSize: "10px", fontWeight: 600, borderRadius: "20px", padding: "2px 9px" }}>{uninvoiced.length} work{uninvoiced.length !== 1 ? "s" : ""}</span>
+                    <span style={{ background: s.status === "Active" ? "#dcfce7" : "#fee2e2", color: s.status === "Active" ? "#166534" : "#991b1b", fontSize: "10px", fontWeight: 600, borderRadius: "20px", padding: "2px 9px" }}>{s.status}</span>
+                    <span onClick={() => setOpenSites(p => siteOpen ? p.filter(x => x !== s.id) : [...p, s.id])} style={{ color: "#fff", fontSize: "12px", cursor: "pointer" }}>{siteOpen ? "▲" : "▼"}</span>
+                  </div>
+                  {siteOpen && uninvoiced.map((w: any) => {
+                    const wsel = selWorks.includes(w.id);
+                    return (
+                      <div key={w.id} onClick={() => setSelWorks(p => wsel ? p.filter(id => id !== w.id) : [...p, w.id])} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px 8px 20px", background: wsel ? "#eff6ff" : "#fff", borderTop: "1px solid #e5e7eb", cursor: "pointer" }}>
+                        <div style={{ width: "16px", height: "16px", borderRadius: "4px", flexShrink: 0, background: wsel ? "#1e50a0" : "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "10px", fontWeight: 700 }}>{wsel ? "✓" : ""}</div>
+                        <span style={S.wbadge(w.workType || "SQM")}>{w.workType || "SQM"}</span>
+                        <div style={{ flex: 1, fontSize: "12px", fontWeight: 500 }}>{w.place}</div>
+                        <div style={{ fontSize: "12px", fontWeight: 700, color: "#166534" }}>₹{calcWork(w).toLocaleString()}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display: "flex", gap: "9px" }}>
+            <button onClick={() => printSection("invoice-doc")} style={{ ...S.btn(), opacity: allWorks.length === 0 ? 0.5 : 1 }} disabled={allWorks.length === 0}>🖨️ Print / PDF</button>
+            <button onClick={saveInv} style={{ ...S.btn("#166534"), opacity: allWorks.length === 0 ? 0.5 : 1 }} disabled={allWorks.length === 0}>💾 Save Invoice</button>
+          </div>
+        </div>
+        <div id="invoice-doc"><InvDoc inv={null} /></div>
+      </>}
+
+      {tab === "history" && (viewInv
+        ? <><div style={{ display: "flex", gap: "9px", marginBottom: "16px" }}>
+          <button onClick={() => setViewInv(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
+          <button onClick={() => printSection("invoice-history-doc")} style={S.btn()}>🖨️ Print</button>
+        </div>
+          <div id="invoice-history-doc"><InvDoc inv={viewInv} /></div>
+        </>
+        : <div style={S.card}>
+          <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>Saved Invoices</h3>
+          <div style={{ display: "flex", gap: "16px", marginBottom: "14px", padding: "12px 14px", background: "#f0f6ff", borderRadius: "10px", flexWrap: "wrap" }}>
+            <div><span style={{ fontSize: "20px", fontWeight: 800, color: "#0f3172" }}>{invoices.length}</span><div style={{ fontSize: "11px", color: "#6b84a3" }}>Total Invoices</div></div>
+            <div><span style={{ fontSize: "20px", fontWeight: 800, color: "#166534" }}>₹{invoices.reduce((a, inv) => a + (inv.total || 0), 0).toLocaleString()}</span><div style={{ fontSize: "11px", color: "#6b84a3" }}>Total Billed</div></div>
+          </div>
+          {invoices.length === 0 ? <p style={{ color: "#9db3cc", fontSize: "13px" }}>No invoices saved yet.</p>
+            : [...invoices].sort((a, b) => b.number.localeCompare(a.number, undefined, { numeric: true })).map((inv, idx) => (
+              <div key={inv.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 13px", background: inv.status === "accepted" ? "#f0fdf4" : "#f8faff", borderRadius: "9px", marginBottom: "6px", border: inv.status === "accepted" ? "1.5px solid #bbf7d0" : "1.5px solid transparent" }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "4px" }}>
+                    <span style={{ background: "#dbeafe", color: "#1e40af", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "12px" }}>{inv.number}</span>
+                    {inv.status === "accepted"
+                      ? <span style={{ background: "#dcfce7", color: "#166534", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "10px" }}>🔒 Accepted</span>
+                      : <span style={{ background: "#fef9c3", color: "#d97706", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "10px" }}>🟡 Raised</span>
+                    }
+                    {inv.flagged && <span style={{ color: "#dc2626", fontSize: "11px" }}>⚠️ Incomplete</span>}
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#6b84a3" }}>{fmtD(inv.date)} — {inv.siteName || "—"}</div>
+                  {inv.measureNo && <div style={{ fontSize: "10px", fontWeight: 600, color: "#1e50a0", marginTop: "2px" }}>📋 {inv.measureNo}</div>}
+                </div>
+                <div style={{ display: "flex", gap: "7px", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                  <div style={{ fontWeight: 700, color: "#166534", fontSize: "13px" }}>₹{inv.total?.toLocaleString()}</div>
+                  <button onClick={() => setViewInv(inv)} style={{ ...S.btn(), padding: "5px 11px", fontSize: "12px" }}>View</button>
+                  <button onClick={() => setStatusModal(inv)} style={{ ...S.btn(inv.status === "accepted" ? "#fee2e2" : "#166534"), padding: "5px 11px", fontSize: "12px" }}>
+                    {inv.status === "accepted" ? "🔓 Unmark" : "🔒 Accept"}
+                  </button>
+                  {inv.status !== "accepted" && <button onClick={() => deleteInv(inv)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "5px 11px", fontSize: "12px" }}>🗑️</button>}
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+      {statusModal && (
+        <PwModal
+          title={statusModal.status === "accepted" ? "Unmark as Accepted?" : "Mark as Accepted?"}
+          onConfirm={() => {
+            const newStatus = statusModal.status === "accepted" ? "raised" : "accepted";
+            setInvoices(p => p.map((inv: any) => inv.id === statusModal.id ? { ...inv, status: newStatus } : inv));
+            setStatusModal(null);
+          }}
+          onCancel={() => setStatusModal(null)}
+        />
+      )}
+
+      {/* Password modal for invoice delete */}
+      {pwModal && <PwModal
+        title="Move to Recycle Bin?"
+        onConfirm={pwModal.action}
+        onCancel={() => setPwModal(null)}
+      />}
+    </div>
+  );
 }
-        async function exportLedgerExcel(ledger, rows, totalDebit, totalCredit, closingBalance) {
+async function exportLedgerExcel(ledger, rows, totalDebit, totalCredit, closingBalance) {
   // @ts-ignore
   const XLSX = await import("https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs");
-        const wb = XLSX.utils.book_new();
-        const wsRows = [
-        ["VinoDhan Coating — " + ledger.name],
-        ["Client: " + ledger.client + (ledger.region ? " — " + ledger.region : "")],
-        [],
-        ["Date", "Particulars", "Note", "Debit (₹)", "Credit (₹)", "Closing Balance (₹)"],
-        ];
+  const wb = XLSX.utils.book_new();
+  const wsRows = [
+    ["VinoDhan Coating — " + ledger.name],
+    ["Client: " + ledger.client + (ledger.region ? " — " + ledger.region : "")],
+    [],
+    ["Date", "Particulars", "Note", "Debit (₹)", "Credit (₹)", "Closing Balance (₹)"],
+  ];
   rows.forEach(e => {
-          wsRows.push([fmtDate(e.date), e.particulars, e.note || "", e.debit > 0 ? e.debit : "", e.credit > 0 ? e.credit : "", e.balance]);
+    wsRows.push([fmtDate(e.date), e.particulars, e.note || "", e.debit > 0 ? e.debit : "", e.credit > 0 ? e.credit : "", e.balance]);
   });
-        wsRows.push([]);
-        wsRows.push(["", "", "TOTAL", totalDebit, totalCredit, closingBalance]);
-        const ws = XLSX.utils.aoa_to_sheet(wsRows);
-        ws["!cols"] = [{wch: 14 }, {wch: 25 }, {wch: 20 }, {wch: 14 }, {wch: 14 }, {wch: 18 }];
-        XLSX.utils.book_append_sheet(wb, ws, ledger.name.slice(0, 31));
-        XLSX.writeFile(wb, `${ledger.name}-${new Date().toISOString().split("T")[0]}.xlsx`);
+  wsRows.push([]);
+  wsRows.push(["", "", "TOTAL", totalDebit, totalCredit, closingBalance]);
+  const ws = XLSX.utils.aoa_to_sheet(wsRows);
+  ws["!cols"] = [{ wch: 14 }, { wch: 25 }, { wch: 20 }, { wch: 14 }, { wch: 14 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, ws, ledger.name.slice(0, 31));
+  XLSX.writeFile(wb, `${ledger.name}-${new Date().toISOString().split("T")[0]}.xlsx`);
 }
-        // ── LEDGER ────────────────────────────────────────────
-        function Ledger({ledgers, setLedgers, invoices}) {
+// ── LEDGER ────────────────────────────────────────────
+function Ledger({ ledgers, setLedgers, invoices }) {
   const [showAdd, setShowAdd] = useState(false);
-        const [form, setForm] = useState({name: "", region: "", client: "Swathi Engineering Agency", measurePrefix: "", enableTds: false, tdsRate: 1, enableRetention: false, retentionRate: 5 });
-        const [selLedger, setSelLedger] = useState(null);
-        const [editLedgerId, setEditLedgerId] = useState(null);
-        const [delLedgerModal, setDelLedgerModal] = useState(null);
+  const [form, setForm] = useState({ name: "", region: "", client: "Swathi Engineering Agency", measurePrefix: "", enableTds: false, tdsRate: 1, enableRetention: false, retentionRate: 5 });
+  const [selLedger, setSelLedger] = useState(null);
+  const [editLedgerId, setEditLedgerId] = useState(null);
+  const [delLedgerModal, setDelLedgerModal] = useState(null);
 
   const saveLedger = () => {
     if (!form.name.trim()) return;
-        if (editLedgerId) {
-          setLedgers(p => p.map((l: any) => l.id === editLedgerId ? { ...l, name: form.name, region: form.region, client: form.client, measurePrefix: form.measurePrefix, enableTds: form.enableTds, tdsRate: Number(form.tdsRate), enableRetention: form.enableRetention, retentionRate: Number(form.retentionRate) } : l));
-        setEditLedgerId(null);
+    if (editLedgerId) {
+      setLedgers(p => p.map((l: any) => l.id === editLedgerId ? { ...l, name: form.name, region: form.region, client: form.client, measurePrefix: form.measurePrefix, enableTds: form.enableTds, tdsRate: Number(form.tdsRate), enableRetention: form.enableRetention, retentionRate: Number(form.retentionRate) } : l));
+      setEditLedgerId(null);
     } else {
-      const nl = {id: Date.now(), name: form.name, region: form.region, client: form.client, measurePrefix: form.measurePrefix, enableTds: form.enableTds, tdsRate: Number(form.tdsRate), enableRetention: form.enableRetention, retentionRate: Number(form.retentionRate), entries: [] };
+      const nl = { id: Date.now(), name: form.name, region: form.region, client: form.client, measurePrefix: form.measurePrefix, enableTds: form.enableTds, tdsRate: Number(form.tdsRate), enableRetention: form.enableRetention, retentionRate: Number(form.retentionRate), entries: [] };
       setLedgers(p => [...p, nl]);
     }
-        setForm({name: "", region: "", client: "Swathi Engineering Agency", measurePrefix: "", enableTds: false, tdsRate: 1, enableRetention: false, retentionRate: 5 });
-        setShowAdd(false);
+    setForm({ name: "", region: "", client: "Swathi Engineering Agency", measurePrefix: "", enableTds: false, tdsRate: 1, enableRetention: false, retentionRate: 5 });
+    setShowAdd(false);
   };
 
-        if (selLedger) {
+  if (selLedger) {
     const ledger = ledgers.find(l => l.id === selLedger);
-        if (!ledger) {setSelLedger(null); return null; }
-        return <LedgerDetail ledger={ledger} ledgers={ledgers} setLedgers={setLedgers} invoices={invoices} onBack={() => setSelLedger(null)} />;
+    if (!ledger) { setSelLedger(null); return null; }
+    return <LedgerDetail ledger={ledger} ledgers={ledgers} setLedgers={setLedgers} invoices={invoices} onBack={() => setSelLedger(null)} />;
   }
 
-        return (
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-            <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 800 }}>📒 Ledger</h2>
-            <button onClick={() => { setEditLedgerId(null); setForm({ name: "", region: "", client: "Swathi Engineering Agency", measurePrefix: "", enableTds: false, tdsRate: 1, enableRetention: false, retentionRate: 5 }); setShowAdd(p => !p); }} style={S.btn()}>+ New Ledger</button>
-          </div>
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+        <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 800 }}>📒 Ledger</h2>
+        <button onClick={() => { setEditLedgerId(null); setForm({ name: "", region: "", client: "Swathi Engineering Agency", measurePrefix: "", enableTds: false, tdsRate: 1, enableRetention: false, retentionRate: 5 }); setShowAdd(p => !p); }} style={S.btn()}>+ New Ledger</button>
+      </div>
 
-          {showAdd && <div style={{ ...S.card, marginBottom: "16px", border: "1.5px solid #bfdbfe" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>{editLedgerId ? "Edit Ledger" : "New Ledger"}</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
-              <div><label style={S.lbl}>Ledger Name</label><input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Karnataka Ledger" style={S.inp} /></div>
-              <div><label style={S.lbl}>Region</label><input value={form.region} onChange={e => setForm(p => ({ ...p, region: e.target.value }))} placeholder="e.g. Bengaluru" style={S.inp} /></div>
-              <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Client</label><input value={form.client} onChange={e => setForm(p => ({ ...p, client: e.target.value }))} style={S.inp} /></div>
-              <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Measurement Job No Prefix (e.g. SEAK or SEAC)</label><input value={form.measurePrefix} onChange={e => setForm(p => ({ ...p, measurePrefix: e.target.value.toUpperCase() }))} placeholder="e.g. SEAK" style={S.inp} /></div>
-              <div>
-                <label style={S.lbl}>TDS</label>
-                <select value={form.enableTds ? "yes" : "no"} onChange={e => setForm(p => ({ ...p, enableTds: e.target.value === "yes" }))} style={S.inp}>
-                  <option value="no">Not Applicable</option>
-                  <option value="yes">Applicable</option>
-                </select>
-              </div>
-              {form.enableTds && <div><label style={S.lbl}>TDS Rate (%)</label><input type="number" value={form.tdsRate} onChange={e => setForm(p => ({ ...p, tdsRate: e.target.value }))} style={S.inp} /></div>}
-              <div>
-                <label style={S.lbl}>Retention</label>
-                <select value={form.enableRetention ? "yes" : "no"} onChange={e => setForm(p => ({ ...p, enableRetention: e.target.value === "yes" }))} style={S.inp}>
-                  <option value="no">Not Applicable</option>
-                  <option value="yes">Applicable</option>
-                </select>
-              </div>
-              {form.enableRetention && <div><label style={S.lbl}>Retention Rate (%)</label><input type="number" value={form.retentionRate} onChange={e => setForm(p => ({ ...p, retentionRate: e.target.value }))} style={S.inp} /></div>}
-            </div>
-            <div style={{ display: "flex", gap: "9px" }}>
-              <button onClick={saveLedger} style={S.btn()}>💾 {editLedgerId ? "Update" : "Save"}</button>
-              <button onClick={() => { setShowAdd(false); setEditLedgerId(null); setForm({ name: "", region: "", client: "Swathi Engineering Agency", measurePrefix: "", enableTds: false, tdsRate: 1, enableRetention: false, retentionRate: 5 }); }} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
-            </div>
-          </div>}
-
-          {ledgers.length === 0 ? <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "40px" }}>
-            <div style={{ fontSize: "32px", marginBottom: "10px" }}>📒</div>
-            <div>No ledgers yet. Create one to get started.</div>
+      {showAdd && <div style={{ ...S.card, marginBottom: "16px", border: "1.5px solid #bfdbfe" }}>
+        <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>{editLedgerId ? "Edit Ledger" : "New Ledger"}</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+          <div><label style={S.lbl}>Ledger Name</label><input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Karnataka Ledger" style={S.inp} /></div>
+          <div><label style={S.lbl}>Region</label><input value={form.region} onChange={e => setForm(p => ({ ...p, region: e.target.value }))} placeholder="e.g. Bengaluru" style={S.inp} /></div>
+          <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Client</label><input value={form.client} onChange={e => setForm(p => ({ ...p, client: e.target.value }))} style={S.inp} /></div>
+          <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Measurement Job No Prefix (e.g. SEAK or SEAC)</label><input value={form.measurePrefix} onChange={e => setForm(p => ({ ...p, measurePrefix: e.target.value.toUpperCase() }))} placeholder="e.g. SEAK" style={S.inp} /></div>
+          <div>
+            <label style={S.lbl}>TDS</label>
+            <select value={form.enableTds ? "yes" : "no"} onChange={e => setForm(p => ({ ...p, enableTds: e.target.value === "yes" }))} style={S.inp}>
+              <option value="no">Not Applicable</option>
+              <option value="yes">Applicable</option>
+            </select>
           </div>
-            : <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {ledgers.map((l: any) => (
-                <div key={l.id} style={{ ...S.card, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: "15px" }}>{l.name}</div>
-                    <div style={{ fontSize: "11px", color: "#6b84a3" }}>{l.client} {l.region ? `— ${l.region}` : ""}</div>
-                    {l.measurePrefix && <div style={{ fontSize: "11px", fontWeight: 600, color: "#1e50a0", marginTop: "2px" }}>Job Prefix: {l.measurePrefix}</div>}
-                    <div style={{ display: "flex", gap: "6px", marginTop: "5px" }}>
-                      {l.enableTds && <span style={{ ...WORK_TYPE_COLOR["Manpower"], fontSize: "10px", fontWeight: 600, borderRadius: "20px", padding: "2px 8px" }}>TDS {l.tdsRate}%</span>}
-                      {l.enableRetention && <span style={{ ...WORK_TYPE_COLOR["SQM"], fontSize: "10px", fontWeight: 600, borderRadius: "20px", padding: "2px 8px" }}>Retention {l.retentionRate}%</span>}
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: "7px" }}>
-                    <button onClick={() => setSelLedger(l.id)} style={S.btn()}>Open →</button>
-                    <button onClick={() => { setForm({ name: l.name, region: l.region, client: l.client, measurePrefix: l.measurePrefix || "", enableTds: l.enableTds, tdsRate: l.tdsRate, enableRetention: l.enableRetention, retentionRate: l.retentionRate }); setEditLedgerId(l.id); setShowAdd(true); }} style={{ ...S.btn("#f0f6ff", "#1e50a0"), padding: "9px 12px" }}>✏️</button>
-                    <button onClick={() => setDelLedgerModal(l.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "9px 12px" }}>🗑️</button>
-                  </div>
-                </div>
-              ))}
-            </div>}
-          {delLedgerModal && <PwModal
-            title="Delete Ledger?"
-            onConfirm={() => { setLedgers(p => p.filter(l => l.id !== delLedgerModal)); setDelLedgerModal(null); }}
-            onCancel={() => setDelLedgerModal(null)}
-          />}
+          {form.enableTds && <div><label style={S.lbl}>TDS Rate (%)</label><input type="number" value={form.tdsRate} onChange={e => setForm(p => ({ ...p, tdsRate: e.target.value }))} style={S.inp} /></div>}
+          <div>
+            <label style={S.lbl}>Retention</label>
+            <select value={form.enableRetention ? "yes" : "no"} onChange={e => setForm(p => ({ ...p, enableRetention: e.target.value === "yes" }))} style={S.inp}>
+              <option value="no">Not Applicable</option>
+              <option value="yes">Applicable</option>
+            </select>
+          </div>
+          {form.enableRetention && <div><label style={S.lbl}>Retention Rate (%)</label><input type="number" value={form.retentionRate} onChange={e => setForm(p => ({ ...p, retentionRate: e.target.value }))} style={S.inp} /></div>}
         </div>
-        );
+        <div style={{ display: "flex", gap: "9px" }}>
+          <button onClick={saveLedger} style={S.btn()}>💾 {editLedgerId ? "Update" : "Save"}</button>
+          <button onClick={() => { setShowAdd(false); setEditLedgerId(null); setForm({ name: "", region: "", client: "Swathi Engineering Agency", measurePrefix: "", enableTds: false, tdsRate: 1, enableRetention: false, retentionRate: 5 }); }} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+        </div>
+      </div>}
+
+      {ledgers.length === 0 ? <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "40px" }}>
+        <div style={{ fontSize: "32px", marginBottom: "10px" }}>📒</div>
+        <div>No ledgers yet. Create one to get started.</div>
+      </div>
+        : <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {ledgers.map((l: any) => (
+            <div key={l.id} style={{ ...S.card, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: "15px" }}>{l.name}</div>
+                <div style={{ fontSize: "11px", color: "#6b84a3" }}>{l.client} {l.region ? `— ${l.region}` : ""}</div>
+                {l.measurePrefix && <div style={{ fontSize: "11px", fontWeight: 600, color: "#1e50a0", marginTop: "2px" }}>Job Prefix: {l.measurePrefix}</div>}
+                <div style={{ display: "flex", gap: "6px", marginTop: "5px" }}>
+                  {l.enableTds && <span style={{ ...WORK_TYPE_COLOR["Manpower"], fontSize: "10px", fontWeight: 600, borderRadius: "20px", padding: "2px 8px" }}>TDS {l.tdsRate}%</span>}
+                  {l.enableRetention && <span style={{ ...WORK_TYPE_COLOR["SQM"], fontSize: "10px", fontWeight: 600, borderRadius: "20px", padding: "2px 8px" }}>Retention {l.retentionRate}%</span>}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "7px" }}>
+                <button onClick={() => setSelLedger(l.id)} style={S.btn()}>Open →</button>
+                <button onClick={() => { setForm({ name: l.name, region: l.region, client: l.client, measurePrefix: l.measurePrefix || "", enableTds: l.enableTds, tdsRate: l.tdsRate, enableRetention: l.enableRetention, retentionRate: l.retentionRate }); setEditLedgerId(l.id); setShowAdd(true); }} style={{ ...S.btn("#f0f6ff", "#1e50a0"), padding: "9px 12px" }}>✏️</button>
+                <button onClick={() => setDelLedgerModal(l.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "9px 12px" }}>🗑️</button>
+              </div>
+            </div>
+          ))}
+        </div>}
+      {delLedgerModal && <PwModal
+        title="Delete Ledger?"
+        onConfirm={() => { setLedgers(p => p.filter(l => l.id !== delLedgerModal)); setDelLedgerModal(null); }}
+        onCancel={() => setDelLedgerModal(null)}
+      />}
+    </div>
+  );
 }
 
-        function LedgerDetail({ledger, ledgers, setLedgers, invoices, onBack}) {
+function LedgerDetail({ ledger, ledgers, setLedgers, invoices, onBack }) {
   const [showAdd, setShowAdd] = useState(false);
-        const [entryForm, setEntryForm] = useState({date: today, particulars: "Bank Payment", customParticulars: "", debit: "", credit: "", note: "" });
-        const [pwModal, setPwModal] = useState(null);
-        const [delEntryModal, setDelEntryModal] = useState(null);
-        const [editEntryModal, setEditEntryModal] = useState(null);
-        const [editPwModal, setEditPwModal] = useState(null);
-        const [editRateModal, setEditRateModal] = useState(null);
-        const [rateForm, setRateForm] = useState({tdsRate: "", retentionRate: "" });
-        const [ratePwModal, setRatePwModal] = useState(false);
-        const [showTransfer, setShowTransfer] = useState(false);
-        const [transferForm, setTransferForm] = useState({date: today, amount: "", toLedgerId: "", note: "" });
-        const PARTICULARS = ["Bank Payment", "Transfer Received", "TDS Deduction", "Retention Deduction", "Other"];
+  const [entryForm, setEntryForm] = useState({ date: today, particulars: "Bank Payment", customParticulars: "", debit: "", credit: "", note: "" });
+  const [pwModal, setPwModal] = useState(null);
+  const [delEntryModal, setDelEntryModal] = useState(null);
+  const [editEntryModal, setEditEntryModal] = useState(null);
+  const [editPwModal, setEditPwModal] = useState(null);
+  const [editRateModal, setEditRateModal] = useState(null);
+  const [rateForm, setRateForm] = useState({ tdsRate: "", retentionRate: "" });
+  const [ratePwModal, setRatePwModal] = useState(false);
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [transferForm, setTransferForm] = useState({ date: today, amount: "", toLedgerId: "", note: "" });
+  const PARTICULARS = ["Bank Payment", "Transfer Received", "TDS Deduction", "Retention Deduction", "Other"];
 
   const updateLedger = updated => {
-          setLedgers(p => p.map((l: any) => l.id === ledger.id ? updated : l));
+    setLedgers(p => p.map((l: any) => l.id === ledger.id ? updated : l));
   };
 
   // Pull invoices not yet added to this ledger
@@ -3471,83 +3471,83 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
   const allLinkedInvIds = new Set(ledgers.flatMap(l => (l.entries || []).filter(e => e.invoiceId).map((e: any) => e.invoiceId)));
   const availableInvoices = invoices.filter(inv => {
     if (allLinkedInvIds.has(inv.id)) return false;
-        if (ledger.measurePrefix && inv.measureNo && inv.measureNo.trim() !== "") {
+    if (ledger.measurePrefix && inv.measureNo && inv.measureNo.trim() !== "") {
       return inv.measureNo.toUpperCase().startsWith(ledger.measurePrefix.toUpperCase());
     }
-        if (ledger.measurePrefix && (!inv.measureNo || inv.measureNo.trim() === "")) {
+    if (ledger.measurePrefix && (!inv.measureNo || inv.measureNo.trim() === "")) {
       return true;
     }
-        return true;
+    return true;
   }).sort((a, b) => {
     const getOrder = inv => {
       if (!inv.measureNo || inv.measureNo.trim() === "") return 0;
-        if (inv.measureNo.toUpperCase().startsWith("SEAC")) return 1;
-        if (inv.measureNo.toUpperCase().startsWith("SEAK")) return 2;
-        return 0;
+      if (inv.measureNo.toUpperCase().startsWith("SEAC")) return 1;
+      if (inv.measureNo.toUpperCase().startsWith("SEAK")) return 2;
+      return 0;
     };
-        const orderDiff = getOrder(a) - getOrder(b);
-        if (orderDiff !== 0) return orderDiff;
-        return a.number.localeCompare(b.number, undefined, {numeric: true });
+    const orderDiff = getOrder(a) - getOrder(b);
+    if (orderDiff !== 0) return orderDiff;
+    return a.number.localeCompare(b.number, undefined, { numeric: true });
   });
 
   const addInvoiceEntry = inv => {
     const amount = inv.total || 0;
-        const newEntries = [{id: crypto.randomUUID(), date: inv.date || today, particulars: "Cont Invoice", credit: amount, debit: 0, note: inv.number, invoiceId: inv.id }];
-        if (ledger.enableTds) {
-          newEntries.push({ id: crypto.randomUUID(), date: inv.date || today, particulars: `TDS @ ${ledger.tdsRate}%`, debit: parseFloat((amount * ledger.tdsRate / 100).toFixed(2)), credit: 0, note: inv.number, invoiceId: inv.id });
+    const newEntries = [{ id: crypto.randomUUID(), date: inv.date || today, particulars: "Cont Invoice", credit: amount, debit: 0, note: inv.number, invoiceId: inv.id }];
+    if (ledger.enableTds) {
+      newEntries.push({ id: crypto.randomUUID(), date: inv.date || today, particulars: `TDS @ ${ledger.tdsRate}%`, debit: parseFloat((amount * ledger.tdsRate / 100).toFixed(2)), credit: 0, note: inv.number, invoiceId: inv.id });
     }
-        if (ledger.enableRetention) {
-          newEntries.push({ id: crypto.randomUUID(), date: inv.date || today, particulars: `Retention @ ${ledger.retentionRate}%`, debit: parseFloat((amount * ledger.retentionRate / 100).toFixed(2)), credit: 0, note: inv.number, invoiceId: inv.id });
+    if (ledger.enableRetention) {
+      newEntries.push({ id: crypto.randomUUID(), date: inv.date || today, particulars: `Retention @ ${ledger.retentionRate}%`, debit: parseFloat((amount * ledger.retentionRate / 100).toFixed(2)), credit: 0, note: inv.number, invoiceId: inv.id });
     }
-        updateLedger({...ledger, entries: [...(ledger.entries || []), ...newEntries] });
+    updateLedger({ ...ledger, entries: [...(ledger.entries || []), ...newEntries] });
   };
 
   const addManualEntry = () => {
     if (!entryForm.debit && !entryForm.credit) return;
-        const particulars = entryForm.particulars === "Other" ? entryForm.customParticulars : entryForm.particulars;
-        const entry = {id: crypto.randomUUID(), date: entryForm.date, particulars, debit: Number(entryForm.debit) || 0, credit: Number(entryForm.credit) || 0, note: entryForm.note };
-        updateLedger({...ledger, entries: [...(ledger.entries || []), entry] });
-        setEntryForm({date: today, particulars: "Bank Payment", customParticulars: "", debit: "", credit: "", note: "" });
-        setShowAdd(false);
+    const particulars = entryForm.particulars === "Other" ? entryForm.customParticulars : entryForm.particulars;
+    const entry = { id: crypto.randomUUID(), date: entryForm.date, particulars, debit: Number(entryForm.debit) || 0, credit: Number(entryForm.credit) || 0, note: entryForm.note };
+    updateLedger({ ...ledger, entries: [...(ledger.entries || []), entry] });
+    setEntryForm({ date: today, particulars: "Bank Payment", customParticulars: "", debit: "", credit: "", note: "" });
+    setShowAdd(false);
   };
 
   const deleteEntry = id => {
     const entry = (ledger.entries || []).find(e => e.id === id);
-        if (entry && entry.invoiceId) {
-          updateLedger({ ...ledger, entries: (ledger.entries || []).filter(e => e.invoiceId !== entry.invoiceId) });
+    if (entry && entry.invoiceId) {
+      updateLedger({ ...ledger, entries: (ledger.entries || []).filter(e => e.invoiceId !== entry.invoiceId) });
     } else if (entry && entry.transferId) {
-          setLedgers(p => p.map((l: any) => ({ ...l, entries: (l.entries || []).filter(e => e.transferId !== entry.transferId) })));
+      setLedgers(p => p.map((l: any) => ({ ...l, entries: (l.entries || []).filter(e => e.transferId !== entry.transferId) })));
     } else {
-          updateLedger({ ...ledger, entries: (ledger.entries || []).filter(e => e.id !== id) });
+      updateLedger({ ...ledger, entries: (ledger.entries || []).filter(e => e.id !== id) });
     }
   };
 
   // Sort entries by date
   const sorted = [...(ledger.entries || [])].sort((a, b) => a.date.localeCompare(b.date));
 
-        // Calculate running balance (credit increases balance, debit decreases)
-        let balance = 0;
+  // Calculate running balance (credit increases balance, debit decreases)
+  let balance = 0;
   const rows = sorted.map((e: any) => {
-          balance = balance + (e.credit || 0) - (e.debit || 0);
-        return {...e, balance};
+    balance = balance + (e.credit || 0) - (e.debit || 0);
+    return { ...e, balance };
   });
 
   const totalCredit = sorted.reduce((a, e) => a + (e.credit || 0), 0);
   const totalDebit = sorted.reduce((a, e) => a + (e.debit || 0), 0);
-        const closingBalance = totalCredit - totalDebit;
+  const closingBalance = totalCredit - totalDebit;
 
-        return (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <button onClick={onBack} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
-              <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 800 }}>📒 {ledger.name}</h2>
-            </div>
-            <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
-              <button onClick={() => setShowAdd(p => !p)} style={S.btn()}>+ Add Entry</button>
-              <button onClick={() => setShowTransfer(p => !p)} style={S.btn("#7c3aed")}>↔️ Transfer</button>
-              <button onClick={() => {
-                const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${ledger.name}</title><style>${printCSS}</style></head><body onload="window.print();">
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <button onClick={onBack} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
+          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 800 }}>📒 {ledger.name}</h2>
+        </div>
+        <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
+          <button onClick={() => setShowAdd(p => !p)} style={S.btn()}>+ Add Entry</button>
+          <button onClick={() => setShowTransfer(p => !p)} style={S.btn("#7c3aed")}>↔️ Transfer</button>
+          <button onClick={() => {
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${ledger.name}</title><style>${printCSS}</style></head><body onload="window.print();">
   <div style="font-family:'Segoe UI',sans-serif;color:#1a2b4a;padding:10mm;">
     <div style="text-align:center;margin-bottom:16px;border-bottom:2px solid #0f3172;padding-bottom:12px;">
       <div style="font-size:20px;font-weight:800;color:#0f3172;">VinoDhan Coating</div>
@@ -3573,11 +3573,11 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
       <tbody>
         ${rows.map((e, idx) => `
           <tr style="background:${e.transferId ? "#fef9c3" :
-                    e.particulars === "Cont Invoice" ? "#f0fdf4" :
-                      e.particulars === "Bank Payment" ? "#eff6ff" :
-                        (e.particulars.includes("TDS") || e.particulars.includes("Retention")) ? "#fdf4ff" :
-                          idx % 2 === 0 ? "#fff" : "#f8faff"
-                  };border-bottom:1px solid #e5e7eb;">
+                e.particulars === "Cont Invoice" ? "#f0fdf4" :
+                  e.particulars === "Bank Payment" ? "#eff6ff" :
+                    (e.particulars.includes("TDS") || e.particulars.includes("Retention")) ? "#fdf4ff" :
+                      idx % 2 === 0 ? "#fff" : "#f8faff"
+              };border-bottom:1px solid #e5e7eb;">
             <td style="padding:7px 10px;white-space:nowrap;">${fmtDate(e.date)}</td>
             <td style="padding:7px 10px;font-weight:600;">${e.particulars}</td>
             <td style="padding:7px 10px;color:#6b84a3;font-size:11px;">${e.note || "—"}</td>
@@ -3596,333 +3596,333 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
     </table>
   </div>
   </body></html>`;
-                const existing = document.getElementById("print-overlay");
-                if (existing) document.body.removeChild(existing);
-                const overlay = document.createElement("div");
-                overlay.id = "print-overlay";
-                overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;";
-                const bar = document.createElement("div");
-                bar.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;flex-wrap:wrap;";
-                const backBtn = document.createElement("button");
-                backBtn.innerText = "← Back";
-                backBtn.style.cssText = "background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
-                backBtn.onclick = () => document.body.removeChild(overlay);
-                const title = document.createElement("div");
-                title.innerText = "Preview — scroll to review";
-                title.style.cssText = "color:#fff;font-size:13px;font-weight:600;flex:1;text-align:center;";
-                const dlBtn = document.createElement("button");
-                dlBtn.innerText = "⬇️ Download & Print";
-                dlBtn.style.cssText = "background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
-                dlBtn.onclick = () => {
-                  const encoded = "data:text/html;charset=utf-8," + encodeURIComponent(html);
-                  const a = document.createElement("a");
-                  a.href = encoded; a.download = `${ledger.name}-${new Date().toISOString().split("T")[0]}.html`;
-                  a.style.display = "none"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                };
-                bar.appendChild(backBtn); bar.appendChild(title); bar.appendChild(dlBtn);
-                const iframe = document.createElement("iframe");
-                iframe.style.cssText = "flex:1;width:100%;border:none;";
-                overlay.appendChild(bar); overlay.appendChild(iframe);
-                document.body.appendChild(overlay);
-                iframe.contentDocument.open();
-                iframe.contentDocument.write(html);
-                iframe.contentDocument.close();
-              }} style={S.btn("#166534")}>🖨️ Print</button>
-              <button onClick={() => exportLedgerExcel(ledger, rows, totalDebit, totalCredit, closingBalance)} style={S.btn("#d97706", "#fff")}>📊 Excel</button>
-            </div>
-          </div>
-
-          {/* Summary Cards */}
-          <div style={{ display: "flex", gap: "10px", marginBottom: "16px", overflowX: "auto", paddingBottom: "4px" }}>
-            <div style={{ ...S.card, background: "#dcfce7", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
-              <div style={{ fontSize: "11px", fontWeight: 700, color: "#166534", marginBottom: "4px" }}>TOTAL CREDIT</div>
-              <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{totalCredit.toLocaleString()}</div>
-            </div>
-            <div style={{ ...S.card, background: "#fee2e2", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
-              <div style={{ fontSize: "11px", fontWeight: 700, color: "#991b1b", marginBottom: "4px" }}>TOTAL DEBIT</div>
-              <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{totalDebit.toLocaleString()}</div>
-            </div>
-            <div style={{ ...S.card, background: "#dbeafe", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
-              <div style={{ fontSize: "11px", fontWeight: 700, color: "#1e40af", marginBottom: "4px" }}>CLOSING BALANCE</div>
-              <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{closingBalance.toLocaleString()}</div>
-            </div>
-            {ledger.enableTds && <div style={{ ...S.card, background: "#fef9c3", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
-              <div style={{ fontSize: "11px", fontWeight: 700, color: "#d97706", marginBottom: "4px" }}>TDS {ledger.tdsRate}%</div>
-              <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{sorted.filter(e => e.particulars.includes("TDS")).reduce((a, e) => a + (e.debit || 0), 0).toLocaleString()}</div>
-              <button onClick={() => { setRateForm({ tdsRate: String(ledger.tdsRate), retentionRate: String(ledger.retentionRate) }); setRatePwModal(true); }} style={{ ...S.btn("#f59e0b", "#fff"), padding: "3px 8px", fontSize: "10px", marginTop: "6px" }}>✏️ Edit Rate</button>
-            </div>}
-            {ledger.enableRetention && <div style={{ ...S.card, background: "#ede9fe", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
-              <div style={{ fontSize: "11px", fontWeight: 700, color: "#5b21b6", marginBottom: "4px" }}>RETENTION {ledger.retentionRate}%</div>
-              <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{sorted.filter(e => e.particulars.includes("Retention")).reduce((a, e) => a + (e.debit || 0), 0).toLocaleString()}</div>
-              <button onClick={() => { setRateForm({ tdsRate: String(ledger.tdsRate), retentionRate: String(ledger.retentionRate) }); setRatePwModal(true); }} style={{ ...S.btn("#7c3aed", "#fff"), padding: "3px 8px", fontSize: "10px", marginTop: "6px" }}>✏️ Edit Rate</button>
-            </div>}
-          </div>
-          {/* Chennai Extra Cards — shows on any ledger that received a transfer */}
-          {(() => {
-            const transferCredits = (ledger.entries || []).filter(e => e.transferId && e.credit > 0);
-            const hasTransferReceived = transferCredits.length > 0;
-            if (!hasTransferReceived) return null;
-
-            // Find source ledger (the one that sent transfer to this ledger)
-            const sourceLedger = ledgers.find(l =>
-              (l.entries || []).some(e =>
-                e.transferId && e.debit > 0 &&
-                transferCredits.some(ce => ce.transferId === e.transferId)
-              )
-            );
-
-            const totalTransferReceived = transferCredits.reduce((a, e) => a + (e.credit || 0), 0);
-
-            const thisTDS = (ledger.entries || []).filter(e => e.particulars.includes("TDS")).reduce((a, e) => a + (e.debit || 0), 0);
-            const sourceTDS = sourceLedger ? (sourceLedger.entries || []).filter(e => e.particulars.includes("TDS")).reduce((a, e) => a + (e.debit || 0), 0) : 0;
-            const combinedTDS = thisTDS + sourceTDS;
-
-            const thisRetention = (ledger.entries || []).filter(e => e.particulars.includes("Retention")).reduce((a, e) => a + (e.debit || 0), 0);
-            const sourceRetention = sourceLedger ? (sourceLedger.entries || []).filter(e => e.particulars.includes("Retention")).reduce((a, e) => a + (e.debit || 0), 0) : 0;
-            const combinedRetention = thisRetention + sourceRetention;
-
-            return (
-              <div style={{ ...S.card, marginBottom: "16px", border: "1.5px solid #0f3172" }}>
-                <h3 style={{ margin: "0 0 12px", fontSize: "13px", fontWeight: 700, color: "#0f3172" }}>
-                  📊 Combined Summary {sourceLedger ? `— ${sourceLedger.name} + ${ledger.name}` : ""}
-                </h3>
-                <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "4px" }}>
-                  {/* Transfer Received */}
-                  <div style={{ ...S.card, background: "#fef9c3", boxShadow: "none", padding: "14px", minWidth: "150px", flexShrink: 0 }}>
-                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#d97706", marginBottom: "4px" }}>
-                      TRANSFER FROM {sourceLedger ? sourceLedger.name.toUpperCase() : "SOURCE"}
-                    </div>
-                    <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{totalTransferReceived.toLocaleString()}</div>
-                  </div>
-                  {/* Combined TDS */}
-                  <div style={{ ...S.card, background: "#fef9c3", boxShadow: "none", padding: "14px", minWidth: "150px", flexShrink: 0 }}>
-                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#d97706", marginBottom: "4px" }}>COMBINED TDS</div>
-                    <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{combinedTDS.toLocaleString()}</div>
-                    {sourceLedger && <div style={{ fontSize: "10px", color: "#6b84a3", marginTop: "4px" }}>
-                      {sourceLedger.name}: ₹{sourceTDS.toLocaleString()} + {ledger.name}: ₹{thisTDS.toLocaleString()}
-                    </div>}
-                  </div>
-                  {/* Combined Retention */}
-                  <div style={{ ...S.card, background: "#ede9fe", boxShadow: "none", padding: "14px", minWidth: "150px", flexShrink: 0 }}>
-                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#5b21b6", marginBottom: "4px" }}>COMBINED RETENTION</div>
-                    <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{combinedRetention.toLocaleString()}</div>
-                    {sourceLedger && <div style={{ fontSize: "10px", color: "#6b84a3", marginTop: "4px" }}>
-                      {sourceLedger.name}: ₹{sourceRetention.toLocaleString()} + {ledger.name}: ₹{thisRetention.toLocaleString()}
-                    </div>}
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Transfer Form */}
-          {showTransfer && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #7c3aed" }}>
-            <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>↔️ Transfer to Another Ledger</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "9px" }}>
-              <div><label style={S.lbl}>Date</label><input type="date" value={transferForm.date} onChange={e => setTransferForm(p => ({ ...p, date: e.target.value }))} style={S.inp} /></div>
-              <div><label style={S.lbl}>Amount (₹)</label><input type="number" value={transferForm.amount} onChange={e => setTransferForm(p => ({ ...p, amount: e.target.value }))} style={S.inp} /></div>
-              <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Transfer To</label>
-                <select value={transferForm.toLedgerId} onChange={e => setTransferForm(p => ({ ...p, toLedgerId: e.target.value }))} style={S.inp}>
-                  <option value="">Select Ledger...</option>
-                  {ledgers.filter(l => l.id !== ledger.id).map((l: any) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                </select>
-              </div>
-              <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Note (optional)</label><input value={transferForm.note} onChange={e => setTransferForm(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} /></div>
-            </div>
-            <div style={{ display: "flex", gap: "7px", marginTop: "11px" }}>
-              <button onClick={() => {
-                if (!transferForm.amount || !transferForm.toLedgerId) return;
-                const transferId = crypto.randomUUID();
-                const amount = Number(transferForm.amount);
-                const toLedger = ledgers.find(l => String(l.id) === String(transferForm.toLedgerId));
-                if (!toLedger) return;
-                const debitEntry = { id: crypto.randomUUID(), date: transferForm.date, particulars: "Transfer to " + toLedger.name, debit: amount, credit: 0, note: transferForm.note, transferId };
-                const creditEntry = { id: crypto.randomUUID(), date: transferForm.date, particulars: "Transfer from " + ledger.name, debit: 0, credit: amount, note: transferForm.note, transferId };
-                setLedgers(p => p.map((l: any) => {
-                  if (String(l.id) === String(ledger.id)) return { ...l, entries: [...(l.entries || []), debitEntry] };
-                  if (String(l.id) === String(toLedger.id)) return { ...l, entries: [...(l.entries || []), creditEntry] };
-                  return l;
-                }));
-                setTransferForm({ date: today, amount: "", toLedgerId: "", note: "" });
-                setShowTransfer(false);
-              }} style={S.btn("#7c3aed")}>💾 Save Transfer</button>
-              <button onClick={() => setShowTransfer(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
-            </div>
-          </div>}
-
-          {/* Add Invoice */}
-          {availableInvoices.length > 0 && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #bfdbfe" }}>
-            <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>📥 Add Invoice to Ledger</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {availableInvoices.map((inv: any) => (
-                <div key={inv.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#f0f6ff", borderRadius: "8px" }}>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: "13px" }}>{inv.number}</div>
-                    <div style={{ fontSize: "11px", color: "#6b84a3" }}>{fmtDate(inv.date)} — ₹{inv.total?.toLocaleString()}</div>
-                    <div style={{ fontSize: "11px", color: "#6b84a3" }}>{inv.siteName || "—"}</div>
-                    {inv.measureNo && <div style={{ fontSize: "10px", fontWeight: 700, color: "#1e50a0", marginTop: "2px" }}>📋 {inv.measureNo}</div>}
-                  </div>
-                  <button onClick={() => addInvoiceEntry(inv)} style={{ ...S.btn("#166634"), padding: "5px 12px", fontSize: "12px" }}>+ Add</button>
-                </div>
-              ))}
-            </div>
-          </div>}
-
-          {/* Manual Entry Form */}
-          {showAdd && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #bfdbfe" }}>
-            <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>New Manual Entry</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "9px" }}>
-              <div><label style={S.lbl}>Date</label><input type="date" value={entryForm.date} onChange={e => setEntryForm(p => ({ ...p, date: e.target.value }))} style={S.inp} /></div>
-              <div><label style={S.lbl}>Particulars</label>
-                <select value={entryForm.particulars} onChange={e => setEntryForm(p => ({ ...p, particulars: e.target.value }))} style={S.inp}>
-                  {PARTICULARS.map((p: any) => <option key={p}>{p}</option>)}
-                </select>
-              </div>
-              {entryForm.particulars === "Other" && <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Description</label><input value={entryForm.customParticulars} onChange={e => setEntryForm(p => ({ ...p, customParticulars: e.target.value }))} placeholder="Enter description" style={S.inp} /></div>}
-              <div><label style={S.lbl}>Debit (₹)</label><input type="number" value={entryForm.debit} onChange={e => setEntryForm(p => ({ ...p, debit: e.target.value, credit: "" }))} style={S.inp} /></div>
-              <div><label style={S.lbl}>Credit (₹)</label><input type="number" value={entryForm.credit} onChange={e => setEntryForm(p => ({ ...p, credit: e.target.value, debit: "" }))} style={S.inp} /></div>
-              <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Note (optional)</label><input value={entryForm.note} onChange={e => setEntryForm(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} /></div>
-            </div>
-            <div style={{ display: "flex", gap: "7px", marginTop: "11px" }}>
-              <button onClick={addManualEntry} style={S.btn()}>💾 Save</button>
-              <button onClick={() => setShowAdd(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
-            </div>
-          </div>}
-
-          {/* Ledger Table */}
-          <div style={{ ...S.card, overflowX: "auto" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📋 {ledger.client} — {ledger.region || "All Regions"}</h3>
-            {rows.length === 0 ? <div style={{ textAlign: "center", color: "#9db3cc", padding: "30px" }}>No entries yet.</div>
-              : <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "500px" }}>
-                <thead><tr style={{ background: "#0f3172", color: "#fff" }}>
-                  <th style={{ padding: "8px 10px", textAlign: "left" }}>Date</th>
-                  <th style={{ padding: "8px 10px", textAlign: "left" }}>Particulars</th>
-                  <th style={{ padding: "8px 10px", textAlign: "right" }}>Debit (₹)</th>
-                  <th style={{ padding: "8px 10px", textAlign: "right" }}>Credit (₹)</th>
-                  <th style={{ padding: "8px 10px", textAlign: "right" }}>Balance (₹)</th>
-                  <th style={{ padding: "8px 10px", textAlign: "center" }}>Action</th>
-                </tr></thead>
-                <tbody>
-                  {rows.map((e, idx) => (
-                    <tr key={e.id} style={{
-                      background:
-                        e.transferId ? "#fef9c3" :
-                          e.particulars === "Cont Invoice" ? "#f0fdf4" :
-                            e.particulars === "Bank Payment" ? "#eff6ff" :
-                              (e.particulars.includes("TDS") || e.particulars.includes("Retention")) ? "#fdf4ff" :
-                                idx % 2 === 0 ? "#fff" : "#f8faff"
-                      , borderBottom: "1px solid #f0f4f9"
-                    }}>
-                      <td style={{ padding: "7px 10px", whiteSpace: "nowrap" }}>{fmtDate(e.date)}</td>
-                      <td style={{ padding: "7px 10px" }}>
-                        <div style={{ fontWeight: 600 }}>{e.particulars}</div>
-                        {e.note && <div style={{ fontSize: "11px", marginTop: "3px" }}>
-                          {e.invoiceId
-                            ? <span style={{ background: "#dbeafe", color: "#1e40af", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}>{e.note}</span>
-                            : e.transferId
-                              ? <span style={{ background: "#fef9c3", color: "#d97706", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}>{e.note}</span>
-                              : <span style={{ color: "#6b84a3", fontSize: "10px" }}>{e.note}</span>
-                          }
-                        </div>}
-                      </td>
-                      <td style={{ padding: "7px 10px", textAlign: "right", color: "#991b1b", fontWeight: 600 }}>{e.debit > 0 ? `₹${e.debit.toLocaleString()}` : "—"}</td>
-                      <td style={{ padding: "7px 10px", textAlign: "right", color: "#166534", fontWeight: 600 }}>{e.credit > 0 ? `₹${e.credit.toLocaleString()}` : "—"}</td>
-                      <td style={{ padding: "7px 10px", textAlign: "right", fontWeight: 700, color: "#1e50a0" }}>₹{e.balance.toLocaleString()}</td>
-                      <td style={{ padding: "7px 10px", textAlign: "center" }}>
-                        <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
-                          <button onClick={() => setEditPwModal({ ...e })} style={{ ...S.btn("#f0f6ff", "#1e50a0"), padding: "3px 8px", fontSize: "11px" }}>✏️</button>
-                          <button onClick={() => setDelEntryModal(e.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "3px 8px", fontSize: "11px" }}>🗑️</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  <tr style={{ background: "#0f3172", color: "#fff", fontWeight: 700 }}>
-                    <td colSpan={2} style={{ padding: "10px", textAlign: "right" }}>TOTAL</td>
-                    <td style={{ padding: "10px", textAlign: "right" }}>₹{totalDebit.toLocaleString()}</td>
-                    <td style={{ padding: "10px", textAlign: "right" }}>₹{totalCredit.toLocaleString()}</td>
-                    <td style={{ padding: "10px", textAlign: "right", color: "#f59e0b", fontSize: "14px" }}>₹{closingBalance.toLocaleString()}</td>
-                    <td></td>
-                  </tr>
-                </tbody>
-              </table>}
-          </div>
-          {editPwModal && <PwModal
-            title="Edit Entry?"
-            onConfirm={() => { setEditEntryModal({ ...editPwModal }); setEditPwModal(null); }}
-            onCancel={() => setEditPwModal(null)}
-          />}
-          {editEntryModal && (
-            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
-              <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "320px" }}>
-                <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>✏️ Edit Entry</h3>
-                <div style={{ display: "grid", gap: "10px", marginBottom: "14px" }}>
-                  <div><label style={S.lbl}>Date</label>
-                    <input type="date" value={editEntryModal.date} onChange={e => setEditEntryModal(p => ({ ...p, date: e.target.value }))} style={S.inp} />
-                  </div>
-                  <div><label style={S.lbl}>Particulars</label>
-                    <input value={editEntryModal.particulars} onChange={e => setEditEntryModal(p => ({ ...p, particulars: e.target.value }))} style={S.inp} />
-                  </div>
-                  <div><label style={S.lbl}>Debit (₹)</label>
-                    {(editEntryModal.particulars.includes("TDS") || editEntryModal.particulars.includes("Retention")) && (
-                      <div style={{ display: "flex", gap: "7px", marginBottom: "7px" }}>
-                        <button onClick={() => setEditEntryModal(p => ({ ...p, debit: 0, credit: 0, particulars: p.particulars + " (N/A)" }))} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 10px", fontSize: "11px" }}>✗ Not Applicable</button>
-                        <span style={{ fontSize: "11px", color: "#6b84a3", alignSelf: "center" }}>Sets amount to zero</span>
-                      </div>
-                    )}
-                    <input type="number" value={editEntryModal.debit || ""} onChange={e => setEditEntryModal(p => ({ ...p, debit: Number(e.target.value), credit: 0 }))} style={S.inp} />
-                  </div>
-                  <div><label style={S.lbl}>Credit (₹)</label>
-                    <input type="number" value={editEntryModal.credit || ""} onChange={e => setEditEntryModal(p => ({ ...p, credit: Number(e.target.value), debit: 0 }))} style={S.inp} />
-                  </div>
-                  <div><label style={S.lbl}>Note</label>
-                    <input value={editEntryModal.note || ""} onChange={e => setEditEntryModal(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} />
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
-                  <button onClick={() => {
-                    updateLedger({ ...ledger, entries: (ledger.entries || []).map((e: any) => e.id === editEntryModal.id ? { ...editEntryModal } : e) });
-                    setEditEntryModal(null);
-                  }} style={S.btn()}>💾 Save</button>
-                  <button onClick={() => setEditEntryModal(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
-                </div>
-              </div>
-            </div>
-          )}
-          {ratePwModal && (
-            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
-              <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
-                <div style={{ fontSize: "32px", marginBottom: "8px" }}>🔐</div>
-                <h3 style={{ margin: "0 0 7px" }}>Edit Rates</h3>
-                <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>Enter password to edit TDS/Retention rates.</p>
-                <input type="password" id="rate-pw-input" placeholder="Enter password" style={{ ...S.inp, marginBottom: "14px", textAlign: "center" }} />
-                {ledger.enableTds && <div style={{ marginBottom: "10px", textAlign: "left" }}>
-                  <label style={S.lbl}>TDS Rate (%)</label>
-                  <input type="number" value={rateForm.tdsRate} onChange={e => setRateForm(p => ({ ...p, tdsRate: e.target.value }))} style={S.inp} />
-                </div>}
-                {ledger.enableRetention && <div style={{ marginBottom: "14px", textAlign: "left" }}>
-                  <label style={S.lbl}>Retention Rate (%)</label>
-                  <input type="number" value={rateForm.retentionRate} onChange={e => setRateForm(p => ({ ...p, retentionRate: e.target.value }))} style={S.inp} />
-                </div>}
-                <div id="rate-err" style={{ color: "#dc2626", fontSize: "12px", marginBottom: "10px", display: "none" }}>❌ Incorrect password.</div>
-                <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
-                  <button onClick={() => {
-                    const pw = document.getElementById("rate-pw-input").value;
-                    if (pw !== RECYCLE_PASSWORD) { document.getElementById("rate-err").style.display = "block"; return; }
-                    updateLedger({ ...ledger, tdsRate: Number(rateForm.tdsRate), retentionRate: Number(rateForm.retentionRate) });
-                    setRatePwModal(false);
-                  }} style={S.btn("#1e50a0")}>Confirm</button>
-                  <button onClick={() => setRatePwModal(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {delEntryModal && <PwModal
-            title="Delete Entry?"
-            onConfirm={() => { deleteEntry(delEntryModal); setDelEntryModal(null); }}
-            onCancel={() => setDelEntryModal(null)}
-          />}
+            const existing = document.getElementById("print-overlay");
+            if (existing) document.body.removeChild(existing);
+            const overlay = document.createElement("div");
+            overlay.id = "print-overlay";
+            overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;";
+            const bar = document.createElement("div");
+            bar.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;flex-wrap:wrap;";
+            const backBtn = document.createElement("button");
+            backBtn.innerText = "← Back";
+            backBtn.style.cssText = "background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
+            backBtn.onclick = () => document.body.removeChild(overlay);
+            const title = document.createElement("div");
+            title.innerText = "Preview — scroll to review";
+            title.style.cssText = "color:#fff;font-size:13px;font-weight:600;flex:1;text-align:center;";
+            const dlBtn = document.createElement("button");
+            dlBtn.innerText = "⬇️ Download & Print";
+            dlBtn.style.cssText = "background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
+            dlBtn.onclick = () => {
+              const encoded = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+              const a = document.createElement("a");
+              a.href = encoded; a.download = `${ledger.name}-${new Date().toISOString().split("T")[0]}.html`;
+              a.style.display = "none"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            };
+            bar.appendChild(backBtn); bar.appendChild(title); bar.appendChild(dlBtn);
+            const iframe = document.createElement("iframe");
+            iframe.style.cssText = "flex:1;width:100%;border:none;";
+            overlay.appendChild(bar); overlay.appendChild(iframe);
+            document.body.appendChild(overlay);
+            iframe.contentDocument.open();
+            iframe.contentDocument.write(html);
+            iframe.contentDocument.close();
+          }} style={S.btn("#166534")}>🖨️ Print</button>
+          <button onClick={() => exportLedgerExcel(ledger, rows, totalDebit, totalCredit, closingBalance)} style={S.btn("#d97706", "#fff")}>📊 Excel</button>
         </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "16px", overflowX: "auto", paddingBottom: "4px" }}>
+        <div style={{ ...S.card, background: "#dcfce7", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
+          <div style={{ fontSize: "11px", fontWeight: 700, color: "#166534", marginBottom: "4px" }}>TOTAL CREDIT</div>
+          <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{totalCredit.toLocaleString()}</div>
+        </div>
+        <div style={{ ...S.card, background: "#fee2e2", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
+          <div style={{ fontSize: "11px", fontWeight: 700, color: "#991b1b", marginBottom: "4px" }}>TOTAL DEBIT</div>
+          <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{totalDebit.toLocaleString()}</div>
+        </div>
+        <div style={{ ...S.card, background: "#dbeafe", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
+          <div style={{ fontSize: "11px", fontWeight: 700, color: "#1e40af", marginBottom: "4px" }}>CLOSING BALANCE</div>
+          <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{closingBalance.toLocaleString()}</div>
+        </div>
+        {ledger.enableTds && <div style={{ ...S.card, background: "#fef9c3", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
+          <div style={{ fontSize: "11px", fontWeight: 700, color: "#d97706", marginBottom: "4px" }}>TDS {ledger.tdsRate}%</div>
+          <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{sorted.filter(e => e.particulars.includes("TDS")).reduce((a, e) => a + (e.debit || 0), 0).toLocaleString()}</div>
+          <button onClick={() => { setRateForm({ tdsRate: String(ledger.tdsRate), retentionRate: String(ledger.retentionRate) }); setRatePwModal(true); }} style={{ ...S.btn("#f59e0b", "#fff"), padding: "3px 8px", fontSize: "10px", marginTop: "6px" }}>✏️ Edit Rate</button>
+        </div>}
+        {ledger.enableRetention && <div style={{ ...S.card, background: "#ede9fe", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
+          <div style={{ fontSize: "11px", fontWeight: 700, color: "#5b21b6", marginBottom: "4px" }}>RETENTION {ledger.retentionRate}%</div>
+          <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{sorted.filter(e => e.particulars.includes("Retention")).reduce((a, e) => a + (e.debit || 0), 0).toLocaleString()}</div>
+          <button onClick={() => { setRateForm({ tdsRate: String(ledger.tdsRate), retentionRate: String(ledger.retentionRate) }); setRatePwModal(true); }} style={{ ...S.btn("#7c3aed", "#fff"), padding: "3px 8px", fontSize: "10px", marginTop: "6px" }}>✏️ Edit Rate</button>
+        </div>}
+      </div>
+      {/* Chennai Extra Cards — shows on any ledger that received a transfer */}
+      {(() => {
+        const transferCredits = (ledger.entries || []).filter(e => e.transferId && e.credit > 0);
+        const hasTransferReceived = transferCredits.length > 0;
+        if (!hasTransferReceived) return null;
+
+        // Find source ledger (the one that sent transfer to this ledger)
+        const sourceLedger = ledgers.find(l =>
+          (l.entries || []).some(e =>
+            e.transferId && e.debit > 0 &&
+            transferCredits.some(ce => ce.transferId === e.transferId)
+          )
+        );
+
+        const totalTransferReceived = transferCredits.reduce((a, e) => a + (e.credit || 0), 0);
+
+        const thisTDS = (ledger.entries || []).filter(e => e.particulars.includes("TDS")).reduce((a, e) => a + (e.debit || 0), 0);
+        const sourceTDS = sourceLedger ? (sourceLedger.entries || []).filter(e => e.particulars.includes("TDS")).reduce((a, e) => a + (e.debit || 0), 0) : 0;
+        const combinedTDS = thisTDS + sourceTDS;
+
+        const thisRetention = (ledger.entries || []).filter(e => e.particulars.includes("Retention")).reduce((a, e) => a + (e.debit || 0), 0);
+        const sourceRetention = sourceLedger ? (sourceLedger.entries || []).filter(e => e.particulars.includes("Retention")).reduce((a, e) => a + (e.debit || 0), 0) : 0;
+        const combinedRetention = thisRetention + sourceRetention;
+
+        return (
+          <div style={{ ...S.card, marginBottom: "16px", border: "1.5px solid #0f3172" }}>
+            <h3 style={{ margin: "0 0 12px", fontSize: "13px", fontWeight: 700, color: "#0f3172" }}>
+              📊 Combined Summary {sourceLedger ? `— ${sourceLedger.name} + ${ledger.name}` : ""}
+            </h3>
+            <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "4px" }}>
+              {/* Transfer Received */}
+              <div style={{ ...S.card, background: "#fef9c3", boxShadow: "none", padding: "14px", minWidth: "150px", flexShrink: 0 }}>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: "#d97706", marginBottom: "4px" }}>
+                  TRANSFER FROM {sourceLedger ? sourceLedger.name.toUpperCase() : "SOURCE"}
+                </div>
+                <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{totalTransferReceived.toLocaleString()}</div>
+              </div>
+              {/* Combined TDS */}
+              <div style={{ ...S.card, background: "#fef9c3", boxShadow: "none", padding: "14px", minWidth: "150px", flexShrink: 0 }}>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: "#d97706", marginBottom: "4px" }}>COMBINED TDS</div>
+                <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{combinedTDS.toLocaleString()}</div>
+                {sourceLedger && <div style={{ fontSize: "10px", color: "#6b84a3", marginTop: "4px" }}>
+                  {sourceLedger.name}: ₹{sourceTDS.toLocaleString()} + {ledger.name}: ₹{thisTDS.toLocaleString()}
+                </div>}
+              </div>
+              {/* Combined Retention */}
+              <div style={{ ...S.card, background: "#ede9fe", boxShadow: "none", padding: "14px", minWidth: "150px", flexShrink: 0 }}>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: "#5b21b6", marginBottom: "4px" }}>COMBINED RETENTION</div>
+                <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{combinedRetention.toLocaleString()}</div>
+                {sourceLedger && <div style={{ fontSize: "10px", color: "#6b84a3", marginTop: "4px" }}>
+                  {sourceLedger.name}: ₹{sourceRetention.toLocaleString()} + {ledger.name}: ₹{thisRetention.toLocaleString()}
+                </div>}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Transfer Form */}
+      {showTransfer && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #7c3aed" }}>
+        <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>↔️ Transfer to Another Ledger</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "9px" }}>
+          <div><label style={S.lbl}>Date</label><input type="date" value={transferForm.date} onChange={e => setTransferForm(p => ({ ...p, date: e.target.value }))} style={S.inp} /></div>
+          <div><label style={S.lbl}>Amount (₹)</label><input type="number" value={transferForm.amount} onChange={e => setTransferForm(p => ({ ...p, amount: e.target.value }))} style={S.inp} /></div>
+          <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Transfer To</label>
+            <select value={transferForm.toLedgerId} onChange={e => setTransferForm(p => ({ ...p, toLedgerId: e.target.value }))} style={S.inp}>
+              <option value="">Select Ledger...</option>
+              {ledgers.filter(l => l.id !== ledger.id).map((l: any) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+          </div>
+          <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Note (optional)</label><input value={transferForm.note} onChange={e => setTransferForm(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} /></div>
+        </div>
+        <div style={{ display: "flex", gap: "7px", marginTop: "11px" }}>
+          <button onClick={() => {
+            if (!transferForm.amount || !transferForm.toLedgerId) return;
+            const transferId = crypto.randomUUID();
+            const amount = Number(transferForm.amount);
+            const toLedger = ledgers.find(l => String(l.id) === String(transferForm.toLedgerId));
+            if (!toLedger) return;
+            const debitEntry = { id: crypto.randomUUID(), date: transferForm.date, particulars: "Transfer to " + toLedger.name, debit: amount, credit: 0, note: transferForm.note, transferId };
+            const creditEntry = { id: crypto.randomUUID(), date: transferForm.date, particulars: "Transfer from " + ledger.name, debit: 0, credit: amount, note: transferForm.note, transferId };
+            setLedgers(p => p.map((l: any) => {
+              if (String(l.id) === String(ledger.id)) return { ...l, entries: [...(l.entries || []), debitEntry] };
+              if (String(l.id) === String(toLedger.id)) return { ...l, entries: [...(l.entries || []), creditEntry] };
+              return l;
+            }));
+            setTransferForm({ date: today, amount: "", toLedgerId: "", note: "" });
+            setShowTransfer(false);
+          }} style={S.btn("#7c3aed")}>💾 Save Transfer</button>
+          <button onClick={() => setShowTransfer(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+        </div>
+      </div>}
+
+      {/* Add Invoice */}
+      {availableInvoices.length > 0 && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #bfdbfe" }}>
+        <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>📥 Add Invoice to Ledger</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {availableInvoices.map((inv: any) => (
+            <div key={inv.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#f0f6ff", borderRadius: "8px" }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: "13px" }}>{inv.number}</div>
+                <div style={{ fontSize: "11px", color: "#6b84a3" }}>{fmtDate(inv.date)} — ₹{inv.total?.toLocaleString()}</div>
+                <div style={{ fontSize: "11px", color: "#6b84a3" }}>{inv.siteName || "—"}</div>
+                {inv.measureNo && <div style={{ fontSize: "10px", fontWeight: 700, color: "#1e50a0", marginTop: "2px" }}>📋 {inv.measureNo}</div>}
+              </div>
+              <button onClick={() => addInvoiceEntry(inv)} style={{ ...S.btn("#166634"), padding: "5px 12px", fontSize: "12px" }}>+ Add</button>
+            </div>
+          ))}
+        </div>
+      </div>}
+
+      {/* Manual Entry Form */}
+      {showAdd && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #bfdbfe" }}>
+        <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>New Manual Entry</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "9px" }}>
+          <div><label style={S.lbl}>Date</label><input type="date" value={entryForm.date} onChange={e => setEntryForm(p => ({ ...p, date: e.target.value }))} style={S.inp} /></div>
+          <div><label style={S.lbl}>Particulars</label>
+            <select value={entryForm.particulars} onChange={e => setEntryForm(p => ({ ...p, particulars: e.target.value }))} style={S.inp}>
+              {PARTICULARS.map((p: any) => <option key={p}>{p}</option>)}
+            </select>
+          </div>
+          {entryForm.particulars === "Other" && <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Description</label><input value={entryForm.customParticulars} onChange={e => setEntryForm(p => ({ ...p, customParticulars: e.target.value }))} placeholder="Enter description" style={S.inp} /></div>}
+          <div><label style={S.lbl}>Debit (₹)</label><input type="number" value={entryForm.debit} onChange={e => setEntryForm(p => ({ ...p, debit: e.target.value, credit: "" }))} style={S.inp} /></div>
+          <div><label style={S.lbl}>Credit (₹)</label><input type="number" value={entryForm.credit} onChange={e => setEntryForm(p => ({ ...p, credit: e.target.value, debit: "" }))} style={S.inp} /></div>
+          <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Note (optional)</label><input value={entryForm.note} onChange={e => setEntryForm(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} /></div>
+        </div>
+        <div style={{ display: "flex", gap: "7px", marginTop: "11px" }}>
+          <button onClick={addManualEntry} style={S.btn()}>💾 Save</button>
+          <button onClick={() => setShowAdd(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+        </div>
+      </div>}
+
+      {/* Ledger Table */}
+      <div style={{ ...S.card, overflowX: "auto" }}>
+        <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📋 {ledger.client} — {ledger.region || "All Regions"}</h3>
+        {rows.length === 0 ? <div style={{ textAlign: "center", color: "#9db3cc", padding: "30px" }}>No entries yet.</div>
+          : <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "500px" }}>
+            <thead><tr style={{ background: "#0f3172", color: "#fff" }}>
+              <th style={{ padding: "8px 10px", textAlign: "left" }}>Date</th>
+              <th style={{ padding: "8px 10px", textAlign: "left" }}>Particulars</th>
+              <th style={{ padding: "8px 10px", textAlign: "right" }}>Debit (₹)</th>
+              <th style={{ padding: "8px 10px", textAlign: "right" }}>Credit (₹)</th>
+              <th style={{ padding: "8px 10px", textAlign: "right" }}>Balance (₹)</th>
+              <th style={{ padding: "8px 10px", textAlign: "center" }}>Action</th>
+            </tr></thead>
+            <tbody>
+              {rows.map((e, idx) => (
+                <tr key={e.id} style={{
+                  background:
+                    e.transferId ? "#fef9c3" :
+                      e.particulars === "Cont Invoice" ? "#f0fdf4" :
+                        e.particulars === "Bank Payment" ? "#eff6ff" :
+                          (e.particulars.includes("TDS") || e.particulars.includes("Retention")) ? "#fdf4ff" :
+                            idx % 2 === 0 ? "#fff" : "#f8faff"
+                  , borderBottom: "1px solid #f0f4f9"
+                }}>
+                  <td style={{ padding: "7px 10px", whiteSpace: "nowrap" }}>{fmtDate(e.date)}</td>
+                  <td style={{ padding: "7px 10px" }}>
+                    <div style={{ fontWeight: 600 }}>{e.particulars}</div>
+                    {e.note && <div style={{ fontSize: "11px", marginTop: "3px" }}>
+                      {e.invoiceId
+                        ? <span style={{ background: "#dbeafe", color: "#1e40af", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}>{e.note}</span>
+                        : e.transferId
+                          ? <span style={{ background: "#fef9c3", color: "#d97706", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}>{e.note}</span>
+                          : <span style={{ color: "#6b84a3", fontSize: "10px" }}>{e.note}</span>
+                      }
+                    </div>}
+                  </td>
+                  <td style={{ padding: "7px 10px", textAlign: "right", color: "#991b1b", fontWeight: 600 }}>{e.debit > 0 ? `₹${e.debit.toLocaleString()}` : "—"}</td>
+                  <td style={{ padding: "7px 10px", textAlign: "right", color: "#166534", fontWeight: 600 }}>{e.credit > 0 ? `₹${e.credit.toLocaleString()}` : "—"}</td>
+                  <td style={{ padding: "7px 10px", textAlign: "right", fontWeight: 700, color: "#1e50a0" }}>₹{e.balance.toLocaleString()}</td>
+                  <td style={{ padding: "7px 10px", textAlign: "center" }}>
+                    <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
+                      <button onClick={() => setEditPwModal({ ...e })} style={{ ...S.btn("#f0f6ff", "#1e50a0"), padding: "3px 8px", fontSize: "11px" }}>✏️</button>
+                      <button onClick={() => setDelEntryModal(e.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "3px 8px", fontSize: "11px" }}>🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              <tr style={{ background: "#0f3172", color: "#fff", fontWeight: 700 }}>
+                <td colSpan={2} style={{ padding: "10px", textAlign: "right" }}>TOTAL</td>
+                <td style={{ padding: "10px", textAlign: "right" }}>₹{totalDebit.toLocaleString()}</td>
+                <td style={{ padding: "10px", textAlign: "right" }}>₹{totalCredit.toLocaleString()}</td>
+                <td style={{ padding: "10px", textAlign: "right", color: "#f59e0b", fontSize: "14px" }}>₹{closingBalance.toLocaleString()}</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>}
+      </div>
+      {editPwModal && <PwModal
+        title="Edit Entry?"
+        onConfirm={() => { setEditEntryModal({ ...editPwModal }); setEditPwModal(null); }}
+        onCancel={() => setEditPwModal(null)}
+      />}
+      {editEntryModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "320px" }}>
+            <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>✏️ Edit Entry</h3>
+            <div style={{ display: "grid", gap: "10px", marginBottom: "14px" }}>
+              <div><label style={S.lbl}>Date</label>
+                <input type="date" value={editEntryModal.date} onChange={e => setEditEntryModal(p => ({ ...p, date: e.target.value }))} style={S.inp} />
+              </div>
+              <div><label style={S.lbl}>Particulars</label>
+                <input value={editEntryModal.particulars} onChange={e => setEditEntryModal(p => ({ ...p, particulars: e.target.value }))} style={S.inp} />
+              </div>
+              <div><label style={S.lbl}>Debit (₹)</label>
+                {(editEntryModal.particulars.includes("TDS") || editEntryModal.particulars.includes("Retention")) && (
+                  <div style={{ display: "flex", gap: "7px", marginBottom: "7px" }}>
+                    <button onClick={() => setEditEntryModal(p => ({ ...p, debit: 0, credit: 0, particulars: p.particulars + " (N/A)" }))} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 10px", fontSize: "11px" }}>✗ Not Applicable</button>
+                    <span style={{ fontSize: "11px", color: "#6b84a3", alignSelf: "center" }}>Sets amount to zero</span>
+                  </div>
+                )}
+                <input type="number" value={editEntryModal.debit || ""} onChange={e => setEditEntryModal(p => ({ ...p, debit: Number(e.target.value), credit: 0 }))} style={S.inp} />
+              </div>
+              <div><label style={S.lbl}>Credit (₹)</label>
+                <input type="number" value={editEntryModal.credit || ""} onChange={e => setEditEntryModal(p => ({ ...p, credit: Number(e.target.value), debit: 0 }))} style={S.inp} />
+              </div>
+              <div><label style={S.lbl}>Note</label>
+                <input value={editEntryModal.note || ""} onChange={e => setEditEntryModal(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
+              <button onClick={() => {
+                updateLedger({ ...ledger, entries: (ledger.entries || []).map((e: any) => e.id === editEntryModal.id ? { ...editEntryModal } : e) });
+                setEditEntryModal(null);
+              }} style={S.btn()}>💾 Save</button>
+              <button onClick={() => setEditEntryModal(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {ratePwModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
+            <div style={{ fontSize: "32px", marginBottom: "8px" }}>🔐</div>
+            <h3 style={{ margin: "0 0 7px" }}>Edit Rates</h3>
+            <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>Enter password to edit TDS/Retention rates.</p>
+            <input type="password" id="rate-pw-input" placeholder="Enter password" style={{ ...S.inp, marginBottom: "14px", textAlign: "center" }} />
+            {ledger.enableTds && <div style={{ marginBottom: "10px", textAlign: "left" }}>
+              <label style={S.lbl}>TDS Rate (%)</label>
+              <input type="number" value={rateForm.tdsRate} onChange={e => setRateForm(p => ({ ...p, tdsRate: e.target.value }))} style={S.inp} />
+            </div>}
+            {ledger.enableRetention && <div style={{ marginBottom: "14px", textAlign: "left" }}>
+              <label style={S.lbl}>Retention Rate (%)</label>
+              <input type="number" value={rateForm.retentionRate} onChange={e => setRateForm(p => ({ ...p, retentionRate: e.target.value }))} style={S.inp} />
+            </div>}
+            <div id="rate-err" style={{ color: "#dc2626", fontSize: "12px", marginBottom: "10px", display: "none" }}>❌ Incorrect password.</div>
+            <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
+              <button onClick={() => {
+                const pw = document.getElementById("rate-pw-input").value;
+                if (pw !== RECYCLE_PASSWORD) { document.getElementById("rate-err").style.display = "block"; return; }
+                updateLedger({ ...ledger, tdsRate: Number(rateForm.tdsRate), retentionRate: Number(rateForm.retentionRate) });
+                setRatePwModal(false);
+              }} style={S.btn("#1e50a0")}>Confirm</button>
+              <button onClick={() => setRatePwModal(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {delEntryModal && <PwModal
+        title="Delete Entry?"
+        onConfirm={() => { deleteEntry(delEntryModal); setDelEntryModal(null); }}
+        onCancel={() => setDelEntryModal(null)}
+      />}
+    </div>
   );
-  }
+}
 
