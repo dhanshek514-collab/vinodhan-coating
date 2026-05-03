@@ -318,7 +318,7 @@ export default function App() {
   const [client, setClient] = useState(INIT_CLIENT);
   const [bank, setBank] = useState(INIT_BANK);
   const [passwords, setPasswords] = useState({ "DHANS1416": "Riseup1416", "Site Executive": "Vinoth1024" });
-  const [recycleBin, setRecycleBin] = useState({ sites: [], invoices: [], attendanceReports: [] });
+  const [recycleBin, setRecycleBin] = useState({ sites: [], invoices: [] });
   const [ledgers, setLedgers] = useState([]);
   const [savedReports, setSavedReports] = useState([]);
   const [savedPermits, setSavedPermits] = useState([]);
@@ -960,26 +960,6 @@ function TopBar({ user, page, setPage, landscape, setLandscape, setUser, recycle
                   </div>
                 ))}
             </div>
-            <div style={{ marginTop: "20px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                <h3 style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "#6b84a3", textTransform: "uppercase", letterSpacing: "1px" }}>✅ Attendance Reports ({(recycleBin.attendanceReports || []).length})</h3>
-              </div>
-              {(recycleBin.attendanceReports || []).length === 0
-                ? <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "24px" }}>No deleted reports</div>
-                : (recycleBin.attendanceReports || []).map((r: any) => (
-                  <div key={r.id} style={{ ...S.card, marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: "14px" }}>{r.invoiceNumber}</div>
-                      <div style={{ fontSize: "11px", color: "#6b84a3" }}>{r.siteName} — {r.workName}</div>
-                      <div style={{ fontSize: "11px", color: "#6b84a3" }}>Deleted {r.savedAt}</div>
-                    </div>
-                    <div style={{ display: "flex", gap: "7px" }}>
-                      <button onClick={() => { setSavedReports((p: any) => [...p, r]); setRecycleBin((p: any) => ({ ...p, attendanceReports: (p.attendanceReports || []).filter((x: any) => x.id !== r.id) })); }} style={{ ...S.btn("#dcfce7", "#166534"), padding: "5px 11px", fontSize: "12px" }}>↩️ Restore</button>
-                      <button onClick={() => setPwModal({ type: "attReport", id: r.id })} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "5px 11px", fontSize: "12px" }}>🗑️ Delete</button>
-                    </div>
-                  </div>
-                ))}
-            </div>
           </div>
         </div>
       )}
@@ -992,7 +972,6 @@ function TopBar({ user, page, setPage, landscape, setLandscape, setUser, recycle
           else if (pwModal.type === "invoice") setRecycleBin(p => ({ ...p, invoices: (p.invoices || []).filter(x => x.id !== pwModal.id) }));
           else if (pwModal.type === "bulkSite") { setRecycleBin(p => ({ ...p, sites: (p.sites || []).filter(x => !selBinSites.includes(x.id)) })); setSelBinSites([]); }
           else if (pwModal.type === "bulkInv") { setRecycleBin(p => ({ ...p, invoices: (p.invoices || []).filter(x => !selBinInvs.includes(x.id)) })); setSelBinInvs([]); }
-          else if (pwModal.type === "attReport") setRecycleBin((p: any) => ({ ...p, attendanceReports: (p.attendanceReports || []).filter((x: any) => x.id !== pwModal.id) }));
           setPwModal(null);
         }}
         onCancel={() => setPwModal(null)}
@@ -2091,613 +2070,273 @@ function EForm({ form, setF }) {
     <div><label style={S.lbl}>Date of Joining</label><input type="date" value={form.doj} onChange={e => setF("doj", e.target.value)} style={S.inp} /></div>
   </div>;
 }
-// ── ATTENDANCE ────────────────────────────────────────────
-// Helper — builds { "YYYY-MM": ["YYYY-MM-DD", ...] } for a date range
-function buildMonthGroups(fromDate: string, toDate?: string): Record<string, string[]> {
-  if (!fromDate) return {};
-  const start = new Date(fromDate);
-  const end = toDate ? new Date(toDate) : new Date(today);
-  const groups: Record<string, string[]> = {};
-  const cur = new Date(start);
-  while (cur <= end) {
-    const ds = cur.toISOString().split("T")[0];
-    const mk = ds.slice(0, 7);
-    if (!groups[mk]) groups[mk] = [];
-    groups[mk].push(ds);
-    cur.setDate(cur.getDate() + 1);
-  }
-  return groups;
-}
 
-function Attendance({ workers, sites, attendance, setAttendance, assignments, invoices, savedReports, setSavedReports, recycleBin, setRecycleBin }: any) {
+// ── ATTENDANCE ────────────────────────────────────────
+function Attendance({ workers, sites, attendance, setAttendance, assignments, savedReports, setSavedReports }) {
   const [tab, setTab] = useState("mark");
-  const [reportTab, setReportTab] = useState("report");
-
-  // ── Mark tab state ──
   const [selSite, setSelSite] = useState(sites[0]?.id || 0);
-  const [selWork, setSelWork] = useState("");
   const [selDate, setSelDate] = useState(today);
-  const [unmarkConfirm, setUnmarkConfirm] = useState(null);
-
-  // ── Report tab state ──
   const [repSite, setRepSite] = useState(sites[0]?.id || 0);
-  const [repWork, setRepWork] = useState("");
+  const [repMonth, setRepMonth] = useState(new Date().getMonth());
+  const [repYear, setRepYear] = useState(new Date().getFullYear());
+  const [repClient, setRepClient] = useState("Swathi Engineering Agency");
+  const [repPlace, setRepPlace] = useState("Chennai");
+  const [repNameOfWork, setRepNameOfWork] = useState("");
+  const [repFromDate, setRepFromDate] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-01`);
+  const [repToDate, setRepToDate] = useState(today);
+  const [unmarkConfirm, setUnmarkConfirm] = useState(null);
   const [saveReportModal, setSaveReportModal] = useState(false);
   const [reportDelModal, setReportDelModal] = useState(null);
-  const [viewReportId, setViewReportId] = useState(null);
-
-  // ── Mark tab derived ──
-  const markWorks = (sites.find((s: any) => s.id === selSite)?.works || []);
-  const markWorkObj = markWorks.find((w: any) => w.id === selWork);
-  const minDate = markWorkObj?.fromDate || "";
-  const maxDate = markWorkObj?.toDate || today;
-  const sa = assignments[selSite] || {};
+  const mark = (wid, status) => setAttendance(p => {
+    const key = `${selDate}_${selSite}_${wid}`;
+    if (status === null) { const n = { ...p }; delete n[key]; return n; }
+    return { ...p, [key]: status };
+  });
+  const getStatus = wid => attendance[`${selDate}_${selSite}_${wid}`] || null;
+  const sa = selSite ? (assignments[selSite] || {}) : {};
   const aids = Object.keys(sa).map(Number);
-
-  const getKey = (date: string, siteId: any, workId: any, workerId: any) =>
-    `${date}_${siteId}_${workId}_${workerId}`;
-  const getStatus = (wid: any) =>
-    attendance[getKey(selDate, selSite, selWork, wid)] || null;
-  const mark = (wid: any, status: any) =>
-    setAttendance((p: any) => {
-      const key = getKey(selDate, selSite, selWork, wid);
-      if (status === null) { const n = { ...p }; delete n[key]; return n; }
-      return { ...p, [key]: status };
-    });
-
   const present = aids.filter(w => getStatus(w) === "Present").length;
   const absent = aids.filter(w => getStatus(w) === "Absent").length;
   const half = aids.filter(w => getStatus(w) === "Half").length;
-
-  // ── Report tab derived ──
-  const repWorks = (sites.find((s: any) => s.id === repSite)?.works || []);
-  const repWorkObj = repWorks.find((w: any) => w.id === repWork);
-  const repSiteObj = sites.find((s: any) => s.id === repSite);
+  const daysInMonth = getDaysInMonth(repMonth, repYear);
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const repSiteObj = sites.find(s => s.id === repSite);
   const repAssign = assignments[repSite] || {};
-  const repWorkers = workers.filter((w: any) => repAssign[w.id]);
-  const linkedInv = repWork
-    ? invoices.find((inv: any) => (inv.works || []).some((w: any) => w.id === repWork))
-    : null;
-
-  const monthGroups = repWorkObj
-    ? buildMonthGroups(repWorkObj.fromDate, repWorkObj.toDate)
-    : {};
-
-  const getRepAtt = (date: string, wid: any) =>
-    attendance[getKey(date, repSite, repWork, wid)] || "";
-  const getMonthTotal = (dates: string[], wid: any) =>
-    dates.reduce((a, d) => {
-      const v = getRepAtt(d, wid);
-      return v === "Present" ? a + 1 : v === "Half" ? a + 0.5 : a;
-    }, 0);
-  const getGrandTotal = (wid: any) =>
-    Object.values(monthGroups).flat().reduce((a, d) => {
-      const v = getRepAtt(d, wid);
-      return v === "Present" ? a + 1 : v === "Half" ? a + 0.5 : a;
-    }, 0);
-
-  const fmtMK = (mk: string) => {
-    const [y, m] = mk.split("-");
-    return `${MONTHS[parseInt(m) - 1]} ${y}`;
-  };
-
-  // ── History rows: all invoiced works, newest first ──
-  const historyRows = [...invoices]
-    .sort((a: any, b: any) =>
-      b.number.localeCompare(a.number, undefined, { numeric: true })
-    )
-    .flatMap((inv: any) =>
-      (inv.works || []).map((w: any) => ({
-        invoiceNumber: inv.number,
-        invoiceId: inv.id,
-        siteName: inv.siteName || "—",
-        workName: w.place,
-        workId: w.id,
-      }))
-    );
-
-  // ── Open print overlay ──
-  const openPrintOverlay = (html: string, filename: string) => {
-    const existing = document.getElementById("print-overlay");
-    if (existing) document.body.removeChild(existing);
-    const overlay = document.createElement("div");
-    overlay.id = "print-overlay";
-    overlay.style.cssText =
-      "position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;";
-    const bar = document.createElement("div");
-    bar.style.cssText =
-      "display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;";
-    const backBtn = document.createElement("button");
-    backBtn.innerText = "← Back";
-    backBtn.style.cssText =
-      "background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
-    backBtn.onclick = () => document.body.removeChild(overlay);
-    const dlBtn = document.createElement("button");
-    dlBtn.innerText = "⬇️ Download & Print";
-    dlBtn.style.cssText =
-      "background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
-    dlBtn.onclick = () => {
-      const a = document.createElement("a");
-      a.href = "data:text/html;charset=utf-8," + encodeURIComponent(html);
-      a.download = `${filename}.html`;
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    };
-    bar.appendChild(backBtn);
-    bar.appendChild(dlBtn);
-    const iframe: any = document.createElement("iframe");
-    iframe.style.cssText = "flex:1;width:100%;border:none;";
-    overlay.appendChild(bar);
-    overlay.appendChild(iframe);
-    document.body.appendChild(overlay);
-    iframe.contentDocument.open();
-    iframe.contentDocument.write(html);
-    iframe.contentDocument.close();
-  };
-
-  // ── Generate report HTML (shared by live print + saved print) ──
-  const buildReportHTML = ({
-    invoiceNumber, client, siteName, nameOfWork, place, fromDate, toDate, monthRows, wkrs, isLive,
-  }: any) => {
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title>
-    <style>@page{size:A4 landscape;margin:8mm;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:8mm;margin:0;font-size:11px;}
-    table{border-collapse:collapse;width:100%;}th,td{padding:5px 6px;font-size:10px;}
-    h3{font-size:12px;color:#0f3172;margin:10px 0 5px;border-bottom:1px solid #0f3172;padding-bottom:3px;}</style>
-    </head><body onload="window.print();">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #0f3172;">
-      <div><div style="font-size:18px;font-weight:800;color:#0f3172;">VinoDhan Coating</div>
-      <div style="font-size:14px;font-weight:700;color:#0f3172;">ATTENDANCE REPORT</div></div>
-      <div style="background:#dbeafe;color:#1e40af;border:1.5px solid #bfdbfe;border-radius:8px;padding:5px 12px;font-weight:700;font-size:13px;">${invoiceNumber}</div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 16px;margin-bottom:12px;font-size:11px;">
-      <div><b>Client:</b> ${client}</div><div><b>Site:</b> ${siteName}</div>
-      <div style="grid-column:1/-1"><b>Name of Work:</b> ${(nameOfWork as string[]).join(" &nbsp;|&nbsp; ")}</div>
-      <div><b>Place:</b> ${place}</div>
-      <div><b>Duration:</b> ${fmtDate(fromDate)} to ${fmtDate(toDate)}</div>
-    </div>
-    ${(monthRows as [string, string[]][]).map(([mk, dates]) => {
-      const [y, m] = mk.split("-");
-      const mLabel = `${MONTHS[parseInt(m) - 1]} ${y}`;
-      return `<h3>${mLabel}</h3>
-      <table><thead><tr style="background:#0f3172;color:#fff;">
-        <th style="text-align:left;min-width:120px;padding:6px 8px;">Worker</th>
-        ${dates.map((d: string) => `<th style="text-align:center;min-width:20px;">${parseInt(d.split("-")[2])}</th>`).join("")}
-        <th style="text-align:center;border-left:2px solid #f59e0b;color:#f59e0b;min-width:40px;">Total</th>
-      </tr></thead><tbody>
-      ${wkrs.map((w: any, i: number) => {
-        const getV = isLive
-          ? (d: string) => attendance[getKey(d, repSite, repWork, w.id)] || ""
-          : (d: string) => (w.attendance.find((a: any) => a.date === d)?.val || "");
-        const mTotal = dates.reduce((a: number, d: string) => {
-          const v = getV(d);
-          return v === "Present" ? a + 1 : v === "Half" ? a + 0.5 : a;
-        }, 0);
-        return `<tr style="background:${i % 2 === 0 ? "#fff" : "#f8faff"};border-bottom:1px solid #f0f4f9;">
-          <td style="font-weight:600;padding:6px 8px;">${w.name}</td>
-          ${dates.map((d: string) => {
-          const v = getV(d);
-          const bg = v === "Present" ? "#dcfce7" : v === "Half" ? "#fef9c3" : v === "Absent" ? "#fee2e2" : "transparent";
-          const col = v === "Present" ? "#166534" : v === "Half" ? "#d97706" : v === "Absent" ? "#991b1b" : "#d1d5db";
-          return `<td style="text-align:center;background:${bg};color:${col};font-weight:600;">${v === "Present" ? "P" : v === "Half" ? "H" : v === "Absent" ? "A" : ""}</td>`;
-        }).join("")}
-          <td style="text-align:center;font-weight:800;color:#1e50a0;border-left:2px solid #bfdbfe;">${mTotal}</td>
-        </tr>`;
-      }).join("")}
-      </tbody></table>`;
-    }).join("")}
-    </body></html>`;
-  };
-
-  const printLive = () => {
-    if (!repWorkObj) return;
-    const html = buildReportHTML({
-      invoiceNumber: linkedInv?.number || "—",
-      client: linkedInv?.snapshot?.client?.name || repSiteObj?.client || "—",
-      siteName: repSiteObj?.name || "—",
-      nameOfWork: (linkedInv?.works || [repWorkObj]).map((w: any) => w.place),
-      place: linkedInv?.sitePlace || "—",
-      fromDate: repWorkObj.fromDate,
-      toDate: repWorkObj.toDate || today,
-      monthRows: Object.entries(monthGroups),
-      wkrs: repWorkers,
-      isLive: true,
-    });
-    openPrintOverlay(html, `Attendance-${linkedInv?.number || repWorkObj.place}`);
-  };
-
-  const printSaved = (r: any) => {
-    const groups = buildMonthGroups(r.fromDate, r.toDate);
-    const html = buildReportHTML({
-      invoiceNumber: r.invoiceNumber,
-      client: r.client,
-      siteName: r.siteName,
-      nameOfWork: r.nameOfWork || [r.workName],
-      place: r.place,
-      fromDate: r.fromDate,
-      toDate: r.toDate,
-      monthRows: Object.entries(groups),
-      wkrs: r.workers,
-      isLive: false,
-    });
-    openPrintOverlay(html, `Attendance-${r.invoiceNumber}`);
-  };
-
-  // ── Save report ──
-  const doSave = () => {
-    if (!repWorkObj) return;
-    const allDates = Object.values(monthGroups).flat();
-    const report = {
-      id: Date.now(),
-      siteId: repSite,
-      siteName: repSiteObj?.name || "—",
-      workId: repWork,
-      workName: repWorkObj.place,
-      invoiceId: linkedInv?.id || null,
-      invoiceNumber: linkedInv?.number || "—",
-      client: linkedInv?.snapshot?.client?.name || repSiteObj?.client || "—",
-      place: linkedInv?.sitePlace || "—",
-      nameOfWork: (linkedInv?.works || [repWorkObj]).map((w: any) => w.place),
-      fromDate: repWorkObj.fromDate,
-      toDate: repWorkObj.toDate || today,
-      savedAt: today,
-      workers: repWorkers.map((w: any) => ({
-        id: w.id,
-        name: w.name,
-        category: repAssign[w.id] || w.category,
-        attendance: allDates.map(date => ({ date, val: getRepAtt(date, w.id) })),
-      })),
-    };
-    setSavedReports((p: any) => [...p, report]);
-    setSaveReportModal(false);
-  };
-
-  // ── Soft delete ──
-  const softDelete = (id: any) => {
-    const r = savedReports.find((x: any) => x.id === id);
-    if (r) {
-      setRecycleBin((p: any) => ({
-        ...p,
-        attendanceReports: [...(p.attendanceReports || []), r],
-      }));
-      setSavedReports((p: any) => p.filter((x: any) => x.id !== id));
-    }
-    setReportDelModal(null);
-  };
-
-  const viewReport = viewReportId
-    ? savedReports.find((r: any) => r.id === viewReportId)
-    : null;
-
-  // ── Shared month table renderer (for live preview + saved view) ──
-  const MonthTable = ({ dates, workers: wks, getAtt }: any) => (
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
-        <thead>
-          <tr style={{ background: "#0f3172", color: "#fff" }}>
-            <th style={{ padding: "7px 10px", textAlign: "left", fontWeight: 600, minWidth: "130px" }}>Worker</th>
-            {dates.map((d: string) => (
-              <th key={d} style={{ padding: "5px 3px", textAlign: "center", fontWeight: 600, minWidth: "22px" }}>
-                {parseInt(d.split("-")[2])}
-              </th>
-            ))}
-            <th style={{ padding: "7px 10px", textAlign: "center", fontWeight: 600, borderLeft: "2px solid #f59e0b", color: "#f59e0b", minWidth: "50px" }}>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {wks.map((w: any, idx: number) => {
-            const mTotal = dates.reduce((a: number, d: string) => {
-              const v = getAtt(d, w.id ?? w);
-              return v === "Present" ? a + 1 : v === "Half" ? a + 0.5 : a;
-            }, 0);
-            return (
-              <tr key={w.id ?? idx} style={{ background: idx % 2 === 0 ? "#fff" : "#f8faff", borderBottom: "1px solid #f0f4f9" }}>
-                <td style={{ padding: "7px 10px", fontWeight: 600 }}>{w.name}</td>
-                {dates.map((d: string) => {
-                  const v = getAtt(d, w.id ?? w);
-                  const bg = v === "Present" ? "#dcfce7" : v === "Half" ? "#fef9c3" : v === "Absent" ? "#fee2e2" : "transparent";
-                  const col = v === "Present" ? "#166534" : v === "Half" ? "#d97706" : v === "Absent" ? "#991b1b" : "#d1d5db";
-                  return (
-                    <td key={d} style={{ padding: "4px 2px", textAlign: "center", background: bg, color: col, fontWeight: 600 }}>
-                      {v === "Present" ? "P" : v === "Half" ? "H" : v === "Absent" ? "A" : ""}
-                    </td>
-                  );
-                })}
-                <td style={{ padding: "7px 10px", textAlign: "center", fontWeight: 800, color: "#1e50a0", borderLeft: "2px solid #bfdbfe" }}>{mTotal}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-
-  // ── Shared report header ──
-  const ReportHeader = ({ invoiceNumber, client, siteName, nameOfWork, place, fromDate, toDate }: any) => (
-    <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", paddingBottom: "14px", borderBottom: "2px solid #0f3172" }}>
-        <div>
-          <div style={{ fontSize: "20px", fontWeight: 800, color: "#0f3172" }}>VinoDhan Coating</div>
-          <div style={{ fontSize: "16px", fontWeight: 700, color: "#0f3172", marginTop: "2px" }}>ATTENDANCE REPORT</div>
-        </div>
-        {invoiceNumber && invoiceNumber !== "—" && (
-          <div style={{ textAlign: "right" }}>
-            <div style={{ background: "#dbeafe", color: "#1e40af", border: "1.5px solid #bfdbfe", borderRadius: "8px", padding: "6px 14px", fontWeight: 700, fontSize: "14px" }}>{invoiceNumber}</div>
-            <div style={{ fontSize: "10px", color: "#6b84a3", marginTop: "4px" }}>Invoice reference</div>
-          </div>
-        )}
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 20px", marginBottom: "16px", fontSize: "13px" }}>
-        {[["Client", client], ["Site Name", siteName], ["Name of Work", (nameOfWork as string[]).join(" | ")], ["Place", place], ["Duration", `${fmtDate(fromDate)} to ${fmtDate(toDate)}`]].map(([lbl, val]) => (
-          <div key={lbl} style={{ display: "flex", gap: "8px", padding: "4px 0", borderBottom: "1px solid #f0f4f9" }}>
-            <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "100px", fontSize: "12px" }}>{lbl}</span>
-            <span style={{ color: "#1a2b4a" }}>: {val}</span>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-
-  // ═══════════════════════════════════════════════
-  // RENDER
-  // ═══════════════════════════════════════════════
+  const repWorkers = workers.filter(w => repAssign[w.id]);
+  const getAttVal = (wid, day) => { const dd = String(day).padStart(2, "0"); const mm = String(repMonth + 1).padStart(2, "0"); return attendance[`${repYear}-${mm}-${dd}_${repSite}_${wid}`] || ""; };
+  const getTotalDays = wid => days.reduce((acc, d) => { const v = getAttVal(wid, d); if (v === "Present") return acc + 1; if (v === "Half") return acc + 0.5; return acc; }, 0);
+  const fromDate = fmtDate(repFromDate); const toDate = fmtDate(repToDate);
   return (
     <div>
       <h2 style={{ margin: "0 0 16px", fontSize: "20px", fontWeight: 800 }}>✅ Attendance</h2>
-
-      {/* Main tabs */}
-      <div style={{ display: "flex", gap: "7px", marginBottom: "16px" }}>
+      <div style={{ display: "flex", gap: "7px", marginBottom: "16px", overflowX: "auto", paddingBottom: "4px" }}>
         {[["mark", "📝 Mark"], ["report", "📊 Report"]].map(([t, lbl]) => (
-          <button key={t} onClick={() => setTab(t)}
-            style={{ ...S.btn(tab === t ? "#1e50a0" : "#e5e7eb", tab === t ? "#fff" : "#374151"), flexShrink: 0 }}>{lbl}</button>
+          <button key={t} onClick={() => setTab(t)} style={{ ...S.btn(tab === t ? "#1e50a0" : "#e5e7eb", tab === t ? "#fff" : "#374151"), flexShrink: 0 }}>{lbl}</button>
         ))}
       </div>
-
-      {/* ════════════════ MARK TAB ════════════════ */}
       {tab === "mark" && <>
-        <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: "wrap", boxSizing: "border-box" }}>
-          <div style={{ flex: 1, minWidth: "140px" }}>
-            <label style={S.lbl}>Site</label>
-            <select value={selSite} onChange={e => { setSelSite(Number(e.target.value)); setSelWork(""); }} style={S.inp}>
-              {sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}
-            </select>
-          </div>
-          <div style={{ flex: 1, minWidth: "140px" }}>
-            <label style={S.lbl}>Work</label>
-            <select value={selWork} onChange={e => setSelWork(e.target.value)} style={S.inp}>
-              <option value="">— Select Work —</option>
-              {markWorks.map((w: any) => <option key={w.id} value={w.id}>{w.place}</option>)}
-            </select>
-          </div>
-          <div style={{ flex: 1, minWidth: "140px" }}>
-            <label style={S.lbl}>Date</label>
-            <input type="date" value={selDate} min={minDate} max={maxDate}
-              onChange={e => setSelDate(e.target.value)} style={S.inp} disabled={!selWork} />
-          </div>
+        <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap", maxWidth: "100%", boxSizing: "border-box" }}>
+          <div style={{ flex: 1, minWidth: "140px" }}><label style={S.lbl}>Site</label><select value={selSite} onChange={e => setSelSite(Number(e.target.value))} style={S.inp}>{sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
+          <div style={{ flex: 1, minWidth: "140px" }}><label style={S.lbl}>Date</label><input type="date" value={selDate} onChange={e => setSelDate(e.target.value)} style={S.inp} /></div>
         </div>
-
-        {markWorkObj && (
-          <div style={{ fontSize: "11px", color: "#6b84a3", marginBottom: "12px", padding: "6px 10px", background: "#f0f6ff", borderRadius: "7px" }}>
-            📅 Work period: <strong>{fmtDate(markWorkObj.fromDate)}</strong> → <strong>{markWorkObj.toDate ? fmtDate(markWorkObj.toDate) : "Ongoing"}</strong>
-          </div>
-        )}
-
-        {!selWork ? (
-          <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "32px" }}>Select a site and work to mark attendance.</div>
-        ) : <>
-          <div style={{ ...S.card, marginBottom: "16px", display: "flex", gap: "18px", flexWrap: "wrap" }}>
-            {[["Present", present, "#166534"], ["Half", half, "#d97706"], ["Absent", absent, "#991b1b"], ["Unmarked", aids.length - present - absent - half, "#6b84a3"], ["Total", aids.length, "#1e50a0"]].map(([lbl, val, color]) => (
-              <div key={lbl}><span style={{ fontSize: "19px", fontWeight: 800, color }}>{val}</span><div style={{ fontSize: "10px", color: "#6b84a3" }}>{lbl}</div></div>
-            ))}
-          </div>
-          {aids.length === 0 ? (
-            <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "32px" }}>No workers assigned to this site.</div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "10px" }}>
-              {aids.map((wid: any) => {
-                const w = workers.find((x: any) => x.id === wid); if (!w) return null;
-                const desig = sa[wid] || w.category; const status = getStatus(wid);
-                return (
-                  <div key={wid} style={{ ...S.card, padding: "13px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                      {w.photo
-                        ? <img src={w.photo} style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }} />
-                        : <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: CAT_COLOR[w.category].bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: CAT_COLOR[w.category].color }}>{w.name[0]}</div>}
-                      <div><div style={{ fontWeight: 600, fontSize: "13px" }}>{w.name}</div><span style={S.badge(desig)}>{desig}</span></div>
-                    </div>
-                    <div style={{ display: "flex", gap: "5px" }}>
-                      {[["Present", "✓ P", "#166534"], ["Half", "½ H", "#d97706"], ["Absent", "✗ A", "#991b1b"]].map(([st, lbl, ac]) => (
-                        <button key={st} onClick={() => { if (status === st) setUnmarkConfirm({ wid, st }); else mark(wid, st); }}
-                          style={{ flex: 1, padding: "6px 4px", borderRadius: "6px", border: "none", fontSize: "11px", fontWeight: 600, cursor: "pointer", background: status === st ? ac : "#e5e7eb", color: status === st ? "#fff" : "#6b7280" }}>{lbl}</button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </>}
-      </>}
-
-      {/* ════════════════ REPORT TAB ════════════════ */}
-      {tab === "report" && <>
-        <div style={{ display: "flex", gap: "7px", marginBottom: "16px" }}>
-          {[["report", "📋 Report"], ["history", "📁 History"]].map(([t, lbl]) => (
-            <button key={t} onClick={() => setReportTab(t)}
-              style={{ ...S.btn(reportTab === t ? "#0f3172" : "#e5e7eb", reportTab === t ? "#fff" : "#374151"), flexShrink: 0 }}>{lbl}</button>
+        <div style={{ ...S.card, marginBottom: "16px", display: "flex", gap: "18px", flexWrap: "wrap" }}>
+          {[["Present", present, "#166534"], ["Half", half, "#d97706"], ["Absent", absent, "#991b1b"], ["Unmarked", aids.length - present - absent - half, "#6b84a3"], ["Total", aids.length, "#1e50a0"]].map(([lbl, val, color]) => (
+            <div key={lbl}><span style={{ fontSize: "19px", fontWeight: 800, color }}>{val}</span><div style={{ fontSize: "10px", color: "#6b84a3" }}>{lbl}</div></div>
           ))}
         </div>
-
-        {/* ── Report sub-tab ── */}
-        {reportTab === "report" && <>
-          <div style={{ ...S.card, marginBottom: "16px" }}>
-            <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>Report Settings</h3>
-            <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: "140px" }}>
-                <label style={S.lbl}>Site</label>
-                <select value={repSite} onChange={e => { setRepSite(Number(e.target.value)); setRepWork(""); }} style={S.inp}>
-                  {sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}
-                </select>
-              </div>
-              <div style={{ flex: 1, minWidth: "140px" }}>
-                <label style={S.lbl}>Work</label>
-                <select value={repWork} onChange={e => setRepWork(e.target.value)} style={S.inp}>
-                  <option value="">— Select Work —</option>
-                  {repWorks.map((w: any) => <option key={w.id} value={w.id}>{w.place}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {repWork && repWorkObj && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "14px", padding: "12px", background: "#f0f6ff", borderRadius: "9px", fontSize: "12px" }}>
-                {[["Site Name", repSiteObj?.name || "—"], ["Client", linkedInv?.snapshot?.client?.name || repSiteObj?.client || "—"], ["Place", linkedInv?.sitePlace || "—"], ["Invoice #", linkedInv?.number || "No invoice linked"], ["Duration", `${fmtDate(repWorkObj.fromDate)} → ${repWorkObj.toDate ? fmtDate(repWorkObj.toDate) : "Ongoing"}`]].map(([lbl, val]) => (
-                  <div key={lbl}><span style={{ color: "#6b84a3", fontWeight: 600, fontSize: "11px" }}>{lbl}: </span><span style={{ color: "#1e50a0", fontWeight: 600 }}>{val}</span></div>
-                ))}
-                <div style={{ gridColumn: "1/-1" }}>
-                  <span style={{ color: "#6b84a3", fontWeight: 600, fontSize: "11px" }}>Name of Work: </span>
-                  {(linkedInv?.works || [repWorkObj]).map((w: any, i: number) => (
-                    <div key={i} style={{ color: "#1e50a0", fontWeight: 600, paddingLeft: "98px" }}>{w.place}</div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: "9px" }}>
-              <button onClick={printLive} disabled={!repWork || repWorkers.length === 0}
-                style={{ ...S.btn(), opacity: (!repWork || repWorkers.length === 0) ? 0.5 : 1 }}>🖨️ Print / PDF</button>
-              <button onClick={() => setSaveReportModal(true)} disabled={!repWork || repWorkers.length === 0}
-                style={{ ...S.btn("#166534"), opacity: (!repWork || repWorkers.length === 0) ? 0.5 : 1 }}>💾 Save Report</button>
-            </div>
-          </div>
-
-          {repWork && repWorkObj ? (
-            <div style={{ background: "#fff", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)", overflowX: "auto" }}>
-              <ReportHeader
-                invoiceNumber={linkedInv?.number}
-                client={linkedInv?.snapshot?.client?.name || repSiteObj?.client || "—"}
-                siteName={repSiteObj?.name || "—"}
-                nameOfWork={(linkedInv?.works || [repWorkObj]).map((w: any) => w.place)}
-                place={linkedInv?.sitePlace || "—"}
-                fromDate={repWorkObj.fromDate}
-                toDate={repWorkObj.toDate || today}
-              />
-              {Object.entries(monthGroups).map(([mk, dates]) => (
-                <div key={mk} style={{ marginBottom: "20px" }}>
-                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f3172", marginBottom: "8px", padding: "5px 0", borderBottom: "1px solid #0f3172" }}>{fmtMK(mk)}</div>
-                  <MonthTable dates={dates} workers={repWorkers} getAtt={(d: string, wid: any) => getRepAtt(d, wid)} />
-                </div>
-              ))}
-              {Object.keys(monthGroups).length > 1 && (
-                <div style={{ background: "#f0f6ff", borderRadius: "9px", padding: "12px 14px", marginTop: "4px" }}>
-                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#0f3172", marginBottom: "8px" }}>Grand Total (All Months)</div>
-                  <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-                    {repWorkers.map((w: any) => (
-                      <div key={w.id} style={{ fontSize: "12px" }}>
-                        <span style={{ color: "#6b84a3" }}>{w.name}: </span>
-                        <span style={{ fontWeight: 800, color: "#1e50a0" }}>{getGrandTotal(w.id)} days</span>
-                      </div>
+        {aids.length === 0 ? <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "32px" }}>No workers assigned to this site.</div>
+          : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "10px" }}>
+            {aids.map((wid: any) => {
+              const w = workers.find(x => x.id === wid); if (!w) return null;
+              const desig = sa[wid] || w.category; const status = getStatus(wid);
+              return (
+                <div key={wid} style={{ ...S.card, padding: "13px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                    {w.photo ? <img src={w.photo} style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }} /> : <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: CAT_COLOR[w.category].bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: CAT_COLOR[w.category].color }}>{w.name[0]}</div>}
+                    <div><div style={{ fontWeight: 600, fontSize: "13px" }}>{w.name}</div><span style={S.badge(desig)}>{desig}</span></div>
+                  </div>
+                  <div style={{ display: "flex", gap: "5px" }}>
+                    {[["Present", "✓ P", "#166534"], ["Half", "½ H", "#d97706"], ["Absent", "✗ A", "#991b1b"]].map(([st, lbl, ac]) => (
+                      <button key={st} onClick={() => {
+                        if (status === st) {
+                          setUnmarkConfirm({ wid, st });
+                        } else {
+                          mark(wid, st);
+                        }
+                      }} style={{ flex: 1, padding: "6px 4px", borderRadius: "6px", border: "none", fontSize: "11px", fontWeight: 600, cursor: "pointer", background: status === st ? ac : "#e5e7eb", color: status === st ? "#fff" : "#6b7280" }}>{lbl}</button>
                     ))}
                   </div>
                 </div>
-              )}
-              <div style={{ display: "flex", gap: "16px", marginTop: "14px", fontSize: "11px" }}>
-                {[["P", "Present", "#dcfce7", "#166534"], ["H", "Half Day", "#fef9c3", "#d97706"], ["A", "Absent", "#fee2e2", "#991b1b"]].map(([sym, lbl, bg, col]) => (
-                  <div key={sym} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                    <span style={{ background: bg, color: col, fontWeight: 700, padding: "2px 6px", borderRadius: "4px", fontSize: "10px" }}>{sym}</span>
-                    <span style={{ color: "#6b84a3" }}>{lbl}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div style={{ ...S.card, textAlign: "center", color: "#9db3cc", padding: "40px" }}>
-              <div style={{ fontSize: "28px", marginBottom: "10px" }}>📊</div>
-              Select a site and work to generate the report.
-            </div>
-          )}
-        </>}
-
-        {/* ── History sub-tab ── */}
-        {reportTab === "history" && (
-          viewReportId && viewReport ? (
-            <div>
-              <div style={{ display: "flex", gap: "9px", marginBottom: "16px", alignItems: "center" }}>
-                <button onClick={() => setViewReportId(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
-                <button onClick={() => printSaved(viewReport)} style={S.btn()}>🖨️ Print / PDF</button>
-                <span style={{ background: "#dbeafe", color: "#1e40af", borderRadius: "6px", padding: "4px 10px", fontWeight: 700, fontSize: "12px", marginLeft: "auto" }}>{viewReport.invoiceNumber}</span>
-              </div>
-              <div style={{ background: "#fff", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)", overflowX: "auto" }}>
-                <ReportHeader
-                  invoiceNumber={viewReport.invoiceNumber}
-                  client={viewReport.client}
-                  siteName={viewReport.siteName}
-                  nameOfWork={viewReport.nameOfWork || [viewReport.workName]}
-                  place={viewReport.place}
-                  fromDate={viewReport.fromDate}
-                  toDate={viewReport.toDate}
-                />
-                {Object.entries(buildMonthGroups(viewReport.fromDate, viewReport.toDate)).map(([mk, dates]) => {
-                  const [y, m] = mk.split("-");
-                  return (
-                    <div key={mk} style={{ marginBottom: "20px" }}>
-                      <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f3172", marginBottom: "8px", padding: "5px 0", borderBottom: "1px solid #0f3172" }}>{MONTHS[parseInt(m) - 1]} {y}</div>
-                      <MonthTable
-                        dates={dates}
-                        workers={viewReport.workers}
-                        getAtt={(d: string, wid: any) => {
-                          const wk = viewReport.workers.find((x: any) => x.id === wid);
-                          return wk?.attendance.find((a: any) => a.date === d)?.val || "";
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div style={S.card}>
-              <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📁 Attendance History</h3>
-              <div style={{ fontSize: "11px", color: "#6b84a3", marginBottom: "10px" }}>All invoiced works — newest first</div>
-              <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 110px 100px", gap: "8px", padding: "6px 10px", background: "#f0f4f9", borderRadius: "7px", marginBottom: "6px", fontSize: "11px", fontWeight: 700, color: "#6b84a3" }}>
-                <span>#</span><span>Site</span><span>Work</span><span>Invoice</span><span>Status</span>
-              </div>
-              {historyRows.length === 0 ? (
-                <div style={{ textAlign: "center", color: "#9db3cc", padding: "30px" }}>No invoiced works yet.</div>
-              ) : historyRows.map((row: any, idx: number) => {
-                const saved = savedReports.find((r: any) => r.workId === row.workId);
-                return (
-                  <div key={`${row.workId}-${idx}`} style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 110px 100px", gap: "8px", padding: "8px 10px", borderRadius: "8px", background: saved ? "#f0fdf4" : "#f8faff", border: `0.5px solid ${saved ? "#bbf7d0" : "transparent"}`, marginBottom: "5px", alignItems: "center", fontSize: "12px" }}>
-                    <span style={{ color: "#6b84a3", fontWeight: 600 }}>{idx + 1}</span>
-                    <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.siteName}>{row.siteName}</span>
-                    <span style={{ color: "#6b84a3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.workName}>{row.workName}</span>
-                    <span style={{ background: "#dbeafe", color: "#1e40af", borderRadius: "6px", padding: "2px 7px", fontWeight: 700, fontSize: "11px", display: "inline-block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.invoiceNumber}</span>
-                    {saved ? (
-                      <div style={{ display: "flex", gap: "4px" }}>
-                        <button onClick={() => setViewReportId(saved.id)} style={{ ...S.btn(), padding: "4px 8px", fontSize: "11px" }}>🖨️</button>
-                        <button onClick={() => setReportDelModal(saved.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 8px", fontSize: "11px" }}>🗑️</button>
-                      </div>
-                    ) : (
-                      <span style={{ background: "#f0f4f9", color: "#9db3cc", borderRadius: "6px", padding: "3px 7px", fontSize: "10px", fontWeight: 600 }}>Not available</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )
-        )}
+              );
+            })}
+          </div>}
       </>}
+      {tab === "report" && <>
+        <div style={{ ...S.card, marginBottom: "16px" }}>
+          <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>Report Settings</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: "10px", marginBottom: "12px" }}>
+            <div><label style={S.lbl}>Site</label><select value={repSite} onChange={e => setRepSite(Number(e.target.value))} style={S.inp}>{sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
+            <div><label style={S.lbl}>Month</label><select value={repMonth} onChange={e => setRepMonth(Number(e.target.value))} style={S.inp}>{MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}</select></div>
+            <div><label style={S.lbl}>Year</label><select value={repYear} onChange={e => setRepYear(Number(e.target.value))} style={S.inp}>{Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((y: any) => <option key={y}>{y}</option>)}</select></div>
+            <div><label style={S.lbl}>Client Name</label><input value={repClient} onChange={e => setRepClient(e.target.value)} style={S.inp} /></div>
+            <div><label style={S.lbl}>Name of Work</label><input value={repNameOfWork} onChange={e => setRepNameOfWork(e.target.value)} placeholder="e.g. Epoxy Floor Coating" style={S.inp} /></div>
+            <div><label style={S.lbl}>Place</label><input value={repPlace} onChange={e => setRepPlace(e.target.value)} style={S.inp} /></div>
+            <div><label style={S.lbl}>Work From Date</label><input type="date" value={repFromDate} onChange={e => setRepFromDate(e.target.value)} style={S.inp} /></div>
+            <div><label style={S.lbl}>Work To Date</label><input type="date" value={repToDate} onChange={e => setRepToDate(e.target.value)} style={S.inp} /></div>
+          </div>
+          <button onClick={() => {
+            const el = document.getElementById("att-report");
+            if (!el) return;
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:6mm;margin:0;font-size:11px;}table{border-collapse:collapse;width:100%;table-layout:fixed;}th,td{padding:3px 2px;font-size:9px;overflow:hidden;}th:first-child,td:first-child{width:100px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}th:not(:first-child),td:not(:first-child){width:18px;text-align:center;}h1,h2,h3,div{font-size:11px;}.no-print{display:none!important;}</style></head><body onload="window.print();">${el.outerHTML}</body></html>`;
+            const a = document.createElement("a");
+            a.href = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+            a.download = "Attendance-Report.html";
+            a.style.display = "none";
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          }} style={S.btn()}>🖨️ Print / PDF</button>
+          <button onClick={() => setSaveReportModal(true)} style={{ ...S.btn("#166534"), marginLeft: "9px" }}>💾 Save Report</button>
+        </div>
+        {saveReportModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
+            <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
+              <div style={{ fontSize: "32px", marginBottom: "8px" }}>💾</div>
+              <h3 style={{ margin: "0 0 7px" }}>Save Report?</h3>
+              <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>
+                Save attendance report for <strong>{repSiteObj?.name}</strong> — <strong>{MONTHS[repMonth]} {repYear}</strong>
+              </p>
+              <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
+                <button onClick={() => {
+                  const report = {
+                    id: Date.now(),
+                    siteId: repSite,
+                    siteName: repSiteObj?.name || "—",
+                    month: repMonth,
+                    year: repYear,
+                    client: repClient,
+                    place: repPlace,
+                    nameOfWork: repNameOfWork,
+                    fromDate: repFromDate,
+                    toDate: repToDate,
+                    savedAt: today,
+                    workers: repWorkers.map((w: any) => ({
+                      id: w.id,
+                      name: w.name,
+                      category: repAssign[w.id] || w.category,
+                      attendance: days.map((d: any) => ({ day: d, val: getAttVal(w.id, d) }))
+                    }))
+                  };
+                  setSavedReports(p => [...p, report]);
+                  setSaveReportModal(false);
+                  alert("✅ Report saved successfully!");
+                }} style={S.btn("#166534")}>💾 Save</button>
+                <button onClick={() => setSaveReportModal(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+        <div id="att-report" style={{ background: "#fff", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)", overflowX: "auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "20px", borderBottom: "2px solid #0f3172", paddingBottom: "14px" }}>
+            <div style={{ fontSize: "22px", fontWeight: 800, color: "#0f3172", marginBottom: "6px" }}>VinoDhan Coating</div>
+            <div style={{ fontSize: "18px", fontWeight: 800, color: "#0f3172" }}>ATTENDANCE REPORT</div>
+            <div style={{ fontSize: "12px", color: "#6b84a3", marginTop: "4px" }}>{MONTHS[repMonth]} {repYear}</div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 20px", marginBottom: "20px", fontSize: "13px" }}>
+            {[["Client", repClient], ["Site Name", repSiteObj?.name || "—"], ["Name of Work", repNameOfWork || "—"], ["Place", repPlace], ["Duration", `${fromDate} to ${toDate}`]].map(([lbl, val]) => (
+              <div key={lbl} style={{ display: "flex", gap: "8px", padding: "4px 0", borderBottom: "1px solid #f0f4f9" }}><span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "90px" }}>{lbl}</span><span style={{ color: "#1a2b4a" }}>: {val}</span></div>
+            ))}
+          </div>
+          {repWorkers.length === 0 ? <div style={{ textAlign: "center", color: "#9db3cc", padding: "30px" }}>No workers assigned.</div>
+            : <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
+                <thead><tr style={{ background: "#0f3172", color: "#fff" }}>
+                  <th style={{ padding: "8px 10px", textAlign: "left", fontWeight: 600, whiteSpace: "nowrap", minWidth: "130px" }}>Worker Name</th>
+                  {days.map((d: any) => <th key={d} style={{ padding: "6px 4px", textAlign: "center", fontWeight: 600, minWidth: "22px" }}>{d}</th>)}
+                  <th style={{ padding: "8px 10px", textAlign: "center", fontWeight: 600, whiteSpace: "nowrap" }}>Total</th>
+                </tr></thead>
+                <tbody>
+                  {repWorkers.map((w, idx) => {
+                    const total = getTotalDays(w.id);
+                    return (
+                      <tr key={w.id} style={{ background: idx % 2 === 0 ? "#fff" : "#f8faff", borderBottom: "1px solid #f0f4f9" }}>
+                        <td style={{ padding: "7px 10px", fontWeight: 600, whiteSpace: "nowrap" }}>{w.name}</td>
+                        {days.map((d: any) => { const v = getAttVal(w.id, d); const bg = v === "Present" ? "#dcfce7" : v === "Half" ? "#fef9c3" : v === "Absent" ? "#fee2e2" : "transparent"; const col = v === "Present" ? "#166534" : v === "Half" ? "#d97706" : v === "Absent" ? "#991b1b" : "#d1d5db"; return <td key={d} style={{ padding: "4px 2px", textAlign: "center", background: bg, color: col, fontWeight: 600, fontSize: "10px" }}>{v === "Present" ? "P" : v === "Half" ? "H" : v === "Absent" ? "A" : ""}</td>; })}
+                        <td style={{ padding: "7px 10px", textAlign: "center", fontWeight: 800, color: "#1e50a0" }}>{total}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>}
+          <div style={{ display: "flex", gap: "16px", marginTop: "14px", fontSize: "11px" }}>
+            {[["P", "Present", "#dcfce7", "#166534"], ["H", "Half Day", "#fef9c3", "#d97706"], ["A", "Absent", "#fee2e2", "#991b1b"]].map(([sym, lbl, bg, col]) => (
+              <div key={sym} style={{ display: "flex", alignItems: "center", gap: "5px" }}><span style={{ background: bg, color: col, fontWeight: 700, padding: "2px 6px", borderRadius: "4px", fontSize: "10px" }}>{sym}</span><span style={{ color: "#6b84a3" }}>{lbl}</span></div>
+            ))}
+          </div>
+        </div>
+      </>}
+      {/* Saved Reports List */}
+      {savedReports.length > 0 && <div style={{ ...S.card, marginTop: "20px" }}>
+        <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📁 Saved Reports</h3>
+        {[...savedReports].sort((a, b) => b.id - a.id).map((r: any) => (
+          <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 13px", background: "#f8faff", borderRadius: "9px", marginBottom: "6px" }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: "13px" }}>{r.siteName}</div>
+              <div style={{ fontSize: "11px", color: "#6b84a3" }}>{MONTHS[r.month]} {r.year} — Saved {fmtDate(r.savedAt)}</div>
+            </div>
+            <div style={{ display: "flex", gap: "7px" }}>
+              <button onClick={() => {
+                const daysInM = getDaysInMonth(r.month, r.year);
+                const daysArr = Array.from({ length: daysInM }, (_, i) => i + 1);
+                const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:6mm;margin:0;font-size:11px;}table{border-collapse:collapse;width:100%;table-layout:fixed;}th,td{padding:3px 2px;font-size:9px;overflow:hidden;}th:first-child,td:first-child{width:100px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}th:not(:first-child),td:not(:first-child){width:18px;text-align:center;}h1,h2,h3,div{font-size:11px;}</style></head><body onload="window.print();">
+          <div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #0f3172;padding-bottom:14px;">
+            <div style="font-size:22px;font-weight:800;color:#0f3172;">VinoDhan Coating</div>
+            <div style="font-size:18px;font-weight:800;color:#0f3172;">ATTENDANCE REPORT</div>
+            <div style="font-size:12px;color:#6b84a3;margin-top:4px;">${MONTHS[r.month]} ${r.year}</div>
+          </div>
+          <table>
+            <thead><tr style="background:#0f3172;color:#fff;">
+              <th style="padding:8px 10px;text-align:left;">Worker Name</th>
+              ${daysArr.map((d: any) => `<th>${d}</th>`).join("")}
+              <th>Total</th>
+            </tr></thead>
+            <tbody>
+              ${r.workers.map((w, idx) => {
+                  const total = w.attendance.reduce((a, d) => d.val === "Present" ? a + 1 : d.val === "Half" ? a + 0.5 : a, 0);
+                  return `<tr style="background:${idx % 2 === 0 ? "#fff" : "#f8faff"};">
+                  <td style="padding:7px 10px;font-weight:600;">${w.name}</td>
+                  ${daysArr.map((d: any) => { const v = w.attendance.find(a => a.day === d)?.val || ""; const bg = v === "Present" ? "#dcfce7" : v === "Half" ? "#fef9c3" : v === "Absent" ? "#fee2e2" : "transparent"; const col = v === "Present" ? "#166534" : v === "Half" ? "#d97706" : v === "Absent" ? "#991b1b" : "#d1d5db"; return `<td style="background:${bg};color:${col};font-weight:600;">${v === "Present" ? "P" : v === "Half" ? "H" : v === "Absent" ? "A" : ""}</td>`; }).join("")}
+                  <td style="text-align:center;font-weight:800;color:#1e50a0;">${total}</td>
+                </tr>`;
+                }).join("")}
+            </tbody>
+          </table>
+          </body></html>`;
+                const existing = document.getElementById("print-overlay");
+                if (existing) document.body.removeChild(existing);
+                const overlay = document.createElement("div");
+                overlay.id = "print-overlay";
+                overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;";
+                const bar = document.createElement("div");
+                bar.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;";
+                const backBtn = document.createElement("button");
+                backBtn.innerText = "← Back";
+                backBtn.style.cssText = "background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
+                backBtn.onclick = () => document.body.removeChild(overlay);
+                const dlBtn = document.createElement("button");
+                dlBtn.innerText = "⬇️ Download & Print";
+                dlBtn.style.cssText = "background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
+                dlBtn.onclick = () => {
+                  const a = document.createElement("a");
+                  a.href = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+                  a.download = `Attendance-${r.siteName}-${MONTHS[r.month]}-${r.year}.html`;
+                  a.style.display = "none"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                };
+                bar.appendChild(backBtn); bar.appendChild(dlBtn);
+                const iframe = document.createElement("iframe");
+                iframe.style.cssText = "flex:1;width:100%;border:none;";
+                overlay.appendChild(bar); overlay.appendChild(iframe);
+                document.body.appendChild(overlay);
+                iframe.contentDocument.open();
+                iframe.contentDocument.write(html);
+                iframe.contentDocument.close();
+              }} style={{ ...S.btn(), padding: "5px 11px", fontSize: "12px" }}>🖨️ Print</button>
+              <button onClick={() => setReportDelModal(r.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "5px 11px", fontSize: "12px" }}>🗑️</button>
+            </div>
+          </div>
+        ))}
+      </div>}
 
-      {/* ════════ MODALS ════════ */}
-      {saveReportModal && <PwModal title="Save Attendance Report?" onConfirm={doSave} onCancel={() => setSaveReportModal(false)} />}
-      {reportDelModal && <PwModal title="Delete Report?" onConfirm={() => softDelete(reportDelModal)} onCancel={() => setReportDelModal(null)} />}
-
+      {reportDelModal && <PwModal
+        title="Delete Saved Report?"
+        onConfirm={() => { setSavedReports(p => p.filter(r => r.id !== reportDelModal)); setReportDelModal(null); }}
+        onCancel={() => setReportDelModal(null)}
+      />}
       {unmarkConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
           <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
             <div style={{ fontSize: "32px", marginBottom: "8px" }}>⚠️</div>
             <h3 style={{ margin: "0 0 7px" }}>Remove Attendance?</h3>
-            <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>Remove <strong>{unmarkConfirm.st}</strong> mark?</p>
+            <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>Are you sure you want to remove the <strong>{unmarkConfirm.st}</strong> mark?</p>
             <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
               <button onClick={() => { mark(unmarkConfirm.wid, null); setUnmarkConfirm(null); }} style={S.btn("#dc2626")}>Yes, Remove</button>
               <button onClick={() => setUnmarkConfirm(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
