@@ -312,13 +312,14 @@ export default function App() {
   const [execProfile, setExecProfile] = useState(EMPTY_EXEC);
   const [sites, setSites] = useState([{ id: 1, name: "Site A", client: "Swathi Engineering Agency", status: "Active", works: [] }]);
   const [attendance, setAttendance] = useState({});
+  const [attendanceBatches, setAttendanceBatches] = useState({});
   const [assignments, setAssignments] = useState({});
   const [invoices, setInvoices] = useState([]);
   const [company, setCompany] = useState(INIT_COMPANY);
   const [client, setClient] = useState(INIT_CLIENT);
   const [bank, setBank] = useState(INIT_BANK);
   const [passwords, setPasswords] = useState({ "DHANS1416": "Riseup1416", "Site Executive": "Vinoth1024" });
-  const [recycleBin, setRecycleBin] = useState({ sites: [], invoices: [] });
+  const [recycleBin, setRecycleBin] = useState({ sites: [], invoices: [], attendance: [] });
   const [ledgers, setLedgers] = useState([]);
   const [savedReports, setSavedReports] = useState([]);
   const [savedPermits, setSavedPermits] = useState([]);
@@ -489,6 +490,7 @@ export default function App() {
   useEffect(() => { if (!ready) return; saveS("vd_bank", bank); fbSet("bank", bank); }, [bank, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_passwords", passwords); fbSet("passwords", passwords); }, [passwords, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_recyclebin", recycleBin); fbSet("recycleBin", recycleBin); }, [recycleBin, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_attendanceBatches", attendanceBatches); fbSet("attendanceBatches", attendanceBatches); }, [attendanceBatches, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_ledgers", ledgers); fbSet("ledgers", ledgers); }, [ledgers, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_savedReports", savedReports); fbSet("savedReports", savedReports); }, [savedReports, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_savedPermits", savedPermits); fbSet("savedPermits", savedPermits); }, [savedPermits, ready]);
@@ -592,6 +594,8 @@ export default function App() {
     setSites,
     attendance,
     setAttendance,
+    attendanceBatches,
+    setAttendanceBatches,
     assignments,
     setAssignments,
     invoices,
@@ -2071,8 +2075,34 @@ function EForm({ form, setF }) {
   </div>;
 }
 
-// ── ATTENDANCE ────────────────────────────────────────
-function Attendance({ workers, sites, attendance, setAttendance, assignments, savedReports, setSavedReports }) {
+// ── ATTENDANCE  ────────────────────────────────────────
+function Attendance({ workers, sites, attendance, setAttendance, assignments, savedReports, setSavedReports, attendanceBatches, setAttendanceBatches, recycleBin, setRecycleBin, ledgers, setLedgers }) {
+  const generateAttendanceId = () => {
+    const now = new Date();
+    const date = now.toISOString().split('T')[0].replace(/-/g, '');
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    return `ATT-${date}-${random}`;
+  };
+
+  const getDateRangeForSite = (siteId) => {
+    const site = sites.find(s => s.id === siteId);
+    if (!site || !site.works || site.works.length === 0) {
+      return { fromDate: today, toDate: today };
+    }
+    const dates = site.works
+      .map(w => ({ from: w.fromDate || today, to: w.toDate || today }))
+      .sort((a, b) => a.from.localeCompare(b.from));
+
+    return {
+      fromDate: dates[0]?.from || today,
+      toDate: dates[dates.length - 1]?.to || today
+    };
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // STATE
+  // ════════════════════════════════════════════════════════════════
+
   const [tab, setTab] = useState("mark");
   const [selSite, setSelSite] = useState(sites[0]?.id || 0);
   const [selDate, setSelDate] = useState(today);
@@ -2087,25 +2117,101 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, sa
   const [unmarkConfirm, setUnmarkConfirm] = useState(null);
   const [saveReportModal, setSaveReportModal] = useState(false);
   const [reportDelModal, setReportDelModal] = useState(null);
-  const mark = (wid, status) => setAttendance(p => {
-    const key = `${selDate}_${selSite}_${wid}`;
-    if (status === null) { const n = { ...p }; delete n[key]; return n; }
-    return { ...p, [key]: status };
-  });
-  const getStatus = wid => attendance[`${selDate}_${selSite}_${wid}`] || null;
+
+  // ════════════════════════════════════════════════════════════════
+  // LOGIC FUNCTIONS (NO JSX RETURN)
+  // ════════════════════════════════════════════════════════════════
+
+  const mark = (wid, status) => {
+    const batch = Object.values(attendanceBatches).find(b => b.siteId === selSite);
+    if (!batch) return;
+
+    setAttendance(p => {
+      const key = `${batch.id}_${selDate}_${selSite}_${wid}`;
+      if (status === null) {
+        const n = { ...p };
+        delete n[key];
+        return n;
+      }
+      return { ...p, [key]: status };
+    });
+  };
+
+  const getStatus = (wid) => {
+    const batch = Object.values(attendanceBatches).find(b => b.siteId === selSite);
+    if (!batch) return null;
+    return attendance[`${batch.id}_${selDate}_${selSite}_${wid}`] || null;
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // COMPUTED VALUES
+  // ════════════════════════════════════════════════════════════════
+
   const sa = selSite ? (assignments[selSite] || {}) : {};
   const aids = Object.keys(sa).map(Number);
   const present = aids.filter(w => getStatus(w) === "Present").length;
   const absent = aids.filter(w => getStatus(w) === "Absent").length;
   const half = aids.filter(w => getStatus(w) === "Half").length;
+
   const daysInMonth = getDaysInMonth(repMonth, repYear);
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const repSiteObj = sites.find(s => s.id === repSite);
   const repAssign = assignments[repSite] || {};
   const repWorkers = workers.filter(w => repAssign[w.id]);
-  const getAttVal = (wid, day) => { const dd = String(day).padStart(2, "0"); const mm = String(repMonth + 1).padStart(2, "0"); return attendance[`${repYear}-${mm}-${dd}_${repSite}_${wid}`] || ""; };
-  const getTotalDays = wid => days.reduce((acc, d) => { const v = getAttVal(wid, d); if (v === "Present") return acc + 1; if (v === "Half") return acc + 0.5; return acc; }, 0);
-  const fromDate = fmtDate(repFromDate); const toDate = fmtDate(repToDate);
+
+  const getAttVal = (wid, day) => {
+    const dd = String(day).padStart(2, "0");
+    const mm = String(repMonth + 1).padStart(2, "0");
+    return attendance[`${repYear}-${mm}-${dd}_${repSite}_${wid}`] || "";
+  };
+
+  const getTotalDays = (wid) => {
+    return days.reduce((acc, d) => {
+      const v = getAttVal(wid, d);
+      if (v === "Present") return acc + 1;
+      if (v === "Half") return acc + 0.5;
+      return acc;
+    }, 0);
+  };
+
+  const fromDate = fmtDate(repFromDate);
+  const toDate = fmtDate(repToDate);
+
+  // ════════════════════════════════════════════════════════════════
+  // EFFECT: Auto-create batch on site change
+  // ════════════════════════════════════════════════════════════════
+
+  useEffect(() => {
+    if (!selSite) return;
+
+    const existingBatch = Object.values(attendanceBatches).find(b => b.siteId === selSite);
+
+    if (!existingBatch) {
+      const { fromDate, toDate } = getDateRangeForSite(selSite);
+      const site = sites.find(s => s.id === selSite);
+      const newBatchId = generateAttendanceId();
+
+      setAttendanceBatches(p => ({
+        ...p,
+        [newBatchId]: {
+          id: newBatchId,
+          siteId: selSite,
+          workIds: (site?.works || []).map(w => w.id),
+          fromDate,
+          toDate,
+          invoiceNumber: null,
+          invoiceId: null,
+          createdAt: today,
+          status: 'active'
+        }
+      }));
+    }
+  }, [selSite]);
+
+  // ════════════════════════════════════════════════════════════════
+  // ✅ MAIN RETURN - ALL JSX HERE
+  // ════════════════════════════════════════════════════════════════
+
   return (
     <div>
       <h2 style={{ margin: "0 0 16px", fontSize: "20px", fontWeight: 800 }}>✅ Attendance</h2>
@@ -2114,6 +2220,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, sa
           <button key={t} onClick={() => setTab(t)} style={{ ...S.btn(tab === t ? "#1e50a0" : "#e5e7eb", tab === t ? "#fff" : "#374151"), flexShrink: 0 }}>{lbl}</button>
         ))}
       </div>
+
       {tab === "mark" && <>
         <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap", maxWidth: "100%", boxSizing: "border-box" }}>
           <div style={{ flex: 1, minWidth: "140px" }}><label style={S.lbl}>Site</label><select value={selSite} onChange={e => setSelSite(Number(e.target.value))} style={S.inp}>{sites.map((st: any) => <option key={st.id} value={st.id}>{st.name}</option>)}</select></div>
@@ -2128,7 +2235,8 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, sa
           : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "10px" }}>
             {aids.map((wid: any) => {
               const w = workers.find(x => x.id === wid); if (!w) return null;
-              const desig = sa[wid] || w.category; const status = getStatus(wid);
+              const desig = sa[wid] || w.category;
+              const status = getStatus(wid);
               return (
                 <div key={wid} style={{ ...S.card, padding: "13px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
@@ -2151,6 +2259,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, sa
             })}
           </div>}
       </>}
+
       {tab === "report" && <>
         <div style={{ ...S.card, marginBottom: "16px" }}>
           <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>Report Settings</h3>
@@ -2176,14 +2285,13 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, sa
           }} style={S.btn()}>🖨️ Print / PDF</button>
           <button onClick={() => setSaveReportModal(true)} style={{ ...S.btn("#166534"), marginLeft: "9px" }}>💾 Save Report</button>
         </div>
+
         {saveReportModal && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
             <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
               <div style={{ fontSize: "32px", marginBottom: "8px" }}>💾</div>
               <h3 style={{ margin: "0 0 7px" }}>Save Report?</h3>
-              <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>
-                Save attendance report for <strong>{repSiteObj?.name}</strong> — <strong>{MONTHS[repMonth]} {repYear}</strong>
-              </p>
+              <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>Save attendance report for <strong>{repSiteObj?.name}</strong> — <strong>{MONTHS[repMonth]} {repYear}</strong></p>
               <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
                 <button onClick={() => {
                   const report = {
@@ -2214,6 +2322,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, sa
             </div>
           </div>
         )}
+
         <div id="att-report" style={{ background: "#fff", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 16px rgba(30,80,160,0.08)", overflowX: "auto" }}>
           <div style={{ textAlign: "center", marginBottom: "20px", borderBottom: "2px solid #0f3172", paddingBottom: "14px" }}>
             <div style={{ fontSize: "22px", fontWeight: 800, color: "#0f3172", marginBottom: "6px" }}>VinoDhan Coating</div>
@@ -2254,6 +2363,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, sa
           </div>
         </div>
       </>}
+
       {/* Saved Reports List */}
       {savedReports.length > 0 && <div style={{ ...S.card, marginTop: "20px" }}>
         <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📁 Saved Reports</h3>
@@ -2267,30 +2377,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, sa
               <button onClick={() => {
                 const daysInM = getDaysInMonth(r.month, r.year);
                 const daysArr = Array.from({ length: daysInM }, (_, i) => i + 1);
-                const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:6mm;margin:0;font-size:11px;}table{border-collapse:collapse;width:100%;table-layout:fixed;}th,td{padding:3px 2px;font-size:9px;overflow:hidden;}th:first-child,td:first-child{width:100px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}th:not(:first-child),td:not(:first-child){width:18px;text-align:center;}h1,h2,h3,div{font-size:11px;}</style></head><body onload="window.print();">
-          <div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #0f3172;padding-bottom:14px;">
-            <div style="font-size:22px;font-weight:800;color:#0f3172;">VinoDhan Coating</div>
-            <div style="font-size:18px;font-weight:800;color:#0f3172;">ATTENDANCE REPORT</div>
-            <div style="font-size:12px;color:#6b84a3;margin-top:4px;">${MONTHS[r.month]} ${r.year}</div>
-          </div>
-          <table>
-            <thead><tr style="background:#0f3172;color:#fff;">
-              <th style="padding:8px 10px;text-align:left;">Worker Name</th>
-              ${daysArr.map((d: any) => `<th>${d}</th>`).join("")}
-              <th>Total</th>
-            </tr></thead>
-            <tbody>
-              ${r.workers.map((w, idx) => {
-                  const total = w.attendance.reduce((a, d) => d.val === "Present" ? a + 1 : d.val === "Half" ? a + 0.5 : a, 0);
-                  return `<tr style="background:${idx % 2 === 0 ? "#fff" : "#f8faff"};">
-                  <td style="padding:7px 10px;font-weight:600;">${w.name}</td>
-                  ${daysArr.map((d: any) => { const v = w.attendance.find(a => a.day === d)?.val || ""; const bg = v === "Present" ? "#dcfce7" : v === "Half" ? "#fef9c3" : v === "Absent" ? "#fee2e2" : "transparent"; const col = v === "Present" ? "#166534" : v === "Half" ? "#d97706" : v === "Absent" ? "#991b1b" : "#d1d5db"; return `<td style="background:${bg};color:${col};font-weight:600;">${v === "Present" ? "P" : v === "Half" ? "H" : v === "Absent" ? "A" : ""}</td>`; }).join("")}
-                  <td style="text-align:center;font-weight:800;color:#1e50a0;">${total}</td>
-                </tr>`;
-                }).join("")}
-            </tbody>
-          </table>
-          </body></html>`;
+                const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title><style>@page{size:A4 landscape;margin:0;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:6mm;margin:0;font-size:11px;}table{border-collapse:collapse;width:100%;table-layout:fixed;}th,td{padding:3px 2px;font-size:9px;overflow:hidden;}th:first-child,td:first-child{width:100px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}th:not(:first-child),td:not(:first-child){width:18px;text-align:center;}h1,h2,h3,div{font-size:11px;}</style></head><body onload="window.print();"><div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #0f3172;padding-bottom:14px;"><div style="font-size:22px;font-weight:800;color:#0f3172;">VinoDhan Coating</div><div style="font-size:18px;font-weight:800;color:#0f3172;">ATTENDANCE REPORT</div><div style="font-size:12px;color:#6b84a3;margin-top:4px;">${MONTHS[r.month]} ${r.year}</div></div><table><thead><tr style="background:#0f3172;color:#fff;"><th style="padding:8px 10px;text-align:left;">Worker Name</th>${daysArr.map((d: any) => `<th>${d}</th>`).join("")}<th>Total</th></tr></thead><tbody>${r.workers.map((w, idx) => { const total = w.attendance.reduce((a, d) => d.val === "Present" ? a + 1 : d.val === "Half" ? a + 0.5 : a, 0); return `<tr style="background:${idx % 2 === 0 ? "#fff" : "#f8faff"};"><td style="padding:7px 10px;font-weight:600;">${w.name}</td>${daysArr.map((d: any) => { const v = w.attendance.find(a => a.day === d)?.val || ""; const bg = v === "Present" ? "#dcfce7" : v === "Half" ? "#fef9c3" : v === "Absent" ? "#fee2e2" : "transparent"; const col = v === "Present" ? "#166534" : v === "Half" ? "#d97706" : v === "Absent" ? "#991b1b" : "#d1d5db"; return `<td style="background:${bg};color:${col};font-weight:600;">${v === "Present" ? "P" : v === "Half" ? "H" : v === "Absent" ? "A" : ""}</td>`; }).join("")}<td style="text-align:center;font-weight:800;color:#1e50a0;">${total}</td></tr>`; }).join("")}</tbody></table></body></html>`;
                 const existing = document.getElementById("print-overlay");
                 if (existing) document.body.removeChild(existing);
                 const overlay = document.createElement("div");
@@ -2331,6 +2418,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, sa
         onConfirm={() => { setSavedReports(p => p.filter(r => r.id !== reportDelModal)); setReportDelModal(null); }}
         onCancel={() => setReportDelModal(null)}
       />}
+
       {unmarkConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
           <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
@@ -2348,7 +2436,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, sa
   );
 }
 // ── ENTRY PERMIT ──────────────────────────────────────
-function EntryPermit({ workers, sites, assignments, setWorkers, savedPermits, setSavedPermits }) {
+function EntryPermit({ workers, sites, assignments, setWorkers, savedPermits, setSavedPermits, recycleBin, setRecycleBin }) {
   const [siteMode, setSiteMode] = useState("existing");
   const [selSite, setSelSite] = useState(sites[0]?.id || 0);
   const [manualSiteName, setManualSiteName] = useState("");
@@ -2623,7 +2711,7 @@ function EntryPermit({ workers, sites, assignments, setWorkers, savedPermits, se
 }
 
 // ── INVOICE ───────────────────────────────────────────
-function Invoice({ sites, invoices, setInvoices, company, setCompany, client, setClient, bank, setBank, recycleBin, setRecycleBin }) {
+function Invoice({ sites, invoices, setInvoices, company, setCompany, client, setClient, bank, setBank, recycleBin, setRecycleBin, attendanceBatches, setAttendanceBatches, attendance, setAttendance }) {
   const [selWorks, setSelWorks] = useState([]);
   const [openSites, setOpenSites] = useState([]);
   const [viewInv, setViewInv] = useState(null);
@@ -2666,6 +2754,27 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
   const saveInv = () => {
     if (allWorks.length === 0) return;
     setInvoices(p => [...p, { id: Date.now(), number: invNum, date: invDate, total, works: allWorks, siteName: invSiteName, sitePlace: invSitePlace, measureNo: client.measureNo, status: "raised", snapshot: { company: { ...company }, client: { ...client }, bank: { ...bank } } }]);
+    // Auto-link attendance batches
+    const invId = Date.now();
+    setAttendanceBatches(p => {
+      const updated = { ...p };
+      Object.keys(p).forEach(batchId => {
+        const batch = p[batchId];
+        // Check if this batch's works match the invoice works
+        const batchWorkIds = new Set(batch.workIds);
+        const invWorkIds = new Set(allWorks.map(w => w.id));
+        const matches = Array.from(batchWorkIds).filter(id => invWorkIds.has(id));
+
+        if (matches.length > 0) {
+          updated[batchId] = {
+            ...batch,
+            invoiceNumber: invNum,
+            invoiceId: invId
+          };
+        }
+      });
+      return updated;
+    });
     setSelWorks([]); setTab("history");
   };
 
@@ -2936,6 +3045,67 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
                   <button onClick={() => setStatusModal(inv)} style={{ ...S.btn(inv.status === "accepted" ? "#fee2e2" : "#166534"), padding: "5px 11px", fontSize: "12px" }}>
                     {inv.status === "accepted" ? "🔓 Unmark" : "🔒 Accept"}
                   </button>
+                  {inv.status !== "accepted" && (
+                    <button onClick={() => {
+                      const batch = Object.values(attendanceBatches).find(b =>
+                        b.invoiceId === inv.id
+                      );
+                      if (!batch) {
+                        alert('⚠️ No linked attendance found for this invoice');
+                        return;
+                      }
+                      setPwModal({
+                        action: () => {
+                          // Archive to recycle bin
+                          const archivedBatch = {
+                            id: `REC-${batch.id}`,
+                            attendanceId: batch.id,
+                            linkedInvoiceNumber: inv.number,
+                            linkedInvoiceId: inv.id,
+                            siteId: batch.siteId,
+                            workIds: batch.workIds,
+                            fromDate: batch.fromDate,
+                            toDate: batch.toDate,
+                            archivedAt: today,
+                            snapshot: {}
+                          };
+
+                          // Copy attendance records for this batch
+                          Object.keys(attendance).forEach(key => {
+                            if (key.startsWith(batch.id + '_')) {
+                              archivedBatch.snapshot[key] = attendance[key];
+                            }
+                          });
+
+                          setRecycleBin(p => ({
+                            ...p,
+                            attendance: [...(p.attendance || []), archivedBatch]
+                          }));
+
+                          // Delete from active
+                          setAttendanceBatches(p => {
+                            const updated = { ...p };
+                            delete updated[batch.id];
+                            return updated;
+                          });
+
+                          // Remove attendance records
+                          setAttendance(p => {
+                            const updated = { ...p };
+                            Object.keys(p).forEach(key => {
+                              if (key.startsWith(batch.id + '_')) delete updated[key];
+                            });
+                            return updated;
+                          });
+
+                          setPwModal(null);
+                          alert('✅ Attendance cleared and archived!');
+                        }
+                      });
+                    }} style={{ ...S.btn("#f59e0b"), padding: "5px 11px", fontSize: "12px" }}>
+                      🔐 Clear Attendance
+                    </button>
+                  )}
                   {inv.status !== "accepted" && <button onClick={() => deleteInv(inv)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "5px 11px", fontSize: "12px" }}>🗑️</button>}
                 </div>
               </div>
@@ -2984,12 +3154,26 @@ async function exportLedgerExcel(ledger, rows, totalDebit, totalCredit, closingB
   XLSX.writeFile(wb, `${ledger.name}-${new Date().toISOString().split("T")[0]}.xlsx`);
 }
 // ── LEDGER ────────────────────────────────────────────
-function Ledger({ ledgers, setLedgers, invoices }) {
+function LedgerDetail({ ledger, ledgers, setLedgers, invoices, onBack }) {
+  // States for LIST view
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", region: "", client: "Swathi Engineering Agency", measurePrefix: "", enableTds: false, tdsRate: 1, enableRetention: false, retentionRate: 5 });
   const [selLedger, setSelLedger] = useState(null);
   const [editLedgerId, setEditLedgerId] = useState(null);
   const [delLedgerModal, setDelLedgerModal] = useState(null);
+
+  // States for DETAIL view (only used when ledger prop is provided)
+  const [showAddEntry, setShowAddEntry] = useState(false);
+  const [entryForm, setEntryForm] = useState({ date: today, particulars: "Bank Payment", customParticulars: "", debit: "", credit: "", note: "" });
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [transferForm, setTransferForm] = useState({ date: today, amount: "", toLedgerId: "", note: "" });
+  const [editPwModal, setEditPwModal] = useState(null);
+  const [editEntryModal, setEditEntryModal] = useState(null);
+  const [delEntryModal, setDelEntryModal] = useState(null);
+  const [rateForm, setRateForm] = useState({ tdsRate: "", retentionRate: "" });
+  const [ratePwModal, setRatePwModal] = useState(false);
+
+  const PARTICULARS = ["Bank Payment", "Transfer Received", "TDS Deduction", "Retention Deduction", "Other"];
 
   const saveLedger = () => {
     if (!form.name.trim()) return;
@@ -3004,12 +3188,417 @@ function Ledger({ ledgers, setLedgers, invoices }) {
     setShowAdd(false);
   };
 
-  if (selLedger) {
-    const ledger = ledgers.find(l => l.id === selLedger);
-    if (!ledger) { setSelLedger(null); return null; }
-    return <LedgerDetail ledger={ledger} ledgers={ledgers} setLedgers={setLedgers} invoices={invoices} onBack={() => setSelLedger(null)} />;
+  // If ledger is provided (detail view)
+  if (ledger) {
+    const updateLedger = updated => {
+      setLedgers(p => p.map((l: any) => l.id === ledger.id ? updated : l));
+    };
+
+    // Pull invoices not yet added to this ledger
+    const linkedInvIds = new Set((ledger.entries || []).filter(e => e.invoiceId).map((e: any) => e.invoiceId));
+    const allLinkedInvIds = new Set(ledgers.flatMap(l => (l.entries || []).filter(e => e.invoiceId).map((e: any) => e.invoiceId)));
+    const availableInvoices = invoices.filter(inv => {
+      if (allLinkedInvIds.has(inv.id)) return false;
+      if (ledger.measurePrefix && inv.measureNo && inv.measureNo.trim() !== "") {
+        return inv.measureNo.toUpperCase().startsWith(ledger.measurePrefix.toUpperCase());
+      }
+      if (ledger.measurePrefix && (!inv.measureNo || inv.measureNo.trim() === "")) {
+        return true;
+      }
+      return true;
+    }).sort((a, b) => {
+      const getOrder = inv => {
+        if (!inv.measureNo || inv.measureNo.trim() === "") return 0;
+        if (inv.measureNo.toUpperCase().startsWith("SEAC")) return 1;
+        if (inv.measureNo.toUpperCase().startsWith("SEAK")) return 2;
+        return 0;
+      };
+      const orderDiff = getOrder(a) - getOrder(b);
+      if (orderDiff !== 0) return orderDiff;
+      return a.number.localeCompare(b.number, undefined, { numeric: true });
+    });
+
+    const addInvoiceEntry = inv => {
+      const amount = inv.total || 0;
+      const newEntries = [{ id: crypto.randomUUID(), date: inv.date || today, particulars: "Cont Invoice", credit: amount, debit: 0, note: inv.number, invoiceId: inv.id }];
+      if (ledger.enableTds) {
+        newEntries.push({ id: crypto.randomUUID(), date: inv.date || today, particulars: `TDS @ ${ledger.tdsRate}%`, debit: parseFloat((amount * ledger.tdsRate / 100).toFixed(2)), credit: 0, note: inv.number, invoiceId: inv.id });
+      }
+      if (ledger.enableRetention) {
+        newEntries.push({ id: crypto.randomUUID(), date: inv.date || today, particulars: `Retention @ ${ledger.retentionRate}%`, debit: parseFloat((amount * ledger.retentionRate / 100).toFixed(2)), credit: 0, note: inv.number, invoiceId: inv.id });
+      }
+      updateLedger({ ...ledger, entries: [...(ledger.entries || []), ...newEntries] });
+    };
+
+    const addManualEntry = () => {
+      if (!entryForm.debit && !entryForm.credit) return;
+      const particulars = entryForm.particulars === "Other" ? entryForm.customParticulars : entryForm.particulars;
+      const entry = { id: crypto.randomUUID(), date: entryForm.date, particulars, debit: Number(entryForm.debit) || 0, credit: Number(entryForm.credit) || 0, note: entryForm.note };
+      updateLedger({ ...ledger, entries: [...(ledger.entries || []), entry] });
+      setEntryForm({ date: today, particulars: "Bank Payment", customParticulars: "", debit: "", credit: "", note: "" });
+      setShowAddEntry(false);
+    };
+
+    const deleteEntry = id => {
+      const entry = (ledger.entries || []).find(e => e.id === id);
+      if (entry && entry.invoiceId) {
+        updateLedger({ ...ledger, entries: (ledger.entries || []).filter(e => e.invoiceId !== entry.invoiceId) });
+      } else if (entry && entry.transferId) {
+        setLedgers(p => p.map((l: any) => ({ ...l, entries: (l.entries || []).filter(e => e.transferId !== entry.transferId) })));
+      } else {
+        updateLedger({ ...ledger, entries: (ledger.entries || []).filter(e => e.id !== id) });
+      }
+    };
+
+    // Sort entries by date
+    const sorted = [...(ledger.entries || [])].sort((a, b) => a.date.localeCompare(b.date));
+
+    // Calculate running balance (credit increases balance, debit decreases)
+    let balance = 0;
+    const rows = sorted.map((e: any) => {
+      balance = balance + (e.credit || 0) - (e.debit || 0);
+      return { ...e, balance };
+    });
+
+    const totalCredit = sorted.reduce((a, e) => a + (e.credit || 0), 0);
+    const totalDebit = sorted.reduce((a, e) => a + (e.debit || 0), 0);
+    const closingBalance = totalCredit - totalDebit;
+
+    // DETAIL VIEW - Return here
+    return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <button onClick={onBack} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
+            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 800 }}>📒 {ledger.name}</h2>
+          </div>
+          <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
+            <button onClick={() => setShowAddEntry(p => !p)} style={S.btn()}>+ Add Entry</button>
+            <button onClick={() => setShowTransfer(p => !p)} style={S.btn("#7c3aed")}>↔️ Transfer</button>
+            <button onClick={() => {
+              const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${ledger.name}</title><style>${printCSS}</style></head><body onload="window.print();">
+  <div style="font-family:'Segoe UI',sans-serif;color:#1a2b4a;padding:10mm;">
+    <div style="text-align:center;margin-bottom:16px;border-bottom:2px solid #0f3172;padding-bottom:12px;">
+      <div style="font-size:20px;font-weight:800;color:#0f3172;">VinoDhan Coating</div>
+      <div style="font-size:16px;font-weight:700;color:#0f3172;margin-top:4px;">${ledger.name}</div>
+      <div style="font-size:12px;color:#6b84a3;margin-top:4px;">Client: ${ledger.client}${ledger.region ? " — " + ledger.region : ""}</div>
+    </div>
+    <div style="display:flex;gap:20px;margin-bottom:16px;font-size:12px;">
+      <div><span style="font-weight:600;color:#6b84a3;">Total Credit: </span><span style="font-weight:700;color:#166534;">₹${totalCredit.toLocaleString()}</span></div>
+      <div><span style="font-weight:600;color:#6b84a3;">Total Debit: </span><span style="font-weight:700;color:#991b1b;">₹${totalDebit.toLocaleString()}</span></div>
+      <div><span style="font-weight:600;color:#6b84a3;">Closing Balance: </span><span style="font-weight:700;color:#1e50a0;">₹${closingBalance.toLocaleString()}</span></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead>
+        <tr style="background:#0f3172;color:#fff;">
+          <th style="padding:8px 10px;text-align:left;">Date</th>
+          <th style="padding:8px 10px;text-align:left;">Particulars</th>
+          <th style="padding:8px 10px;text-align:left;">Note</th>
+          <th style="padding:8px 10px;text-align:right;">Debit (₹)</th>
+          <th style="padding:8px 10px;text-align:right;">Credit (₹)</th>
+          <th style="padding:8px 10px;text-align:right;">Balance (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((e, idx) => `
+          <tr style="background:${e.transferId ? "#fef9c3" :
+                  e.particulars === "Cont Invoice" ? "#f0fdf4" :
+                    e.particulars === "Bank Payment" ? "#eff6ff" :
+                      (e.particulars.includes("TDS") || e.particulars.includes("Retention")) ? "#fdf4ff" :
+                        idx % 2 === 0 ? "#fff" : "#f8faff"
+                };border-bottom:1px solid #e5e7eb;">
+            <td style="padding:7px 10px;white-space:nowrap;">${fmtDate(e.date)}</td>
+            <td style="padding:7px 10px;font-weight:600;">${e.particulars}</td>
+            <td style="padding:7px 10px;color:#6b84a3;font-size:11px;">${e.note || "—"}</td>
+            <td style="padding:7px 10px;text-align:right;color:#991b1b;font-weight:600;">${e.debit > 0 ? "₹" + e.debit.toLocaleString() : "—"}</td>
+            <td style="padding:7px 10px;text-align:right;color:#166534;font-weight:600;">${e.credit > 0 ? "₹" + e.credit.toLocaleString() : "—"}</td>
+            <td style="padding:7px 10px;text-align:right;font-weight:700;color:#1e50a0;">₹${e.balance.toLocaleString()}</td>
+          </tr>
+        `).join("")}
+        <tr style="background:#0f3172;color:#fff;font-weight:700;">
+          <td colspan="3" style="padding:10px;text-align:right;">TOTAL</td>
+          <td style="padding:10px;text-align:right;">₹${totalDebit.toLocaleString()}</td>
+          <td style="padding:10px;text-align:right;">₹${totalCredit.toLocaleString()}</td>
+          <td style="padding:10px;text-align:right;color:#f59e0b;font-size:14px;">₹${closingBalance.toLocaleString()}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  </body></html>`;
+              const existing = document.getElementById("print-overlay");
+              if (existing) document.body.removeChild(existing);
+              const overlay = document.createElement("div");
+              overlay.id = "print-overlay";
+              overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;";
+              const bar = document.createElement("div");
+              bar.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;flex-wrap:wrap;";
+              const backBtn = document.createElement("button");
+              backBtn.innerText = "← Back";
+              backBtn.style.cssText = "background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
+              backBtn.onclick = () => document.body.removeChild(overlay);
+              const title = document.createElement("div");
+              title.innerText = "Preview — scroll to review";
+              title.style.cssText = "color:#fff;font-size:13px;font-weight:600;flex:1;text-align:center;";
+              const dlBtn = document.createElement("button");
+              dlBtn.innerText = "⬇️ Download & Print";
+              dlBtn.style.cssText = "background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
+              dlBtn.onclick = () => {
+                const encoded = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+                const a = document.createElement("a");
+                a.href = encoded; a.download = `${ledger.name}-${new Date().toISOString().split("T")[0]}.html`;
+                a.style.display = "none"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              };
+              bar.appendChild(backBtn); bar.appendChild(title); bar.appendChild(dlBtn);
+              const iframe = document.createElement("iframe");
+              iframe.style.cssText = "flex:1;width:100%;border:none;";
+              overlay.appendChild(bar); overlay.appendChild(iframe);
+              document.body.appendChild(overlay);
+              iframe.contentDocument.open();
+              iframe.contentDocument.write(html);
+              iframe.contentDocument.close();
+            }} style={S.btn("#166534")}>🖨️ Print</button>
+            <button onClick={() => exportLedgerExcel(ledger, rows, totalDebit, totalCredit, closingBalance)} style={S.btn("#d97706", "#fff")}>📊 Excel</button>
+          </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "16px", overflowX: "auto", paddingBottom: "4px" }}>
+          <div style={{ ...S.card, background: "#dcfce7", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#166534", marginBottom: "4px" }}>TOTAL CREDIT</div>
+            <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{totalCredit.toLocaleString()}</div>
+          </div>
+          <div style={{ ...S.card, background: "#fee2e2", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#991b1b", marginBottom: "4px" }}>TOTAL DEBIT</div>
+            <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{totalDebit.toLocaleString()}</div>
+          </div>
+          <div style={{ ...S.card, background: "#dbeafe", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#1e40af", marginBottom: "4px" }}>CLOSING BALANCE</div>
+            <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{closingBalance.toLocaleString()}</div>
+          </div>
+          {ledger.enableTds && <div style={{ ...S.card, background: "#fef9c3", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#d97706", marginBottom: "4px" }}>TDS {ledger.tdsRate}%</div>
+            <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{sorted.filter(e => e.particulars.includes("TDS")).reduce((a, e) => a + (e.debit || 0), 0).toLocaleString()}</div>
+            <button onClick={() => { setRateForm({ tdsRate: String(ledger.tdsRate), retentionRate: String(ledger.retentionRate) }); setRatePwModal(true); }} style={{ ...S.btn("#f59e0b", "#fff"), padding: "3px 8px", fontSize: "10px", marginTop: "6px" }}>✏️ Edit Rate</button>
+          </div>}
+          {ledger.enableRetention && <div style={{ ...S.card, background: "#ede9fe", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#5b21b6", marginBottom: "4px" }}>RETENTION {ledger.retentionRate}%</div>
+            <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{sorted.filter(e => e.particulars.includes("Retention")).reduce((a, e) => a + (e.debit || 0), 0).toLocaleString()}</div>
+            <button onClick={() => { setRateForm({ tdsRate: String(ledger.tdsRate), retentionRate: String(ledger.retentionRate) }); setRatePwModal(true); }} style={{ ...S.btn("#7c3aed", "#fff"), padding: "3px 8px", fontSize: "10px", marginTop: "6px" }}>✏️ Edit Rate</button>
+          </div>}
+        </div>
+
+        {/* Transfer Form */}
+        {showTransfer && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #7c3aed" }}>
+          <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>↔️ Transfer to Another Ledger</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "9px" }}>
+            <div><label style={S.lbl}>Date</label><input type="date" value={transferForm.date} onChange={e => setTransferForm(p => ({ ...p, date: e.target.value }))} style={S.inp} /></div>
+            <div><label style={S.lbl}>Amount (₹)</label><input type="number" value={transferForm.amount} onChange={e => setTransferForm(p => ({ ...p, amount: e.target.value }))} style={S.inp} /></div>
+            <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Transfer To</label>
+              <select value={transferForm.toLedgerId} onChange={e => setTransferForm(p => ({ ...p, toLedgerId: e.target.value }))} style={S.inp}>
+                <option value="">Select Ledger...</option>
+                {ledgers.filter(l => l.id !== ledger.id).map((l: any) => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            </div>
+            <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Note (optional)</label><input value={transferForm.note} onChange={e => setTransferForm(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} /></div>
+          </div>
+          <div style={{ display: "flex", gap: "7px", marginTop: "11px" }}>
+            <button onClick={() => {
+              if (!transferForm.amount || !transferForm.toLedgerId) return;
+              const transferId = crypto.randomUUID();
+              const amount = Number(transferForm.amount);
+              const toLedger = ledgers.find(l => String(l.id) === String(transferForm.toLedgerId));
+              if (!toLedger) return;
+              const debitEntry = { id: crypto.randomUUID(), date: transferForm.date, particulars: "Transfer to " + toLedger.name, debit: amount, credit: 0, note: transferForm.note, transferId };
+              const creditEntry = { id: crypto.randomUUID(), date: transferForm.date, particulars: "Transfer from " + ledger.name, debit: 0, credit: amount, note: transferForm.note, transferId };
+              setLedgers(p => p.map((l: any) => {
+                if (String(l.id) === String(ledger.id)) return { ...l, entries: [...(l.entries || []), debitEntry] };
+                if (String(l.id) === String(toLedger.id)) return { ...l, entries: [...(l.entries || []), creditEntry] };
+                return l;
+              }));
+              setTransferForm({ date: today, amount: "", toLedgerId: "", note: "" });
+              setShowTransfer(false);
+            }} style={S.btn("#7c3aed")}>💾 Save Transfer</button>
+            <button onClick={() => setShowTransfer(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+          </div>
+        </div>}
+
+        {/* Add Invoice */}
+        {availableInvoices.length > 0 && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #bfdbfe" }}>
+          <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>📥 Add Invoice to Ledger</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {availableInvoices.map((inv: any) => (
+              <div key={inv.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#f0f6ff", borderRadius: "8px" }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: "13px" }}>{inv.number}</div>
+                  <div style={{ fontSize: "11px", color: "#6b84a3" }}>{fmtDate(inv.date)} — ₹{inv.total?.toLocaleString()}</div>
+                  <div style={{ fontSize: "11px", color: "#6b84a3" }}>{inv.siteName || "—"}</div>
+                  {inv.measureNo && <div style={{ fontSize: "10px", fontWeight: 700, color: "#1e50a0", marginTop: "2px" }}>📋 {inv.measureNo}</div>}
+                </div>
+                <button onClick={() => addInvoiceEntry(inv)} style={{ ...S.btn("#166634"), padding: "5px 12px", fontSize: "12px" }}>+ Add</button>
+              </div>
+            ))}
+          </div>
+        </div>}
+
+        {/* Manual Entry Form */}
+        {showAddEntry && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #bfdbfe" }}>
+          <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>New Manual Entry</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "9px" }}>
+            <div><label style={S.lbl}>Date</label><input type="date" value={entryForm.date} onChange={e => setEntryForm(p => ({ ...p, date: e.target.value }))} style={S.inp} /></div>
+            <div><label style={S.lbl}>Particulars</label>
+              <select value={entryForm.particulars} onChange={e => setEntryForm(p => ({ ...p, particulars: e.target.value }))} style={S.inp}>
+                {PARTICULARS.map((p: any) => <option key={p}>{p}</option>)}
+              </select>
+            </div>
+            {entryForm.particulars === "Other" && <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Description</label><input value={entryForm.customParticulars} onChange={e => setEntryForm(p => ({ ...p, customParticulars: e.target.value }))} placeholder="Enter description" style={S.inp} /></div>}
+            <div><label style={S.lbl}>Debit (₹)</label><input type="number" value={entryForm.debit} onChange={e => setEntryForm(p => ({ ...p, debit: e.target.value, credit: "" }))} style={S.inp} /></div>
+            <div><label style={S.lbl}>Credit (₹)</label><input type="number" value={entryForm.credit} onChange={e => setEntryForm(p => ({ ...p, credit: e.target.value, debit: "" }))} style={S.inp} /></div>
+            <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Note (optional)</label><input value={entryForm.note} onChange={e => setEntryForm(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} /></div>
+          </div>
+          <div style={{ display: "flex", gap: "7px", marginTop: "11px" }}>
+            <button onClick={addManualEntry} style={S.btn()}>💾 Save</button>
+            <button onClick={() => setShowAddEntry(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+          </div>
+        </div>}
+
+        {/* Ledger Table */}
+        <div style={{ ...S.card, overflowX: "auto" }}>
+          <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📋 {ledger.client} — {ledger.region || "All Regions"}</h3>
+          {rows.length === 0 ? <div style={{ textAlign: "center", color: "#9db3cc", padding: "30px" }}>No entries yet.</div>
+            : <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "500px" }}>
+              <thead><tr style={{ background: "#0f3172", color: "#fff" }}>
+                <th style={{ padding: "8px 10px", textAlign: "left" }}>Date</th>
+                <th style={{ padding: "8px 10px", textAlign: "left" }}>Particulars</th>
+                <th style={{ padding: "8px 10px", textAlign: "right" }}>Debit (₹)</th>
+                <th style={{ padding: "8px 10px", textAlign: "right" }}>Credit (₹)</th>
+                <th style={{ padding: "8px 10px", textAlign: "right" }}>Balance (₹)</th>
+                <th style={{ padding: "8px 10px", textAlign: "center" }}>Action</th>
+              </tr></thead>
+              <tbody>
+                {rows.map((e, idx) => (
+                  <tr key={e.id} style={{
+                    background:
+                      e.transferId ? "#fef9c3" :
+                        e.particulars === "Cont Invoice" ? "#f0fdf4" :
+                          e.particulars === "Bank Payment" ? "#eff6ff" :
+                            (e.particulars.includes("TDS") || e.particulars.includes("Retention")) ? "#fdf4ff" :
+                              idx % 2 === 0 ? "#fff" : "#f8faff"
+                    , borderBottom: "1px solid #f0f4f9"
+                  }}>
+                    <td style={{ padding: "7px 10px", whiteSpace: "nowrap" }}>{fmtDate(e.date)}</td>
+                    <td style={{ padding: "7px 10px" }}>
+                      <div style={{ fontWeight: 600 }}>{e.particulars}</div>
+                      {e.note && <div style={{ fontSize: "11px", marginTop: "3px" }}>
+                        {e.invoiceId
+                          ? <span style={{ background: "#dbeafe", color: "#1e40af", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}>{e.note}</span>
+                          : e.transferId
+                            ? <span style={{ background: "#fef9c3", color: "#d97706", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}>{e.note}</span>
+                            : <span style={{ color: "#6b84a3", fontSize: "10px" }}>{e.note}</span>
+                        }
+                      </div>}
+                    </td>
+                    <td style={{ padding: "7px 10px", textAlign: "right", color: "#991b1b", fontWeight: 600 }}>{e.debit > 0 ? `₹${e.debit.toLocaleString()}` : "—"}</td>
+                    <td style={{ padding: "7px 10px", textAlign: "right", color: "#166534", fontWeight: 600 }}>{e.credit > 0 ? `₹${e.credit.toLocaleString()}` : "—"}</td>
+                    <td style={{ padding: "7px 10px", textAlign: "right", fontWeight: 700, color: "#1e50a0" }}>₹{e.balance.toLocaleString()}</td>
+                    <td style={{ padding: "7px 10px", textAlign: "center" }}>
+                      <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
+                        <button onClick={() => setEditPwModal({ ...e })} style={{ ...S.btn("#f0f6ff", "#1e50a0"), padding: "3px 8px", fontSize: "11px" }}>✏️</button>
+                        <button onClick={() => setDelEntryModal(e.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "3px 8px", fontSize: "11px" }}>🗑️</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                <tr style={{ background: "#0f3172", color: "#fff", fontWeight: 700 }}>
+                  <td colSpan={2} style={{ padding: "10px", textAlign: "right" }}>TOTAL</td>
+                  <td style={{ padding: "10px", textAlign: "right" }}>₹{totalDebit.toLocaleString()}</td>
+                  <td style={{ padding: "10px", textAlign: "right" }}>₹{totalCredit.toLocaleString()}</td>
+                  <td style={{ padding: "10px", textAlign: "right", color: "#f59e0b", fontSize: "14px" }}>₹{closingBalance.toLocaleString()}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>}
+        </div>
+        {editPwModal && <PwModal
+          title="Edit Entry?"
+          onConfirm={() => { setEditEntryModal({ ...editPwModal }); setEditPwModal(null); }}
+          onCancel={() => setEditPwModal(null)}
+        />}
+        {editEntryModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
+            <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "320px" }}>
+              <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>✏️ Edit Entry</h3>
+              <div style={{ display: "grid", gap: "10px", marginBottom: "14px" }}>
+                <div><label style={S.lbl}>Date</label>
+                  <input type="date" value={editEntryModal.date} onChange={e => setEditEntryModal(p => ({ ...p, date: e.target.value }))} style={S.inp} />
+                </div>
+                <div><label style={S.lbl}>Particulars</label>
+                  <input value={editEntryModal.particulars} onChange={e => setEditEntryModal(p => ({ ...p, particulars: e.target.value }))} style={S.inp} />
+                </div>
+                <div><label style={S.lbl}>Debit (₹)</label>
+                  {(editEntryModal.particulars.includes("TDS") || editEntryModal.particulars.includes("Retention")) && (
+                    <div style={{ display: "flex", gap: "7px", marginBottom: "7px" }}>
+                      <button onClick={() => setEditEntryModal(p => ({ ...p, debit: 0, credit: 0, particulars: p.particulars + " (N/A)" }))} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 10px", fontSize: "11px" }}>✗ Not Applicable</button>
+                      <span style={{ fontSize: "11px", color: "#6b84a3", alignSelf: "center" }}>Sets amount to zero</span>
+                    </div>
+                  )}
+                  <input type="number" value={editEntryModal.debit || ""} onChange={e => setEditEntryModal(p => ({ ...p, debit: Number(e.target.value), credit: 0 }))} style={S.inp} />
+                </div>
+                <div><label style={S.lbl}>Credit (₹)</label>
+                  <input type="number" value={editEntryModal.credit || ""} onChange={e => setEditEntryModal(p => ({ ...p, credit: Number(e.target.value), debit: 0 }))} style={S.inp} />
+                </div>
+                <div><label style={S.lbl}>Note</label>
+                  <input value={editEntryModal.note || ""} onChange={e => setEditEntryModal(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
+                <button onClick={() => {
+                  updateLedger({ ...ledger, entries: (ledger.entries || []).map((e: any) => e.id === editEntryModal.id ? { ...editEntryModal } : e) });
+                  setEditEntryModal(null);
+                }} style={S.btn()}>💾 Save</button>
+                <button onClick={() => setEditEntryModal(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {ratePwModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
+            <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
+              <div style={{ fontSize: "32px", marginBottom: "8px" }}>🔐</div>
+              <h3 style={{ margin: "0 0 7px" }}>Edit Rates</h3>
+              <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>Enter password to edit TDS/Retention rates.</p>
+              <input type="password" id="rate-pw-input" placeholder="Enter password" style={{ ...S.inp, marginBottom: "14px", textAlign: "center" }} />
+              {ledger.enableTds && <div style={{ marginBottom: "10px", textAlign: "left" }}>
+                <label style={S.lbl}>TDS Rate (%)</label>
+                <input type="number" value={rateForm.tdsRate} onChange={e => setRateForm(p => ({ ...p, tdsRate: e.target.value }))} style={S.inp} />
+              </div>}
+              {ledger.enableRetention && <div style={{ marginBottom: "14px", textAlign: "left" }}>
+                <label style={S.lbl}>Retention Rate (%)</label>
+                <input type="number" value={rateForm.retentionRate} onChange={e => setRateForm(p => ({ ...p, retentionRate: e.target.value }))} style={S.inp} />
+              </div>}
+              <div id="rate-err" style={{ color: "#dc2626", fontSize: "12px", marginBottom: "10px", display: "none" }}>❌ Incorrect password.</div>
+              <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
+                <button onClick={() => {
+                  const pw = document.getElementById("rate-pw-input").value;
+                  if (pw !== RECYCLE_PASSWORD) { document.getElementById("rate-err").style.display = "block"; return; }
+                  updateLedger({ ...ledger, tdsRate: Number(rateForm.tdsRate), retentionRate: Number(rateForm.retentionRate) });
+                  setRatePwModal(false);
+                }} style={S.btn("#1e50a0")}>Confirm</button>
+                <button onClick={() => setRatePwModal(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {delEntryModal && <PwModal
+          title="Delete Entry?"
+          onConfirm={() => { deleteEntry(delEntryModal); setDelEntryModal(null); }}
+          onCancel={() => setDelEntryModal(null)}
+        />}
+      </div>
+    );
   }
 
+  // LIST VIEW - Default return (when no ledger is provided)
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
@@ -3075,484 +3664,6 @@ function Ledger({ ledgers, setLedgers, invoices }) {
         title="Delete Ledger?"
         onConfirm={() => { setLedgers(p => p.filter(l => l.id !== delLedgerModal)); setDelLedgerModal(null); }}
         onCancel={() => setDelLedgerModal(null)}
-      />}
-    </div>
-  );
-}
-
-function LedgerDetail({ ledger, ledgers, setLedgers, invoices, onBack }) {
-  const [showAdd, setShowAdd] = useState(false);
-  const [entryForm, setEntryForm] = useState({ date: today, particulars: "Bank Payment", customParticulars: "", debit: "", credit: "", note: "" });
-  const [pwModal, setPwModal] = useState(null);
-  const [delEntryModal, setDelEntryModal] = useState(null);
-  const [editEntryModal, setEditEntryModal] = useState(null);
-  const [editPwModal, setEditPwModal] = useState(null);
-  const [editRateModal, setEditRateModal] = useState(null);
-  const [rateForm, setRateForm] = useState({ tdsRate: "", retentionRate: "" });
-  const [ratePwModal, setRatePwModal] = useState(false);
-  const [showTransfer, setShowTransfer] = useState(false);
-  const [transferForm, setTransferForm] = useState({ date: today, amount: "", toLedgerId: "", note: "" });
-  const PARTICULARS = ["Bank Payment", "Transfer Received", "TDS Deduction", "Retention Deduction", "Other"];
-
-  const updateLedger = updated => {
-    setLedgers(p => p.map((l: any) => l.id === ledger.id ? updated : l));
-  };
-
-  // Pull invoices not yet added to this ledger
-  const linkedInvIds = new Set((ledger.entries || []).filter(e => e.invoiceId).map((e: any) => e.invoiceId));
-  const allLinkedInvIds = new Set(ledgers.flatMap(l => (l.entries || []).filter(e => e.invoiceId).map((e: any) => e.invoiceId)));
-  const availableInvoices = invoices.filter(inv => {
-    if (allLinkedInvIds.has(inv.id)) return false;
-    if (ledger.measurePrefix && inv.measureNo && inv.measureNo.trim() !== "") {
-      return inv.measureNo.toUpperCase().startsWith(ledger.measurePrefix.toUpperCase());
-    }
-    if (ledger.measurePrefix && (!inv.measureNo || inv.measureNo.trim() === "")) {
-      return true;
-    }
-    return true;
-  }).sort((a, b) => {
-    const getOrder = inv => {
-      if (!inv.measureNo || inv.measureNo.trim() === "") return 0;
-      if (inv.measureNo.toUpperCase().startsWith("SEAC")) return 1;
-      if (inv.measureNo.toUpperCase().startsWith("SEAK")) return 2;
-      return 0;
-    };
-    const orderDiff = getOrder(a) - getOrder(b);
-    if (orderDiff !== 0) return orderDiff;
-    return a.number.localeCompare(b.number, undefined, { numeric: true });
-  });
-
-  const addInvoiceEntry = inv => {
-    const amount = inv.total || 0;
-    const newEntries = [{ id: crypto.randomUUID(), date: inv.date || today, particulars: "Cont Invoice", credit: amount, debit: 0, note: inv.number, invoiceId: inv.id }];
-    if (ledger.enableTds) {
-      newEntries.push({ id: crypto.randomUUID(), date: inv.date || today, particulars: `TDS @ ${ledger.tdsRate}%`, debit: parseFloat((amount * ledger.tdsRate / 100).toFixed(2)), credit: 0, note: inv.number, invoiceId: inv.id });
-    }
-    if (ledger.enableRetention) {
-      newEntries.push({ id: crypto.randomUUID(), date: inv.date || today, particulars: `Retention @ ${ledger.retentionRate}%`, debit: parseFloat((amount * ledger.retentionRate / 100).toFixed(2)), credit: 0, note: inv.number, invoiceId: inv.id });
-    }
-    updateLedger({ ...ledger, entries: [...(ledger.entries || []), ...newEntries] });
-  };
-
-  const addManualEntry = () => {
-    if (!entryForm.debit && !entryForm.credit) return;
-    const particulars = entryForm.particulars === "Other" ? entryForm.customParticulars : entryForm.particulars;
-    const entry = { id: crypto.randomUUID(), date: entryForm.date, particulars, debit: Number(entryForm.debit) || 0, credit: Number(entryForm.credit) || 0, note: entryForm.note };
-    updateLedger({ ...ledger, entries: [...(ledger.entries || []), entry] });
-    setEntryForm({ date: today, particulars: "Bank Payment", customParticulars: "", debit: "", credit: "", note: "" });
-    setShowAdd(false);
-  };
-
-  const deleteEntry = id => {
-    const entry = (ledger.entries || []).find(e => e.id === id);
-    if (entry && entry.invoiceId) {
-      updateLedger({ ...ledger, entries: (ledger.entries || []).filter(e => e.invoiceId !== entry.invoiceId) });
-    } else if (entry && entry.transferId) {
-      setLedgers(p => p.map((l: any) => ({ ...l, entries: (l.entries || []).filter(e => e.transferId !== entry.transferId) })));
-    } else {
-      updateLedger({ ...ledger, entries: (ledger.entries || []).filter(e => e.id !== id) });
-    }
-  };
-
-  // Sort entries by date
-  const sorted = [...(ledger.entries || [])].sort((a, b) => a.date.localeCompare(b.date));
-
-  // Calculate running balance (credit increases balance, debit decreases)
-  let balance = 0;
-  const rows = sorted.map((e: any) => {
-    balance = balance + (e.credit || 0) - (e.debit || 0);
-    return { ...e, balance };
-  });
-
-  const totalCredit = sorted.reduce((a, e) => a + (e.credit || 0), 0);
-  const totalDebit = sorted.reduce((a, e) => a + (e.debit || 0), 0);
-  const closingBalance = totalCredit - totalDebit;
-
-  return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <button onClick={onBack} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
-          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 800 }}>📒 {ledger.name}</h2>
-        </div>
-        <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
-          <button onClick={() => setShowAdd(p => !p)} style={S.btn()}>+ Add Entry</button>
-          <button onClick={() => setShowTransfer(p => !p)} style={S.btn("#7c3aed")}>↔️ Transfer</button>
-          <button onClick={() => {
-            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${ledger.name}</title><style>${printCSS}</style></head><body onload="window.print();">
-  <div style="font-family:'Segoe UI',sans-serif;color:#1a2b4a;padding:10mm;">
-    <div style="text-align:center;margin-bottom:16px;border-bottom:2px solid #0f3172;padding-bottom:12px;">
-      <div style="font-size:20px;font-weight:800;color:#0f3172;">VinoDhan Coating</div>
-      <div style="font-size:16px;font-weight:700;color:#0f3172;margin-top:4px;">${ledger.name}</div>
-      <div style="font-size:12px;color:#6b84a3;margin-top:4px;">Client: ${ledger.client}${ledger.region ? " — " + ledger.region : ""}</div>
-    </div>
-    <div style="display:flex;gap:20px;margin-bottom:16px;font-size:12px;">
-      <div><span style="font-weight:600;color:#6b84a3;">Total Credit: </span><span style="font-weight:700;color:#166534;">₹${totalCredit.toLocaleString()}</span></div>
-      <div><span style="font-weight:600;color:#6b84a3;">Total Debit: </span><span style="font-weight:700;color:#991b1b;">₹${totalDebit.toLocaleString()}</span></div>
-      <div><span style="font-weight:600;color:#6b84a3;">Closing Balance: </span><span style="font-weight:700;color:#1e50a0;">₹${closingBalance.toLocaleString()}</span></div>
-    </div>
-    <table style="width:100%;border-collapse:collapse;font-size:12px;">
-      <thead>
-        <tr style="background:#0f3172;color:#fff;">
-          <th style="padding:8px 10px;text-align:left;">Date</th>
-          <th style="padding:8px 10px;text-align:left;">Particulars</th>
-          <th style="padding:8px 10px;text-align:left;">Note</th>
-          <th style="padding:8px 10px;text-align:right;">Debit (₹)</th>
-          <th style="padding:8px 10px;text-align:right;">Credit (₹)</th>
-          <th style="padding:8px 10px;text-align:right;">Balance (₹)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.map((e, idx) => `
-          <tr style="background:${e.transferId ? "#fef9c3" :
-                e.particulars === "Cont Invoice" ? "#f0fdf4" :
-                  e.particulars === "Bank Payment" ? "#eff6ff" :
-                    (e.particulars.includes("TDS") || e.particulars.includes("Retention")) ? "#fdf4ff" :
-                      idx % 2 === 0 ? "#fff" : "#f8faff"
-              };border-bottom:1px solid #e5e7eb;">
-            <td style="padding:7px 10px;white-space:nowrap;">${fmtDate(e.date)}</td>
-            <td style="padding:7px 10px;font-weight:600;">${e.particulars}</td>
-            <td style="padding:7px 10px;color:#6b84a3;font-size:11px;">${e.note || "—"}</td>
-            <td style="padding:7px 10px;text-align:right;color:#991b1b;font-weight:600;">${e.debit > 0 ? "₹" + e.debit.toLocaleString() : "—"}</td>
-            <td style="padding:7px 10px;text-align:right;color:#166534;font-weight:600;">${e.credit > 0 ? "₹" + e.credit.toLocaleString() : "—"}</td>
-            <td style="padding:7px 10px;text-align:right;font-weight:700;color:#1e50a0;">₹${e.balance.toLocaleString()}</td>
-          </tr>
-        `).join("")}
-        <tr style="background:#0f3172;color:#fff;font-weight:700;">
-          <td colspan="3" style="padding:10px;text-align:right;">TOTAL</td>
-          <td style="padding:10px;text-align:right;">₹${totalDebit.toLocaleString()}</td>
-          <td style="padding:10px;text-align:right;">₹${totalCredit.toLocaleString()}</td>
-          <td style="padding:10px;text-align:right;color:#f59e0b;font-size:14px;">₹${closingBalance.toLocaleString()}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  </body></html>`;
-            const existing = document.getElementById("print-overlay");
-            if (existing) document.body.removeChild(existing);
-            const overlay = document.createElement("div");
-            overlay.id = "print-overlay";
-            overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f4f9;z-index:99999;display:flex;flex-direction:column;font-family:'Segoe UI',sans-serif;";
-            const bar = document.createElement("div");
-            bar.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#0f3172;flex-shrink:0;gap:10px;flex-wrap:wrap;";
-            const backBtn = document.createElement("button");
-            backBtn.innerText = "← Back";
-            backBtn.style.cssText = "background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;";
-            backBtn.onclick = () => document.body.removeChild(overlay);
-            const title = document.createElement("div");
-            title.innerText = "Preview — scroll to review";
-            title.style.cssText = "color:#fff;font-size:13px;font-weight:600;flex:1;text-align:center;";
-            const dlBtn = document.createElement("button");
-            dlBtn.innerText = "⬇️ Download & Print";
-            dlBtn.style.cssText = "background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;";
-            dlBtn.onclick = () => {
-              const encoded = "data:text/html;charset=utf-8," + encodeURIComponent(html);
-              const a = document.createElement("a");
-              a.href = encoded; a.download = `${ledger.name}-${new Date().toISOString().split("T")[0]}.html`;
-              a.style.display = "none"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            };
-            bar.appendChild(backBtn); bar.appendChild(title); bar.appendChild(dlBtn);
-            const iframe = document.createElement("iframe");
-            iframe.style.cssText = "flex:1;width:100%;border:none;";
-            overlay.appendChild(bar); overlay.appendChild(iframe);
-            document.body.appendChild(overlay);
-            iframe.contentDocument.open();
-            iframe.contentDocument.write(html);
-            iframe.contentDocument.close();
-          }} style={S.btn("#166534")}>🖨️ Print</button>
-          <button onClick={() => exportLedgerExcel(ledger, rows, totalDebit, totalCredit, closingBalance)} style={S.btn("#d97706", "#fff")}>📊 Excel</button>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "16px", overflowX: "auto", paddingBottom: "4px" }}>
-        <div style={{ ...S.card, background: "#dcfce7", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
-          <div style={{ fontSize: "11px", fontWeight: 700, color: "#166534", marginBottom: "4px" }}>TOTAL CREDIT</div>
-          <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{totalCredit.toLocaleString()}</div>
-        </div>
-        <div style={{ ...S.card, background: "#fee2e2", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
-          <div style={{ fontSize: "11px", fontWeight: 700, color: "#991b1b", marginBottom: "4px" }}>TOTAL DEBIT</div>
-          <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{totalDebit.toLocaleString()}</div>
-        </div>
-        <div style={{ ...S.card, background: "#dbeafe", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
-          <div style={{ fontSize: "11px", fontWeight: 700, color: "#1e40af", marginBottom: "4px" }}>CLOSING BALANCE</div>
-          <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{closingBalance.toLocaleString()}</div>
-        </div>
-        {ledger.enableTds && <div style={{ ...S.card, background: "#fef9c3", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
-          <div style={{ fontSize: "11px", fontWeight: 700, color: "#d97706", marginBottom: "4px" }}>TDS {ledger.tdsRate}%</div>
-          <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{sorted.filter(e => e.particulars.includes("TDS")).reduce((a, e) => a + (e.debit || 0), 0).toLocaleString()}</div>
-          <button onClick={() => { setRateForm({ tdsRate: String(ledger.tdsRate), retentionRate: String(ledger.retentionRate) }); setRatePwModal(true); }} style={{ ...S.btn("#f59e0b", "#fff"), padding: "3px 8px", fontSize: "10px", marginTop: "6px" }}>✏️ Edit Rate</button>
-        </div>}
-        {ledger.enableRetention && <div style={{ ...S.card, background: "#ede9fe", boxShadow: "none", padding: "14px", minWidth: "130px", flexShrink: 0 }}>
-          <div style={{ fontSize: "11px", fontWeight: 700, color: "#5b21b6", marginBottom: "4px" }}>RETENTION {ledger.retentionRate}%</div>
-          <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{sorted.filter(e => e.particulars.includes("Retention")).reduce((a, e) => a + (e.debit || 0), 0).toLocaleString()}</div>
-          <button onClick={() => { setRateForm({ tdsRate: String(ledger.tdsRate), retentionRate: String(ledger.retentionRate) }); setRatePwModal(true); }} style={{ ...S.btn("#7c3aed", "#fff"), padding: "3px 8px", fontSize: "10px", marginTop: "6px" }}>✏️ Edit Rate</button>
-        </div>}
-      </div>
-      {/* Chennai Extra Cards — shows on any ledger that received a transfer */}
-      {(() => {
-        const transferCredits = (ledger.entries || []).filter(e => e.transferId && e.credit > 0);
-        const hasTransferReceived = transferCredits.length > 0;
-        if (!hasTransferReceived) return null;
-
-        // Find source ledger (the one that sent transfer to this ledger)
-        const sourceLedger = ledgers.find(l =>
-          (l.entries || []).some(e =>
-            e.transferId && e.debit > 0 &&
-            transferCredits.some(ce => ce.transferId === e.transferId)
-          )
-        );
-
-        const totalTransferReceived = transferCredits.reduce((a, e) => a + (e.credit || 0), 0);
-
-        const thisTDS = (ledger.entries || []).filter(e => e.particulars.includes("TDS")).reduce((a, e) => a + (e.debit || 0), 0);
-        const sourceTDS = sourceLedger ? (sourceLedger.entries || []).filter(e => e.particulars.includes("TDS")).reduce((a, e) => a + (e.debit || 0), 0) : 0;
-        const combinedTDS = thisTDS + sourceTDS;
-
-        const thisRetention = (ledger.entries || []).filter(e => e.particulars.includes("Retention")).reduce((a, e) => a + (e.debit || 0), 0);
-        const sourceRetention = sourceLedger ? (sourceLedger.entries || []).filter(e => e.particulars.includes("Retention")).reduce((a, e) => a + (e.debit || 0), 0) : 0;
-        const combinedRetention = thisRetention + sourceRetention;
-
-        return (
-          <div style={{ ...S.card, marginBottom: "16px", border: "1.5px solid #0f3172" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: "13px", fontWeight: 700, color: "#0f3172" }}>
-              📊 Combined Summary {sourceLedger ? `— ${sourceLedger.name} + ${ledger.name}` : ""}
-            </h3>
-            <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "4px" }}>
-              {/* Transfer Received */}
-              <div style={{ ...S.card, background: "#fef9c3", boxShadow: "none", padding: "14px", minWidth: "150px", flexShrink: 0 }}>
-                <div style={{ fontSize: "11px", fontWeight: 700, color: "#d97706", marginBottom: "4px" }}>
-                  TRANSFER FROM {sourceLedger ? sourceLedger.name.toUpperCase() : "SOURCE"}
-                </div>
-                <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{totalTransferReceived.toLocaleString()}</div>
-              </div>
-              {/* Combined TDS */}
-              <div style={{ ...S.card, background: "#fef9c3", boxShadow: "none", padding: "14px", minWidth: "150px", flexShrink: 0 }}>
-                <div style={{ fontSize: "11px", fontWeight: 700, color: "#d97706", marginBottom: "4px" }}>COMBINED TDS</div>
-                <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{combinedTDS.toLocaleString()}</div>
-                {sourceLedger && <div style={{ fontSize: "10px", color: "#6b84a3", marginTop: "4px" }}>
-                  {sourceLedger.name}: ₹{sourceTDS.toLocaleString()} + {ledger.name}: ₹{thisTDS.toLocaleString()}
-                </div>}
-              </div>
-              {/* Combined Retention */}
-              <div style={{ ...S.card, background: "#ede9fe", boxShadow: "none", padding: "14px", minWidth: "150px", flexShrink: 0 }}>
-                <div style={{ fontSize: "11px", fontWeight: 700, color: "#5b21b6", marginBottom: "4px" }}>COMBINED RETENTION</div>
-                <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f3172" }}>₹{combinedRetention.toLocaleString()}</div>
-                {sourceLedger && <div style={{ fontSize: "10px", color: "#6b84a3", marginTop: "4px" }}>
-                  {sourceLedger.name}: ₹{sourceRetention.toLocaleString()} + {ledger.name}: ₹{thisRetention.toLocaleString()}
-                </div>}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* Transfer Form */}
-      {showTransfer && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #7c3aed" }}>
-        <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>↔️ Transfer to Another Ledger</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "9px" }}>
-          <div><label style={S.lbl}>Date</label><input type="date" value={transferForm.date} onChange={e => setTransferForm(p => ({ ...p, date: e.target.value }))} style={S.inp} /></div>
-          <div><label style={S.lbl}>Amount (₹)</label><input type="number" value={transferForm.amount} onChange={e => setTransferForm(p => ({ ...p, amount: e.target.value }))} style={S.inp} /></div>
-          <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Transfer To</label>
-            <select value={transferForm.toLedgerId} onChange={e => setTransferForm(p => ({ ...p, toLedgerId: e.target.value }))} style={S.inp}>
-              <option value="">Select Ledger...</option>
-              {ledgers.filter(l => l.id !== ledger.id).map((l: any) => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
-          </div>
-          <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Note (optional)</label><input value={transferForm.note} onChange={e => setTransferForm(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} /></div>
-        </div>
-        <div style={{ display: "flex", gap: "7px", marginTop: "11px" }}>
-          <button onClick={() => {
-            if (!transferForm.amount || !transferForm.toLedgerId) return;
-            const transferId = crypto.randomUUID();
-            const amount = Number(transferForm.amount);
-            const toLedger = ledgers.find(l => String(l.id) === String(transferForm.toLedgerId));
-            if (!toLedger) return;
-            const debitEntry = { id: crypto.randomUUID(), date: transferForm.date, particulars: "Transfer to " + toLedger.name, debit: amount, credit: 0, note: transferForm.note, transferId };
-            const creditEntry = { id: crypto.randomUUID(), date: transferForm.date, particulars: "Transfer from " + ledger.name, debit: 0, credit: amount, note: transferForm.note, transferId };
-            setLedgers(p => p.map((l: any) => {
-              if (String(l.id) === String(ledger.id)) return { ...l, entries: [...(l.entries || []), debitEntry] };
-              if (String(l.id) === String(toLedger.id)) return { ...l, entries: [...(l.entries || []), creditEntry] };
-              return l;
-            }));
-            setTransferForm({ date: today, amount: "", toLedgerId: "", note: "" });
-            setShowTransfer(false);
-          }} style={S.btn("#7c3aed")}>💾 Save Transfer</button>
-          <button onClick={() => setShowTransfer(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
-        </div>
-      </div>}
-
-      {/* Add Invoice */}
-      {availableInvoices.length > 0 && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #bfdbfe" }}>
-        <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>📥 Add Invoice to Ledger</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          {availableInvoices.map((inv: any) => (
-            <div key={inv.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#f0f6ff", borderRadius: "8px" }}>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: "13px" }}>{inv.number}</div>
-                <div style={{ fontSize: "11px", color: "#6b84a3" }}>{fmtDate(inv.date)} — ₹{inv.total?.toLocaleString()}</div>
-                <div style={{ fontSize: "11px", color: "#6b84a3" }}>{inv.siteName || "—"}</div>
-                {inv.measureNo && <div style={{ fontSize: "10px", fontWeight: 700, color: "#1e50a0", marginTop: "2px" }}>📋 {inv.measureNo}</div>}
-              </div>
-              <button onClick={() => addInvoiceEntry(inv)} style={{ ...S.btn("#166634"), padding: "5px 12px", fontSize: "12px" }}>+ Add</button>
-            </div>
-          ))}
-        </div>
-      </div>}
-
-      {/* Manual Entry Form */}
-      {showAdd && <div style={{ ...S.card, marginBottom: "14px", border: "1.5px solid #bfdbfe" }}>
-        <h3 style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700 }}>New Manual Entry</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "9px" }}>
-          <div><label style={S.lbl}>Date</label><input type="date" value={entryForm.date} onChange={e => setEntryForm(p => ({ ...p, date: e.target.value }))} style={S.inp} /></div>
-          <div><label style={S.lbl}>Particulars</label>
-            <select value={entryForm.particulars} onChange={e => setEntryForm(p => ({ ...p, particulars: e.target.value }))} style={S.inp}>
-              {PARTICULARS.map((p: any) => <option key={p}>{p}</option>)}
-            </select>
-          </div>
-          {entryForm.particulars === "Other" && <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Description</label><input value={entryForm.customParticulars} onChange={e => setEntryForm(p => ({ ...p, customParticulars: e.target.value }))} placeholder="Enter description" style={S.inp} /></div>}
-          <div><label style={S.lbl}>Debit (₹)</label><input type="number" value={entryForm.debit} onChange={e => setEntryForm(p => ({ ...p, debit: e.target.value, credit: "" }))} style={S.inp} /></div>
-          <div><label style={S.lbl}>Credit (₹)</label><input type="number" value={entryForm.credit} onChange={e => setEntryForm(p => ({ ...p, credit: e.target.value, debit: "" }))} style={S.inp} /></div>
-          <div style={{ gridColumn: "1/-1" }}><label style={S.lbl}>Note (optional)</label><input value={entryForm.note} onChange={e => setEntryForm(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} /></div>
-        </div>
-        <div style={{ display: "flex", gap: "7px", marginTop: "11px" }}>
-          <button onClick={addManualEntry} style={S.btn()}>💾 Save</button>
-          <button onClick={() => setShowAdd(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
-        </div>
-      </div>}
-
-      {/* Ledger Table */}
-      <div style={{ ...S.card, overflowX: "auto" }}>
-        <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📋 {ledger.client} — {ledger.region || "All Regions"}</h3>
-        {rows.length === 0 ? <div style={{ textAlign: "center", color: "#9db3cc", padding: "30px" }}>No entries yet.</div>
-          : <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "500px" }}>
-            <thead><tr style={{ background: "#0f3172", color: "#fff" }}>
-              <th style={{ padding: "8px 10px", textAlign: "left" }}>Date</th>
-              <th style={{ padding: "8px 10px", textAlign: "left" }}>Particulars</th>
-              <th style={{ padding: "8px 10px", textAlign: "right" }}>Debit (₹)</th>
-              <th style={{ padding: "8px 10px", textAlign: "right" }}>Credit (₹)</th>
-              <th style={{ padding: "8px 10px", textAlign: "right" }}>Balance (₹)</th>
-              <th style={{ padding: "8px 10px", textAlign: "center" }}>Action</th>
-            </tr></thead>
-            <tbody>
-              {rows.map((e, idx) => (
-                <tr key={e.id} style={{
-                  background:
-                    e.transferId ? "#fef9c3" :
-                      e.particulars === "Cont Invoice" ? "#f0fdf4" :
-                        e.particulars === "Bank Payment" ? "#eff6ff" :
-                          (e.particulars.includes("TDS") || e.particulars.includes("Retention")) ? "#fdf4ff" :
-                            idx % 2 === 0 ? "#fff" : "#f8faff"
-                  , borderBottom: "1px solid #f0f4f9"
-                }}>
-                  <td style={{ padding: "7px 10px", whiteSpace: "nowrap" }}>{fmtDate(e.date)}</td>
-                  <td style={{ padding: "7px 10px" }}>
-                    <div style={{ fontWeight: 600 }}>{e.particulars}</div>
-                    {e.note && <div style={{ fontSize: "11px", marginTop: "3px" }}>
-                      {e.invoiceId
-                        ? <span style={{ background: "#dbeafe", color: "#1e40af", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}>{e.note}</span>
-                        : e.transferId
-                          ? <span style={{ background: "#fef9c3", color: "#d97706", fontWeight: 700, borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}>{e.note}</span>
-                          : <span style={{ color: "#6b84a3", fontSize: "10px" }}>{e.note}</span>
-                      }
-                    </div>}
-                  </td>
-                  <td style={{ padding: "7px 10px", textAlign: "right", color: "#991b1b", fontWeight: 600 }}>{e.debit > 0 ? `₹${e.debit.toLocaleString()}` : "—"}</td>
-                  <td style={{ padding: "7px 10px", textAlign: "right", color: "#166534", fontWeight: 600 }}>{e.credit > 0 ? `₹${e.credit.toLocaleString()}` : "—"}</td>
-                  <td style={{ padding: "7px 10px", textAlign: "right", fontWeight: 700, color: "#1e50a0" }}>₹{e.balance.toLocaleString()}</td>
-                  <td style={{ padding: "7px 10px", textAlign: "center" }}>
-                    <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
-                      <button onClick={() => setEditPwModal({ ...e })} style={{ ...S.btn("#f0f6ff", "#1e50a0"), padding: "3px 8px", fontSize: "11px" }}>✏️</button>
-                      <button onClick={() => setDelEntryModal(e.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "3px 8px", fontSize: "11px" }}>🗑️</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              <tr style={{ background: "#0f3172", color: "#fff", fontWeight: 700 }}>
-                <td colSpan={2} style={{ padding: "10px", textAlign: "right" }}>TOTAL</td>
-                <td style={{ padding: "10px", textAlign: "right" }}>₹{totalDebit.toLocaleString()}</td>
-                <td style={{ padding: "10px", textAlign: "right" }}>₹{totalCredit.toLocaleString()}</td>
-                <td style={{ padding: "10px", textAlign: "right", color: "#f59e0b", fontSize: "14px" }}>₹{closingBalance.toLocaleString()}</td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>}
-      </div>
-      {editPwModal && <PwModal
-        title="Edit Entry?"
-        onConfirm={() => { setEditEntryModal({ ...editPwModal }); setEditPwModal(null); }}
-        onCancel={() => setEditPwModal(null)}
-      />}
-      {editEntryModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
-          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "320px" }}>
-            <h3 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700 }}>✏️ Edit Entry</h3>
-            <div style={{ display: "grid", gap: "10px", marginBottom: "14px" }}>
-              <div><label style={S.lbl}>Date</label>
-                <input type="date" value={editEntryModal.date} onChange={e => setEditEntryModal(p => ({ ...p, date: e.target.value }))} style={S.inp} />
-              </div>
-              <div><label style={S.lbl}>Particulars</label>
-                <input value={editEntryModal.particulars} onChange={e => setEditEntryModal(p => ({ ...p, particulars: e.target.value }))} style={S.inp} />
-              </div>
-              <div><label style={S.lbl}>Debit (₹)</label>
-                {(editEntryModal.particulars.includes("TDS") || editEntryModal.particulars.includes("Retention")) && (
-                  <div style={{ display: "flex", gap: "7px", marginBottom: "7px" }}>
-                    <button onClick={() => setEditEntryModal(p => ({ ...p, debit: 0, credit: 0, particulars: p.particulars + " (N/A)" }))} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 10px", fontSize: "11px" }}>✗ Not Applicable</button>
-                    <span style={{ fontSize: "11px", color: "#6b84a3", alignSelf: "center" }}>Sets amount to zero</span>
-                  </div>
-                )}
-                <input type="number" value={editEntryModal.debit || ""} onChange={e => setEditEntryModal(p => ({ ...p, debit: Number(e.target.value), credit: 0 }))} style={S.inp} />
-              </div>
-              <div><label style={S.lbl}>Credit (₹)</label>
-                <input type="number" value={editEntryModal.credit || ""} onChange={e => setEditEntryModal(p => ({ ...p, credit: Number(e.target.value), debit: 0 }))} style={S.inp} />
-              </div>
-              <div><label style={S.lbl}>Note</label>
-                <input value={editEntryModal.note || ""} onChange={e => setEditEntryModal(p => ({ ...p, note: e.target.value }))} placeholder="e.g. cheque no, reference" style={S.inp} />
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
-              <button onClick={() => {
-                updateLedger({ ...ledger, entries: (ledger.entries || []).map((e: any) => e.id === editEntryModal.id ? { ...editEntryModal } : e) });
-                setEditEntryModal(null);
-              }} style={S.btn()}>💾 Save</button>
-              <button onClick={() => setEditEntryModal(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-      {ratePwModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000 }}>
-          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "300px", textAlign: "center" }}>
-            <div style={{ fontSize: "32px", marginBottom: "8px" }}>🔐</div>
-            <h3 style={{ margin: "0 0 7px" }}>Edit Rates</h3>
-            <p style={{ fontSize: "12px", color: "#6b84a3", margin: "0 0 16px" }}>Enter password to edit TDS/Retention rates.</p>
-            <input type="password" id="rate-pw-input" placeholder="Enter password" style={{ ...S.inp, marginBottom: "14px", textAlign: "center" }} />
-            {ledger.enableTds && <div style={{ marginBottom: "10px", textAlign: "left" }}>
-              <label style={S.lbl}>TDS Rate (%)</label>
-              <input type="number" value={rateForm.tdsRate} onChange={e => setRateForm(p => ({ ...p, tdsRate: e.target.value }))} style={S.inp} />
-            </div>}
-            {ledger.enableRetention && <div style={{ marginBottom: "14px", textAlign: "left" }}>
-              <label style={S.lbl}>Retention Rate (%)</label>
-              <input type="number" value={rateForm.retentionRate} onChange={e => setRateForm(p => ({ ...p, retentionRate: e.target.value }))} style={S.inp} />
-            </div>}
-            <div id="rate-err" style={{ color: "#dc2626", fontSize: "12px", marginBottom: "10px", display: "none" }}>❌ Incorrect password.</div>
-            <div style={{ display: "flex", gap: "9px", justifyContent: "center" }}>
-              <button onClick={() => {
-                const pw = document.getElementById("rate-pw-input").value;
-                if (pw !== RECYCLE_PASSWORD) { document.getElementById("rate-err").style.display = "block"; return; }
-                updateLedger({ ...ledger, tdsRate: Number(rateForm.tdsRate), retentionRate: Number(rateForm.retentionRate) });
-                setRatePwModal(false);
-              }} style={S.btn("#1e50a0")}>Confirm</button>
-              <button onClick={() => setRatePwModal(false)} style={S.btn("#f0f4f9", "#1a2b4a")}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {delEntryModal && <PwModal
-        title="Delete Entry?"
-        onConfirm={() => { deleteEntry(delEntryModal); setDelEntryModal(null); }}
-        onCancel={() => setDelEntryModal(null)}
       />}
     </div>
   );
