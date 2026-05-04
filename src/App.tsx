@@ -441,6 +441,7 @@ export default function App() {
           savedReports,
           savedPermits,
           exec: execProfile,
+          savedSignature,
         };
 
         const projectId = "vinodhan-coating";
