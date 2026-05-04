@@ -3361,8 +3361,10 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
                 <div style={{ display: "flex", gap: "7px", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
                   <div style={{ fontWeight: 700, color: "#166534", fontSize: "13px" }}>₹{inv.total?.toLocaleString()}</div>
                   <button onClick={() => {
-                    setSigImage(inv.signature || null);
-                    setSigMode(inv.signature ? "saved" : "none");
+                    const saved = localStorage.getItem("vd_saved_signature");
+                    const sig = inv.signature || saved || null;
+                    setSigImage(sig);
+                    setSigMode(sig ? "saved" : "none");
                     setViewInv(inv);
                   }} style={{ ...S.btn(), padding: "5px 11px", fontSize: "12px" }}>View</button>
                   <button onClick={() => setStatusModal(inv)} style={{ ...S.btn(inv.status === "accepted" ? "#fee2e2" : "#166534"), padding: "5px 11px", fontSize: "12px" }}>
