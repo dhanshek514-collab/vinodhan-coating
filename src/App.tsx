@@ -406,6 +406,7 @@ export default function App() {
         setLedgers(loadS("vd_ledgers", []));
         setSavedReports(loadS("vd_savedReports", []));
         setSavedPermits(loadS("vd_savedPermits", []));
+        setSavedSignature(loadS("vd_savedSignature", ""));
 
         console.log("✅ READY!");
         setReady(true);
