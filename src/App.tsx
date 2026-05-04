@@ -3091,7 +3091,15 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
     const tot = inv ? inv.total : total;
     const num = inv ? inv.number : invNum;
     const dt = inv ? fmtD(inv.date) : fmtD(invDate);
-    const editable = !inv;
+    const editable = !inv; useEffect(() => {
+      if (!editable) {
+        const saved = localStorage.getItem("vd_saved_signature");
+        if (saved) { setSigImage(saved); setSigMode("saved"); }
+      } else {
+        setSigImage(null);
+        setSigMode("none");
+      }
+    }, [editable]);
     const displaySiteName = inv ? inv.siteName : invSiteName;
     const displayMeasureNo = inv ? inv.measureNo : client.measureNo;
     const snap = inv?.snapshot;
