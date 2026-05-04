@@ -3043,12 +3043,8 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
   const [invSitePlace, setInvSitePlace] = useState("");
   const [pwModal, setPwModal] = useState(null);
   const [statusModal, setStatusModal] = useState(null);
-  const sigCanvas = useRef(null);
   const [sigMode, setSigMode] = useState("none");
-  const DEFAULT_SIG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAArUAAAFoCAYAAABJ6AMtAAAQAElEQVR4Aez...";
-  const [sigImage, setSigImage] = useState(DEFAULT_SIG);
-  const [sigDrawing, setSigDrawing] = useState(false);
-  const lastPt = useRef(null);
+  const [sigImage, setSigImage] = useState(null);
 
   const invoicedWorkIds = new Set(invoices.flatMap(inv => (inv.works || []).map((w: any) => w.id)));
 
@@ -3067,11 +3063,6 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
       setInvSiteName("");
     }
   }, [allWorks.length]);
-  const startDraw = e => { setSigDrawing(true); const r = sigCanvas.current.getBoundingClientRect(); const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top; lastPt.current = { x, y }; };
-  const draw = e => { if (!sigDrawing || !sigCanvas.current || !lastPt.current) return; e.preventDefault(); const r = sigCanvas.current.getBoundingClientRect(); const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top; const ctx = sigCanvas.current.getContext("2d"); ctx.strokeStyle = "#1a2b4a"; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(lastPt.current.x, lastPt.current.y); ctx.lineTo(x, y); ctx.stroke(); lastPt.current = { x, y }; };
-  const endDraw = () => { setSigDrawing(false); if (sigCanvas.current) setSigImage(sigCanvas.current.toDataURL()); };
-  const clearSig = () => { sigCanvas.current?.getContext("2d")?.clearRect(0, 0, 180, 90); setSigImage(null); };
-  const uploadSig = e => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { if (ev.target?.result) setSigImage(ev.target.result); }; r.readAsDataURL(f); };
 
   const saveInv = () => {
     if (allWorks.length === 0) return;
@@ -3235,18 +3226,45 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
           <div style={{ textAlign: "center" }}>
             {/* Signature box */}
             <div style={{ width: "180px", height: "90px", border: "1.5px dashed #bfdbfe", borderRadius: "8px", marginBottom: "6px", overflow: "hidden", background: "#fafcff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {sigImage ? <img src={sigImage} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-                : sigMode === "draw" ? <canvas ref={sigCanvas} width={180} height={90} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw} onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} style={{ cursor: "crosshair", touchAction: "none", display: "block" }} />
-                  : <span className="no-print" style={{ fontSize: "11px", color: "#9db3cc" }}>{sigMode === "physical" ? "Physical Sign" : "Seal / Signature"}</span>}
+              {sigImage
+                ? <img src={sigImage} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                : <span className="no-print" style={{ fontSize: "11px", color: "#9db3cc" }}>
+                  {sigMode === "physical" ? "Physical Sign" : "Seal / Signature"}
+                </span>
+              }
             </div>
+
             {/* Signature controls — hidden on print */}
             {editable && <div className="no-print" style={{ display: "flex", gap: "4px", justifyContent: "center", marginBottom: "6px", flexWrap: "wrap" }}>
-              <button onClick={() => { setSigMode("draw"); setSigImage(null); setTimeout(() => sigCanvas.current?.getContext("2d")?.clearRect(0, 0, 180, 90), 50); }} style={{ ...S.btn(sigMode === "draw" ? "#1e50a0" : "#f0f6ff", sigMode === "draw" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>✏️ Draw</button>
+              <button onClick={() => {
+                const saved = localStorage.getItem("vd_saved_signature");
+                if (saved) { setSigImage(saved); setSigMode("saved"); }
+                else alert("No saved signature found. Please upload one first.");
+              }} style={{ ...S.btn(sigMode === "saved" ? "#1e50a0" : "#f0f6ff", sigMode === "saved" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>💾 Saved Sign</button>
+
               <label style={{ ...S.btn(sigMode === "upload" ? "#1e50a0" : "#f0f6ff", sigMode === "upload" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px", cursor: "pointer" }}>
-                📁 Upload<input type="file" accept="image/*" onChange={e => { setSigMode("upload"); uploadSig(e); }} style={{ display: "none" }} />
+                📁 Upload
+                <input type="file" accept="image/*" onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  const r = new FileReader();
+                  r.onload = ev => { setSigImage(ev.target?.result as string); setSigMode("upload"); };
+                  r.readAsDataURL(f);
+                }} style={{ display: "none" }} />
               </label>
-              <button onClick={() => { setSigMode("physical"); setSigImage(null); clearSig(); }} style={{ ...S.btn(sigMode === "physical" ? "#1e50a0" : "#f0f6ff", sigMode === "physical" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>🖊️ Physical</button>
-              {(sigImage || sigMode === "draw") && <button onClick={() => { clearSig(); setSigMode("none"); }} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 8px", fontSize: "10px" }}>✗</button>}
+
+              {sigMode === "upload" && sigImage && (
+                <button onClick={() => {
+                  localStorage.setItem("vd_saved_signature", sigImage);
+                  alert("✅ Signature saved for future use!");
+                }} style={{ ...S.btn("#166534", "#fff"), padding: "4px 8px", fontSize: "10px" }}>💾 Save Sign</button>
+              )}
+
+              <button onClick={() => { setSigMode("physical"); setSigImage(null); }}
+                style={{ ...S.btn(sigMode === "physical" ? "#1e50a0" : "#f0f6ff", sigMode === "physical" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>🖊️ Physical</button>
+
+              {sigImage && <button onClick={() => { setSigImage(null); setSigMode("none"); }}
+                style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 8px", fontSize: "10px" }}>✗</button>}
             </div>}
             <div style={{ borderTop: "1px solid #1a2b4a", paddingTop: "5px", fontSize: "11px", color: "#6b84a3" }}>Authorised Signatory<br /><strong>{dispCompany.name}</strong></div>
           </div>
