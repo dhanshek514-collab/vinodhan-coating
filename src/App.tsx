@@ -3340,7 +3340,7 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
 
       {tab === "history" && (viewInv
         ? <><div style={{ display: "flex", gap: "9px", marginBottom: "16px" }}>
-          <button onClick={() => setViewInv(null)} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
+          <button onClick={() => { setViewInv(null); setSigImage(null); setSigMode("none"); }} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
           <button onClick={() => printSection("invoice-history-doc")} style={S.btn()}>🖨️ Print</button>
         </div>
           <div id="invoice-history-doc"><InvDoc inv={viewInv} /></div>
@@ -3368,7 +3368,12 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
                 </div>
                 <div style={{ display: "flex", gap: "7px", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
                   <div style={{ fontWeight: 700, color: "#166534", fontSize: "13px" }}>₹{inv.total?.toLocaleString()}</div>
-                  <button onClick={() => setViewInv(inv)} style={{ ...S.btn(), padding: "5px 11px", fontSize: "12px" }}>View</button>
+                  <button onClick={() => {
+                    const saved = localStorage.getItem("vd_saved_signature");
+                    if (saved) { setSigImage(saved); setSigMode("saved"); }
+                    else { setSigImage(null); setSigMode("none"); }
+                    setViewInv(inv);
+                  }} style={{ ...S.btn(), padding: "5px 11px", fontSize: "12px" }}>View</button>
                   <button onClick={() => setStatusModal(inv)} style={{ ...S.btn(inv.status === "accepted" ? "#fee2e2" : "#166534"), padding: "5px 11px", fontSize: "12px" }}>
                     {inv.status === "accepted" ? "🔓 Unmark" : "🔒 Accept"}
                   </button>
@@ -3377,26 +3382,31 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
               </div>
             ))}
         </div>
-      )}
-      {statusModal && (
-        <PwModal
-          title={statusModal.status === "accepted" ? "Unmark as Accepted?" : "Mark as Accepted?"}
-          onConfirm={() => {
-            const newStatus = statusModal.status === "accepted" ? "raised" : "accepted";
-            setInvoices(p => p.map((inv: any) => inv.id === statusModal.id ? { ...inv, status: newStatus } : inv));
-            setStatusModal(null);
-          }}
-          onCancel={() => setStatusModal(null)}
-        />
-      )}
+      )
+      }
+      {
+        statusModal && (
+          <PwModal
+            title={statusModal.status === "accepted" ? "Unmark as Accepted?" : "Mark as Accepted?"}
+            onConfirm={() => {
+              const newStatus = statusModal.status === "accepted" ? "raised" : "accepted";
+              setInvoices(p => p.map((inv: any) => inv.id === statusModal.id ? { ...inv, status: newStatus } : inv));
+              setStatusModal(null);
+            }}
+            onCancel={() => setStatusModal(null)}
+          />
+        )
+      }
 
       {/* Password modal for invoice delete */}
-      {pwModal && <PwModal
-        title="Move to Recycle Bin?"
-        onConfirm={pwModal.action}
-        onCancel={() => setPwModal(null)}
-      />}
-    </div>
+      {
+        pwModal && <PwModal
+          title="Move to Recycle Bin?"
+          onConfirm={pwModal.action}
+          onCancel={() => setPwModal(null)}
+        />
+      }
+    </div >
   );
 }
 async function exportLedgerExcel(ledger, rows, totalDebit, totalCredit, closingBalance) {
