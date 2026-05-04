@@ -322,6 +322,7 @@ export default function App() {
   const [ledgers, setLedgers] = useState([]);
   const [savedReports, setSavedReports] = useState([]);
   const [savedPermits, setSavedPermits] = useState([]);
+  const [savedSignature, setSavedSignature] = useState("");
 
   // ════════════════════════════════════════════════════════════════════════════════
   // EFFECT 1: Firebase Auth State Listener
@@ -381,7 +382,7 @@ export default function App() {
             setLedgers(backupData.ledgers || []);
             setSavedReports(backupData.savedReports || []);
             setSavedPermits(backupData.savedPermits || []);
-
+            setSavedSignature(backupData.savedSignature || "");
             setReady(true);
             return;
           }
@@ -492,6 +493,7 @@ export default function App() {
   useEffect(() => { if (!ready) return; saveS("vd_ledgers", ledgers); fbSet("ledgers", ledgers); }, [ledgers, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_savedReports", savedReports); fbSet("savedReports", savedReports); }, [savedReports, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_savedPermits", savedPermits); fbSet("savedPermits", savedPermits); }, [savedPermits, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_savedSignature", savedSignature); fbSet("savedSignature", savedSignature); }, [savedSignature, ready]);
 
   // ════════════════════════════════════════════════════════════════════════════════
   // EFFECT 17: Daily Backup
@@ -610,6 +612,8 @@ export default function App() {
     setSavedReports,
     savedPermits,
     setSavedPermits,
+    savedSignature,
+    setSavedSignature,
   };
 
   return (
@@ -3032,7 +3036,7 @@ function EntryPermit({ workers, sites, assignments, setWorkers, savedPermits, se
 }
 
 // ── INVOICE ───────────────────────────────────────────
-function Invoice({ sites, invoices, setInvoices, company, setCompany, client, setClient, bank, setBank, recycleBin, setRecycleBin }) {
+function Invoice({ sites, invoices, setInvoices, company, setCompany, client, setClient, bank, setBank, recycleBin, setRecycleBin, savedSignature, setSavedSignature }) {
   const [selWorks, setSelWorks] = useState([]);
   const [openSites, setOpenSites] = useState([]);
   const [viewInv, setViewInv] = useState(null);
@@ -3237,7 +3241,7 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
             {/* Signature controls — hidden on print */}
             {editable && <div className="no-print" style={{ display: "flex", gap: "4px", justifyContent: "center", marginBottom: "6px", flexWrap: "wrap" }}>
               <button onClick={() => {
-                const saved = localStorage.getItem("vd_saved_signature");
+                const saved = savedSignature;
                 if (saved) { setSigImage(saved); setSigMode("saved"); }
                 else alert("No saved signature found. Please upload one first.");
               }} style={{ ...S.btn(sigMode === "saved" ? "#1e50a0" : "#f0f6ff", sigMode === "saved" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>💾 Saved Sign</button>
@@ -3255,7 +3259,7 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
 
               {sigMode === "upload" && sigImage && (
                 <button onClick={() => {
-                  localStorage.setItem("vd_saved_signature", sigImage);
+                  setSavedSignature(sigImage);
                   alert("✅ Signature saved for future use!");
                 }} style={{ ...S.btn("#166534", "#fff"), padding: "4px 8px", fontSize: "10px" }}>💾 Save Sign</button>
               )}
