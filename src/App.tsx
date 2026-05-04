@@ -3086,7 +3086,7 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
   const upB = (k, v) => setBank(p => ({ ...p, [k]: v }));
   const fmtD = d => { if (!d) return "—"; const [y, m, dy] = d.split("-"); return `${dy}/${m}/${y}`; };
 
-  const InvDoc = ({ inv }) => {
+  const InvDoc = ({ inv, sigImage, setSigImage, sigMode, setSigMode }) => {
     const works = inv ? inv.works : allWorks;
     const tot = inv ? inv.total : total;
     const num = inv ? inv.number : invNum;
@@ -3335,7 +3335,7 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
             <button onClick={saveInv} style={{ ...S.btn("#166534"), opacity: allWorks.length === 0 ? 0.5 : 1 }} disabled={allWorks.length === 0}>💾 Save Invoice</button>
           </div>
         </div>
-        <div id="invoice-doc"><InvDoc inv={null} /></div>
+        <div id="invoice-doc"><InvDoc inv={null} sigImage={sigImage} setSigImage={setSigImage} sigMode={sigMode} setSigMode={setSigMode} /></div>
       </>}
 
       {tab === "history" && (viewInv
@@ -3343,7 +3343,7 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
           <button onClick={() => { setViewInv(null); setSigImage(null); setSigMode("none"); }} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
           <button onClick={() => printSection("invoice-history-doc")} style={S.btn()}>🖨️ Print</button>
         </div>
-          <div id="invoice-history-doc"><InvDoc inv={viewInv} /></div>
+          <div id="invoice-history-doc"><InvDoc inv={viewInv} sigImage={sigImage} setSigImage={setSigImage} sigMode={sigMode} setSigMode={setSigMode} /></div><div id="invoice-history-doc"><InvDoc inv={viewInv} sigImage={sigImage} setSigImage={setSigImage} sigMode={sigMode} setSigMode={setSigMode} /></div>
         </>
         : <div style={S.card}>
           <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>Saved Invoices</h3>
