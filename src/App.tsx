@@ -3066,7 +3066,7 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
 
   const saveInv = () => {
     if (allWorks.length === 0) return;
-    setInvoices(p => [...p, { id: Date.now(), number: invNum, date: invDate, total, works: allWorks, siteName: invSiteName, sitePlace: invSitePlace, measureNo: client.measureNo, status: "raised", snapshot: { company: { ...company }, client: { ...client }, bank: { ...bank } } }]);
+    setInvoices(p => [...p, { id: Date.now(), number: invNum, date: invDate, total, works: allWorks, siteName: invSiteName, sitePlace: invSitePlace, measureNo: client.measureNo, signature: sigImage, status: "raised", snapshot: { company: { ...company }, client: { ...client }, bank: { ...bank } } }]);
     setSelWorks([]); setTab("history");
   };
 
@@ -3335,7 +3335,7 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
           <button onClick={() => { setViewInv(null); setSigImage(null); setSigMode("none"); }} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
           <button onClick={() => printSection("invoice-history-doc")} style={S.btn()}>🖨️ Print</button>
         </div>
-          <div id="invoice-history-doc"><InvDoc inv={viewInv} sigImage={sigImage} setSigImage={setSigImage} sigMode={sigMode} setSigMode={setSigMode} /></div><div id="invoice-history-doc"><InvDoc inv={viewInv} sigImage={sigImage} setSigImage={setSigImage} sigMode={sigMode} setSigMode={setSigMode} /></div>
+          <div id="invoice-history-doc"><InvDoc inv={viewInv} sigImage={sigImage} setSigImage={setSigImage} sigMode={sigMode} setSigMode={setSigMode} /></div>
         </>
         : <div style={S.card}>
           <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>Saved Invoices</h3>
@@ -3361,9 +3361,8 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
                 <div style={{ display: "flex", gap: "7px", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
                   <div style={{ fontWeight: 700, color: "#166534", fontSize: "13px" }}>₹{inv.total?.toLocaleString()}</div>
                   <button onClick={() => {
-                    const saved = localStorage.getItem("vd_saved_signature");
-                    if (saved) { setSigImage(saved); setSigMode("saved"); }
-                    else { setSigImage(null); setSigMode("none"); }
+                    setSigImage(inv.signature || null);
+                    setSigMode(inv.signature ? "saved" : "none");
                     setViewInv(inv);
                   }} style={{ ...S.btn(), padding: "5px 11px", fontSize: "12px" }}>View</button>
                   <button onClick={() => setStatusModal(inv)} style={{ ...S.btn(inv.status === "accepted" ? "#fee2e2" : "#166534"), padding: "5px 11px", fontSize: "12px" }}>
