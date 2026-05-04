@@ -2666,7 +2666,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
               <div style={S.card}>
                 <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📁 Attendance History</h3>
                 <div style={{ fontSize: "11px", color: "#6b84a3", marginBottom: "10px" }}>All invoiced works — newest first</div>
-                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", minWidth: "100%" }}></div>
+                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%", maxWidth: "100%" }}></div>
                 <div style={{ display: "grid", gridTemplateColumns: "32px 160px 160px 120px 110px", gap: "8px", padding: "6px 10px", background: "#f0f4f9", borderRadius: "7px", marginBottom: "6px", fontSize: "11px", fontWeight: 700, color: "#6b84a3" }}>
                   <span>#</span><span>Site</span><span>Work</span><span>Invoice</span><span>Status</span>
                 </div>
