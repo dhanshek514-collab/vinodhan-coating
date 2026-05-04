@@ -2373,47 +2373,75 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
     : null;
 
   // ── Shared month table renderer (for live preview + saved view) ──
-  const MonthTable = ({ dates, workers: wks, getAtt }: any) => (
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
-        <thead>
-          <tr style={{ background: "#0f3172", color: "#fff" }}>
-            <th style={{ padding: "7px 10px", textAlign: "left", fontWeight: 600, minWidth: "130px" }}>Worker</th>
-            {dates.map((d: string) => (
-              <th key={d} style={{ padding: "5px 3px", textAlign: "center", fontWeight: 600, minWidth: "22px" }}>
-                {parseInt(d.split("-")[2])}
-              </th>
-            ))}
-            <th style={{ padding: "7px 10px", textAlign: "center", fontWeight: 600, borderLeft: "2px solid #f59e0b", color: "#f59e0b", minWidth: "50px" }}>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {wks.map((w: any, idx: number) => {
-            const mTotal = dates.reduce((a: number, d: string) => {
-              const v = getAtt(d, w.id ?? w);
-              return v === "Present" ? a + 1 : v === "Half" ? a + 0.5 : a;
-            }, 0);
-            return (
-              <tr key={w.id ?? idx} style={{ background: idx % 2 === 0 ? "#fff" : "#f8faff", borderBottom: "1px solid #f0f4f9" }}>
-                <td style={{ padding: "7px 10px", fontWeight: 600 }}>{w.name}</td>
-                {dates.map((d: string) => {
-                  const v = getAtt(d, w.id ?? w);
-                  const bg = v === "Present" ? "#dcfce7" : v === "Half" ? "#fef9c3" : v === "Absent" ? "#fee2e2" : "transparent";
-                  const col = v === "Present" ? "#166534" : v === "Half" ? "#d97706" : v === "Absent" ? "#991b1b" : "#d1d5db";
-                  return (
-                    <td key={d} style={{ padding: "4px 2px", textAlign: "center", background: bg, color: col, fontWeight: 600 }}>
-                      {v === "Present" ? "P" : v === "Half" ? "H" : v === "Absent" ? "A" : ""}
-                    </td>
-                  );
-                })}
-                <td style={{ padding: "7px 10px", textAlign: "center", fontWeight: 800, color: "#1e50a0", borderLeft: "2px solid #bfdbfe" }}>{mTotal}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
+  const CombinedTable = ({ monthGroups, workers: wks, getAtt }: any) => {
+    const months = Object.entries(monthGroups) as [string, string[]][];
+    const monthColors = ["#0f3172", "#1e50a0", "#163a6e", "#2a5fa8"];
+    return (
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
+          <thead>
+            <tr>
+              <th style={{ padding: "7px 10px", textAlign: "left", background: "#0f3172", color: "#fff", fontWeight: 600, minWidth: "130px" }}>Worker</th>
+              {months.map(([mk, dates], mi) => {
+                const [y, m] = mk.split("-");
+                const label = `${MONTHS[parseInt(m) - 1]} ${y}`;
+                return [
+                  mi > 0 && <th key={`div-${mk}`} style={{ width: "6px", background: "#f0f4f9", padding: 0, border: "none" }}></th>,
+                  ...dates.map((d: string) => (
+                    <th key={d} style={{ padding: "5px 3px", textAlign: "center", background: monthColors[mi] || "#0f3172", color: "#fff", fontWeight: 600, minWidth: "22px" }}>
+                      {parseInt(d.split("-")[2])}
+                    </th>
+                  ))
+                ];
+              })}
+              <th style={{ padding: "7px 10px", textAlign: "center", background: "#0f3172", color: "#f59e0b", fontWeight: 600, borderLeft: "2px solid #f59e0b", minWidth: "50px" }}>Total</th>
+            </tr>
+            <tr style={{ background: "#f8faff" }}>
+              <th style={{ padding: "5px 10px", textAlign: "left", fontSize: "10px", color: "#6b84a3" }}></th>
+              {months.map(([mk, dates], mi) => {
+                const [y, m] = mk.split("-");
+                const label = `${MONTHS[parseInt(m) - 1]} ${y}`;
+                return [
+                  mi > 0 && <th key={`div2-${mk}`} style={{ width: "6px", background: "#f0f4f9", padding: 0, border: "none" }}></th>,
+                  <th key={`label-${mk}`} colSpan={dates.length} style={{ padding: "4px 6px", textAlign: "center", fontSize: "10px", fontWeight: 700, color: monthColors[mi] || "#0f3172" }}>{label}</th>
+                ];
+              })}
+              <th style={{ borderLeft: "2px solid #bfdbfe" }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {wks.map((w: any, idx: number) => {
+              const grandTotal = months.flatMap(([, dates]) => dates).reduce((a: number, d: string) => {
+                const v = getAtt(d, w.id ?? w);
+                return v === "Present" ? a + 1 : v === "Half" ? a + 0.5 : a;
+              }, 0);
+              return (
+                <tr key={w.id ?? idx} style={{ background: idx % 2 === 0 ? "#fff" : "#f8faff", borderBottom: "1px solid #f0f4f9" }}>
+                  <td style={{ padding: "7px 10px", fontWeight: 600 }}>{w.name}</td>
+                  {months.map(([mk, dates], mi) => {
+                    return [
+                      mi > 0 && <td key={`div-r-${mk}`} style={{ width: "6px", background: "#f0f4f9", padding: 0 }}></td>,
+                      ...dates.map((d: string) => {
+                        const v = getAtt(d, w.id ?? w);
+                        const bg = v === "Present" ? "#dcfce7" : v === "Half" ? "#fef9c3" : v === "Absent" ? "#fee2e2" : "transparent";
+                        const col = v === "Present" ? "#166534" : v === "Half" ? "#d97706" : v === "Absent" ? "#991b1b" : "#d1d5db";
+                        return (
+                          <td key={d} style={{ padding: "4px 2px", textAlign: "center", background: bg, color: col, fontWeight: 600 }}>
+                            {v === "Present" ? "P" : v === "Half" ? "H" : v === "Absent" ? "A" : ""}
+                          </td>
+                        );
+                      })
+                    ];
+                  })}
+                  <td style={{ padding: "7px 10px", textAlign: "center", fontWeight: 800, color: "#1e50a0", borderLeft: "2px solid #bfdbfe" }}>{grandTotal}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   // ── Shared report header ──
   const ReportHeader = ({ invoiceNumber, client, siteName, nameOfWork, place, fromDate, toDate }: any) => (
@@ -2590,25 +2618,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
                   fromDate={repWorkObj.fromDate}
                   toDate={repWorkObj.toDate || today}
                 />
-                {Object.entries(monthGroups).map(([mk, dates]) => (
-                  <div key={mk} style={{ marginBottom: "20px" }}>
-                    <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f3172", marginBottom: "8px", padding: "5px 0", borderBottom: "1px solid #0f3172" }}>{fmtMK(mk)}</div>
-                    <MonthTable dates={dates} workers={repWorkers} getAtt={(d: string, wid: any) => getRepAtt(d, wid)} />
-                  </div>
-                ))}
-                {Object.keys(monthGroups).length > 1 && (
-                  <div style={{ background: "#f0f6ff", borderRadius: "9px", padding: "12px 14px", marginTop: "4px" }}>
-                    <div style={{ fontSize: "12px", fontWeight: 700, color: "#0f3172", marginBottom: "8px" }}>Grand Total (All Months)</div>
-                    <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-                      {repWorkers.map((w: any) => (
-                        <div key={w.id} style={{ fontSize: "12px" }}>
-                          <span style={{ color: "#6b84a3" }}>{w.name}: </span>
-                          <span style={{ fontWeight: 800, color: "#1e50a0" }}>{getGrandTotal(w.id)} days</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <CombinedTable monthGroups={monthGroups} workers={repWorkers} getAtt={(d: string, wid: any) => getRepAtt(d, wid)} />
                 <div style={{ display: "flex", gap: "16px", marginTop: "14px", fontSize: "11px" }}>
                   {[["P", "Present", "#dcfce7", "#166534"], ["H", "Half Day", "#fef9c3", "#d97706"], ["A", "Absent", "#fee2e2", "#991b1b"]].map(([sym, lbl, bg, col]) => (
                     <div key={sym} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -2645,22 +2655,14 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
                     fromDate={viewReport.fromDate}
                     toDate={viewReport.toDate}
                   />
-                  {Object.entries(buildMonthGroups(viewReport.fromDate, viewReport.toDate)).map(([mk, dates]) => {
-                    const [y, m] = mk.split("-");
-                    return (
-                      <div key={mk} style={{ marginBottom: "20px" }}>
-                        <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f3172", marginBottom: "8px", padding: "5px 0", borderBottom: "1px solid #0f3172" }}>{MONTHS[parseInt(m) - 1]} {y}</div>
-                        <MonthTable
-                          dates={dates}
-                          workers={viewReport.workers}
-                          getAtt={(d: string, wid: any) => {
-                            const wk = viewReport.workers.find((x: any) => x.id === wid);
-                            return wk?.attendance.find((a: any) => a.date === d)?.val || "";
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
+                  <CombinedTable
+                    monthGroups={buildMonthGroups(viewReport.fromDate, viewReport.toDate)}
+                    workers={viewReport.workers}
+                    getAtt={(d: string, wid: any) => {
+                      const wk = viewReport.workers.find((x: any) => x.id === wid);
+                      return wk?.attendance.find((a: any) => a.date === d)?.val || "";
+                    }}
+                  />
                 </div>
               </div>
             ) : (
