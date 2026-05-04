@@ -2667,31 +2667,46 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
               <div style={S.card}>
                 <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>📁 Attendance History</h3>
                 <div style={{ fontSize: "11px", color: "#6b84a3", marginBottom: "10px" }}>All invoiced works — newest first</div>
-                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%", maxWidth: "100%" }}></div>
-                <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 110px 100px", gap: "8px", padding: "6px 10px", background: "#f0f4f9", borderRadius: "7px", marginBottom: "6px", fontSize: "11px", fontWeight: 700, color: "#6b84a3" }}>
-                  <span>#</span><span>Site</span><span>Work</span><span>Invoice</span><span>Status</span>
+                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "520px" }}>
+                    <thead>
+                      <tr style={{ background: "#f0f4f9" }}>
+                        <th style={{ padding: "8px 10px", textAlign: "left", fontSize: "11px", fontWeight: 700, color: "#6b84a3", width: "36px" }}>#</th>
+                        <th style={{ padding: "8px 10px", textAlign: "left", fontSize: "11px", fontWeight: 700, color: "#6b84a3", minWidth: "120px" }}>Site</th>
+                        <th style={{ padding: "8px 10px", textAlign: "left", fontSize: "11px", fontWeight: 700, color: "#6b84a3", minWidth: "140px" }}>Work</th>
+                        <th style={{ padding: "8px 10px", textAlign: "left", fontSize: "11px", fontWeight: 700, color: "#6b84a3", minWidth: "110px" }}>Invoice</th>
+                        <th style={{ padding: "8px 10px", textAlign: "left", fontSize: "11px", fontWeight: 700, color: "#6b84a3", minWidth: "100px" }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {historyRows.length === 0 ? (
+                        <tr><td colSpan={5} style={{ padding: "30px", textAlign: "center", color: "#9db3cc" }}>No invoiced works yet.</td></tr>
+                      ) : historyRows.map((row: any, idx: number) => {
+                        const saved = savedReports.find((r: any) => r.workId === row.workId);
+                        return (
+                          <tr key={`${row.workId}-${idx}`} style={{ background: saved ? "#f0fdf4" : idx % 2 === 0 ? "#fff" : "#f8faff", borderBottom: "1px solid #f0f4f9" }}>
+                            <td style={{ padding: "8px 10px", color: "#6b84a3", fontWeight: 600, fontSize: "12px" }}>{historyRows.length - idx}</td>
+                            <td style={{ padding: "8px 10px", fontWeight: 600, fontSize: "12px" }}>{row.siteName}</td>
+                            <td style={{ padding: "8px 10px", color: "#6b84a3", fontSize: "12px" }}>{row.workName}</td>
+                            <td style={{ padding: "8px 10px" }}>
+                              <span style={{ background: "#dbeafe", color: "#1e40af", borderRadius: "6px", padding: "2px 7px", fontWeight: 700, fontSize: "11px" }}>{row.invoiceNumber}</span>
+                            </td>
+                            <td style={{ padding: "8px 10px" }}>
+                              {saved ? (
+                                <div style={{ display: "flex", gap: "4px" }}>
+                                  <button onClick={() => setViewReportId(saved.id)} style={{ ...S.btn(), padding: "4px 8px", fontSize: "11px" }}>🖨️</button>
+                                  <button onClick={() => setReportDelModal(saved.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 8px", fontSize: "11px" }}>🗑️</button>
+                                </div>
+                              ) : (
+                                <span style={{ background: "#f0f4f9", color: "#9db3cc", borderRadius: "6px", padding: "3px 7px", fontSize: "10px", fontWeight: 600 }}>Not available</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                {historyRows.length === 0 ? (
-                  <div style={{ textAlign: "center", color: "#9db3cc", padding: "30px" }}>No invoiced works yet.</div>
-                ) : historyRows.map((row: any, idx: number) => {
-                  const saved = savedReports.find((r: any) => r.workId === row.workId);
-                  return (
-                    <div key={`${row.workId}-${idx}`} style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 110px 100px", gap: "8px", padding: "8px 10px", borderRadius: "8px", background: saved ? "#f0fdf4" : "#f8faff", border: `0.5px solid ${saved ? "#bbf7d0" : "transparent"}`, marginBottom: "5px", alignItems: "center", fontSize: "12px" }}>
-                      <span style={{ color: "#6b84a3", fontWeight: 600 }}>{historyRows.length - idx}</span>
-                      <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.siteName}>{row.siteName}</span>
-                      <span style={{ color: "#6b84a3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.workName}>{row.workName}</span>
-                      <span style={{ background: "#dbeafe", color: "#1e40af", borderRadius: "6px", padding: "2px 7px", fontWeight: 700, fontSize: "11px", display: "inline-block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.invoiceNumber}</span>
-                      {saved ? (
-                        <div style={{ display: "flex", gap: "4px" }}>
-                          <button onClick={() => setViewReportId(saved.id)} style={{ ...S.btn(), padding: "4px 8px", fontSize: "11px" }}>🖨️</button>
-                          <button onClick={() => setReportDelModal(saved.id)} style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 8px", fontSize: "11px" }}>🗑️</button>
-                        </div>
-                      ) : (
-                        <span style={{ background: "#f0f4f9", color: "#9db3cc", borderRadius: "6px", padding: "3px 7px", fontSize: "10px", fontWeight: 600 }}>Not available</span>
-                      )}
-                    </div>
-                  );
-                })}
               </div>
             )
           )}
