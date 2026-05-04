@@ -2243,10 +2243,62 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
   const buildReportHTML = ({
     invoiceNumber, client, siteName, nameOfWork, place, fromDate, toDate, monthRows, wkrs, isLive,
   }: any) => {
+    const monthEntries = monthRows as [string, string[]][];
+    const monthColors = ["#0f3172", "#1e50a0", "#163a6e", "#2a5fa8"];
+    const tableHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:10px;">
+        <thead>
+          <tr>
+            <th style="padding:7px 10px;text-align:left;background:#0f3172;color:#fff;font-weight:700;min-width:120px;">Worker</th>
+            ${monthEntries.map(([mk, dates], mi) => {
+      const divider = mi > 0 ? `<th style="width:6px;background:#f0f4f9;padding:0;border:none;"></th>` : "";
+      return divider + dates.map((d: string) =>
+        `<th style="padding:5px 3px;text-align:center;background:${monthColors[mi] || "#0f3172"};color:#fff;font-weight:700;min-width:20px;">${parseInt(d.split("-")[2])}</th>`
+      ).join("");
+    }).join("")}
+            <th style="padding:7px 10px;text-align:center;background:#0f3172;color:#f59e0b;font-weight:700;border-left:2px solid #f59e0b;min-width:40px;">Total</th>
+          </tr>
+          <tr style="background:#f8faff;">
+            <th></th>
+            ${monthEntries.map(([mk, dates], mi) => {
+      const [y, m] = mk.split("-");
+      const label = `${MONTHS[parseInt(m) - 1]} ${y}`;
+      const divider = mi > 0 ? `<th style="width:6px;background:#f0f4f9;padding:0;border:none;"></th>` : "";
+      return divider + `<th colspan="${dates.length}" style="padding:3px 6px;text-align:center;font-size:9px;font-weight:700;color:${monthColors[mi] || "#0f3172"};">${label}</th>`;
+    }).join("")}
+            <th style="border-left:2px solid #bfdbfe;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${wkrs.map((w: any, idx: number) => {
+      const allDates = monthEntries.flatMap(([, dates]) => dates);
+      const getV = isLive
+        ? (d: string) => attendance[getKey(d, repSite, repWork, w.id)] || ""
+        : (d: string) => (w.attendance.find((a: any) => a.date === d)?.val || "");
+      const grandTotal = allDates.reduce((a: number, d: string) => {
+        const v = getV(d);
+        return v === "Present" ? a + 1 : v === "Half" ? a + 0.5 : a;
+      }, 0);
+      return `<tr style="background:${idx % 2 === 0 ? "#fff" : "#f8faff"};border-bottom:1px solid #f0f4f9;">
+              <td style="padding:6px 10px;font-weight:600;">${w.name}</td>
+              ${monthEntries.map(([mk, dates], mi) => {
+        const divider = mi > 0 ? `<td style="width:6px;background:#f0f4f9;padding:0;"></td>` : "";
+        return divider + dates.map((d: string) => {
+          const v = getV(d);
+          const bg = v === "Present" ? "#dcfce7" : v === "Half" ? "#fef9c3" : v === "Absent" ? "#fee2e2" : "transparent";
+          const col = v === "Present" ? "#166534" : v === "Half" ? "#d97706" : v === "Absent" ? "#991b1b" : "#d1d5db";
+          return `<td style="padding:4px 2px;text-align:center;background:${bg};color:${col};font-weight:600;">${v === "Present" ? "P" : v === "Half" ? "H" : v === "Absent" ? "A" : ""}</td>`;
+        }).join("");
+      }).join("")}
+              <td style="padding:6px 10px;text-align:center;font-weight:800;color:#1e50a0;border-left:2px solid #bfdbfe;">${grandTotal}</td>
+            </tr>`;
+    }).join("")}
+        </tbody>
+      </table>`;
+
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Attendance Report</title>
     <style>@page{size:A4 landscape;margin:8mm;}body{font-family:'Segoe UI',sans-serif;color:#1a2b4a;background:#fff;padding:8mm;margin:0;font-size:11px;}
-    table{border-collapse:collapse;width:100%;}th,td{padding:5px 6px;font-size:10px;}
-    h3{font-size:12px;color:#0f3172;margin:10px 0 5px;border-bottom:1px solid #0f3172;padding-bottom:3px;}</style>
+    table{border-collapse:collapse;width:100%;}th,td{padding:5px 6px;font-size:10px;}</style>
     </head><body onload="window.print();">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #0f3172;">
       <div><div style="font-size:18px;font-weight:800;color:#0f3172;">VinoDhan Coating</div>
@@ -2259,36 +2311,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
       <div><b>Place:</b> ${place}</div>
       <div><b>Duration:</b> ${fmtDate(fromDate)} to ${fmtDate(toDate)}</div>
     </div>
-    ${(monthRows as [string, string[]][]).map(([mk, dates]) => {
-      const [y, m] = mk.split("-");
-      const mLabel = `${MONTHS[parseInt(m) - 1]} ${y}`;
-      return `<h3>${mLabel}</h3>
-      <table><thead><tr style="background:#0f3172;color:#fff;">
-        <th style="text-align:left;min-width:120px;padding:6px 8px;">Worker</th>
-        ${dates.map((d: string) => `<th style="text-align:center;min-width:20px;">${parseInt(d.split("-")[2])}</th>`).join("")}
-        <th style="text-align:center;border-left:2px solid #f59e0b;color:#f59e0b;min-width:40px;">Total</th>
-      </tr></thead><tbody>
-      ${wkrs.map((w: any, i: number) => {
-        const getV = isLive
-          ? (d: string) => attendance[getKey(d, repSite, repWork, w.id)] || ""
-          : (d: string) => (w.attendance.find((a: any) => a.date === d)?.val || "");
-        const mTotal = dates.reduce((a: number, d: string) => {
-          const v = getV(d);
-          return v === "Present" ? a + 1 : v === "Half" ? a + 0.5 : a;
-        }, 0);
-        return `<tr style="background:${i % 2 === 0 ? "#fff" : "#f8faff"};border-bottom:1px solid #f0f4f9;">
-          <td style="font-weight:600;padding:6px 8px;">${w.name}</td>
-          ${dates.map((d: string) => {
-          const v = getV(d);
-          const bg = v === "Present" ? "#dcfce7" : v === "Half" ? "#fef9c3" : v === "Absent" ? "#fee2e2" : "transparent";
-          const col = v === "Present" ? "#166534" : v === "Half" ? "#d97706" : v === "Absent" ? "#991b1b" : "#d1d5db";
-          return `<td style="text-align:center;background:${bg};color:${col};font-weight:600;">${v === "Present" ? "P" : v === "Half" ? "H" : v === "Absent" ? "A" : ""}</td>`;
-        }).join("")}
-          <td style="text-align:center;font-weight:800;color:#1e50a0;border-left:2px solid #bfdbfe;">${mTotal}</td>
-        </tr>`;
-      }).join("")}
-      </tbody></table>`;
-    }).join("")}
+    ${tableHTML}
     </body></html>`;
   };
 
