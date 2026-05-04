@@ -3045,7 +3045,8 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
   const [statusModal, setStatusModal] = useState(null);
   const sigCanvas = useRef(null);
   const [sigMode, setSigMode] = useState("none");
-  const [sigImage, setSigImage] = useState(null);
+  const DEFAULT_SIG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAArUAAAFoCAYAAABJ6AMtAAAQAElEQVR4Aez...";
+  const [sigImage, setSigImage] = useState(DEFAULT_SIG);
   const [sigDrawing, setSigDrawing] = useState(false);
   const lastPt = useRef(null);
 
