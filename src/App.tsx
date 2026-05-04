@@ -2308,8 +2308,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 16px;margin-bottom:12px;font-size:11px;">
       <div><b>Client:</b> ${client}</div><div><b>Site:</b> ${siteName}</div>
       <div style="grid-column:1/-1"><b>Name of Work:</b> ${(nameOfWork as string[]).join(" &nbsp;|&nbsp; ")}</div>
-      <div><b>Place:</b> ${place}</div>
-      <div><b>Duration:</b> ${fmtDate(fromDate)} to ${fmtDate(toDate)}</div>
+      <div><b>Duration:</b> ${fmtDate(fromDate)} to ${fmtDate(toDate)}</div><div><b>Place:</b> ${place}</div>
     </div>
     ${tableHTML}
     </body></html>`;
