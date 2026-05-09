@@ -360,7 +360,7 @@ export default function App() {
 
         try {
           const response = await fetch(
-            `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/backup_2026-05-01?key=${apiKey}`
+            `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/appData?key=${apiKey}`
           );
           const firebaseData = await response.json();
 
@@ -448,7 +448,7 @@ export default function App() {
         const apiKey = "AIzaSyAz13tZTrb-qRfIui_6Q_X0U4NNm0mxtfE";
 
         const response = await fetch(
-          `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/backup_2026-05-01?key=${apiKey}`,
+          `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/appData?key=${apiKey}`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -476,8 +476,7 @@ export default function App() {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [workers, sites, invoices, ledgers, attendance, assignments, company, client, bank, passwords, recycleBin, savedReports, savedPermits, execProfile, ready]);
-
+  }, [workers, sites, invoices, ledgers, attendance, assignments, company, client, bank, passwords, recycleBin, savedReports, savedPermits, execProfile, savedSignature, ready]);
   // ════════════════════════════════════════════════════════════════════════════════
   // EFFECT 3-16: Auto-sync individual data to Firebase & localStorage
   // ════════════════════════════════════════════════════════════════════════════════
