@@ -473,7 +473,7 @@ export default function App() {
     // Debounce: sync after 2 seconds of no changes
     const timer = setTimeout(() => {
       syncToFirebase();
-    }, 2000);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [workers, sites, invoices, ledgers, attendance, assignments, company, client, bank, passwords, recycleBin, savedReports, savedPermits, execProfile, savedSignature, ready]);
@@ -485,7 +485,7 @@ export default function App() {
   useEffect(() => { if (!ready) return; saveS("vd_sites", sites); }, [sites, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_attendance", attendance); }, [attendance, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_assignments", assignments); }, [assignments, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_invoices", invoices); }, [invoices, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_invoices", invoices); fbSet("invoices", invoices); }, [invoices, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_company", company); fbSet("company", company); }, [company, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_client", client); fbSet("client", client); }, [client, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_bank", bank); fbSet("bank", bank); }, [bank, ready]);
