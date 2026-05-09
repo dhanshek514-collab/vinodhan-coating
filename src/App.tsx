@@ -480,12 +480,12 @@ export default function App() {
   // ════════════════════════════════════════════════════════════════════════════════
   // EFFECT 3-16: Auto-sync individual data to Firebase & localStorage
   // ════════════════════════════════════════════════════════════════════════════════
-  useEffect(() => { if (!ready) return; saveS("vd_workers", workers); fbSet("workers", workers); }, [workers, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_exec", execProfile); fbSet("exec", execProfile); }, [execProfile, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_sites", sites); fbSet("sites", sites); }, [sites, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_attendance", attendance); fbSet("attendance", attendance); }, [attendance, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_assignments", assignments); fbSet("assignments", assignments); }, [assignments, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_invoices", invoices); fbSet("invoices", invoices); }, [invoices, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_workers", workers); }, [workers, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_exec", execProfile); }, [execProfile, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_sites", sites); }, [sites, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_attendance", attendance); }, [attendance, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_assignments", assignments); }, [assignments, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_invoices", invoices); }, [invoices, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_company", company); fbSet("company", company); }, [company, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_client", client); fbSet("client", client); }, [client, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_bank", bank); fbSet("bank", bank); }, [bank, ready]);
