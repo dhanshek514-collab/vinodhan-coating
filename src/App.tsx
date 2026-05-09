@@ -358,36 +358,35 @@ export default function App() {
         const projectId = "vinodhan-coating";
         const apiKey = "AIzaSyAz13tZTrb-qRfIui_6Q_X0U4NNm0mxtfE";
 
-        try {
-          const response = await fetch(
-            `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/appData?key=${apiKey}`
-          );
-          const firebaseData = await response.json();
+        const docs = ["workers", "exec", "sites", "attendance", "assignments", "invoices", "company", "client", "bank", "passwords", "recycleBin", "ledgers", "savedReports", "savedPermits", "savedSignature"];
+        const results = await Promise.all(docs.map(doc =>
+          fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/${doc}?key=${apiKey}`)
+            .then(r => r.json())
+            .then(j => ({ doc, data: j.fields?.data?.stringValue }))
+            .catch(() => ({ doc, data: null }))
+        ));
+        const loaded: any = {};
+        results.forEach(({ doc, data }) => { if (data) try { loaded[doc] = JSON.parse(data); } catch { } });
 
-          if (firebaseData.fields?.data?.stringValue) {
-            const backupData = JSON.parse(firebaseData.fields.data.stringValue);
-            console.log("✅ Data loaded from Firebase!");
-
-            setWorkers(backupData.workers || INIT_WORKERS);
-            setExecProfile(backupData.exec || EMPTY_EXEC);
-            setSites(backupData.sites || [{ id: 1, name: "Site A", client: "Swathi Engineering Agency", status: "Active", works: [] }]);
-            setAttendance(backupData.attendance || {});
-            setAssignments(backupData.assignments || {});
-            setInvoices(backupData.invoices || []);
-            setCompany(backupData.company || INIT_COMPANY);
-            setClient(backupData.client || INIT_CLIENT);
-            setBank(backupData.bank || INIT_BANK);
-            setPasswords(backupData.passwords || {});
-            setRecycleBin(backupData.recycleBin || { sites: [], invoices: [] });
-            setLedgers(backupData.ledgers || []);
-            setSavedReports(backupData.savedReports || []);
-            setSavedPermits(backupData.savedPermits || []);
-            setSavedSignature(backupData.savedSignature || "");
-            setReady(true);
-            return;
-          }
-        } catch (firebaseError) {
-          console.log("⚠️ Firebase fetch failed, using localStorage...");
+        if (Object.keys(loaded).length > 0) {
+          if (loaded.workers) setWorkers(loaded.workers);
+          if (loaded.exec) setExecProfile(loaded.exec);
+          if (loaded.sites) setSites(loaded.sites);
+          if (loaded.attendance) setAttendance(loaded.attendance);
+          if (loaded.assignments) setAssignments(loaded.assignments);
+          if (loaded.invoices) setInvoices(loaded.invoices);
+          if (loaded.company) setCompany(loaded.company);
+          if (loaded.client) setClient(loaded.client);
+          if (loaded.bank) setBank(loaded.bank);
+          if (loaded.passwords) setPasswords(loaded.passwords);
+          if (loaded.recycleBin) setRecycleBin(loaded.recycleBin);
+          if (loaded.ledgers) setLedgers(loaded.ledgers);
+          if (loaded.savedReports) setSavedReports(loaded.savedReports);
+          if (loaded.savedPermits) setSavedPermits(loaded.savedPermits);
+          if (loaded.savedSignature) setSavedSignature(loaded.savedSignature);
+          console.log("✅ Loaded from Firebase!");
+          setReady(true);
+          return;
         }
 
         // Fallback: Load from localStorage
@@ -480,11 +479,11 @@ export default function App() {
   // ════════════════════════════════════════════════════════════════════════════════
   // EFFECT 3-16: Auto-sync individual data to Firebase & localStorage
   // ════════════════════════════════════════════════════════════════════════════════
-  useEffect(() => { if (!ready) return; saveS("vd_workers", workers); }, [workers, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_exec", execProfile); }, [execProfile, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_sites", sites); }, [sites, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_attendance", attendance); }, [attendance, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_assignments", assignments); }, [assignments, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_workers", workers); fbSet("workers", workers); }, [workers, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_exec", execProfile); fbSet("exec", execProfile); }, [execProfile, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_sites", sites); fbSet("sites", sites); }, [sites, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_attendance", attendance); fbSet("attendance", attendance); }, [attendance, ready]);
+  useEffect(() => { if (!ready) return; saveS("vd_assignments", assignments); fbSet("assignments", assignments); }, [assignments, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_invoices", invoices); fbSet("invoices", invoices); }, [invoices, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_company", company); fbSet("company", company); }, [company, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_client", client); fbSet("client", client); }, [client, ready]);
