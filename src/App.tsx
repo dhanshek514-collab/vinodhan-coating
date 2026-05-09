@@ -541,6 +541,33 @@ export default function App() {
   }, [user, doLogout]);
 
   useEffect(() => {
+    if (!ready) return;
+    const interval = setInterval(async () => {
+      const projectId = "vinodhan-coating";
+      const apiKey = "AIzaSyAz13tZTrb-qRfIui_6Q_X0U4NNm0mxtfE";
+      const docs = ["workers", "exec", "sites", "attendance", "assignments", "invoices", "company", "client", "bank", "passwords", "recycleBin", "ledgers", "savedReports", "savedPermits", "savedSignature"];
+      const results = await Promise.all(docs.map(doc =>
+        fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/${doc}?key=${apiKey}`)
+          .then(r => r.json())
+          .then(j => ({ doc, data: j.fields?.data?.stringValue }))
+          .catch(() => ({ doc, data: null }))
+      ));
+      const loaded: any = {};
+      results.forEach(({ doc, data }) => { if (data) try { loaded[doc] = JSON.parse(data); } catch { } });
+      if (loaded.workers) setWorkers(loaded.workers);
+      if (loaded.sites) setSites(loaded.sites);
+      if (loaded.invoices) setInvoices(loaded.invoices);
+      if (loaded.attendance) setAttendance(loaded.attendance);
+      if (loaded.assignments) setAssignments(loaded.assignments);
+      if (loaded.ledgers) setLedgers(loaded.ledgers);
+      if (loaded.savedReports) setSavedReports(loaded.savedReports);
+      if (loaded.savedPermits) setSavedPermits(loaded.savedPermits);
+      if (loaded.recycleBin) setRecycleBin(loaded.recycleBin);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [ready]);
+
+  useEffect(() => {
     if (!user) return;
     const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"];
     events.forEach((e) => window.addEventListener(e, resetTimer, true));
