@@ -479,18 +479,18 @@ export default function App() {
   // ════════════════════════════════════════════════════════════════════════════════
   // EFFECT 3-16: Auto-sync individual data to Firebase & localStorage
   // ════════════════════════════════════════════════════════════════════════════════
-  useEffect(() => { if (!ready) return; saveS("vd_workers", workers); fbSet("workers", workers); }, [workers, ready]);
+  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_workers", workers); fbSet("workers", workers); }, [workers, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_exec", execProfile); fbSet("exec", execProfile); }, [execProfile, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_sites", sites); fbSet("sites", sites); }, [sites, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_attendance", attendance); fbSet("attendance", attendance); }, [attendance, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_assignments", assignments); fbSet("assignments", assignments); }, [assignments, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_invoices", invoices); fbSet("invoices", invoices); }, [invoices, ready]);
+  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_sites", sites); fbSet("sites", sites); }, [sites, ready]);
+  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_attendance", attendance); fbSet("attendance", attendance); }, [attendance, ready]);
+  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_assignments", assignments); fbSet("assignments", assignments); }, [assignments, ready]);
+  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_invoices", invoices); fbSet("invoices", invoices); }, [invoices, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_company", company); fbSet("company", company); }, [company, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_client", client); fbSet("client", client); }, [client, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_bank", bank); fbSet("bank", bank); }, [bank, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_passwords", passwords); fbSet("passwords", passwords); }, [passwords, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_recyclebin", recycleBin); fbSet("recycleBin", recycleBin); }, [recycleBin, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_ledgers", ledgers); fbSet("ledgers", ledgers); }, [ledgers, ready]);
+  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_ledgers", ledgers); fbSet("ledgers", ledgers); }, [ledgers, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_savedReports", savedReports); fbSet("savedReports", savedReports); }, [savedReports, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_savedPermits", savedPermits); fbSet("savedPermits", savedPermits); }, [savedPermits, ready]);
   useEffect(() => { if (!ready) return; saveS("vd_savedSignature", savedSignature); fbSet("savedSignature", savedSignature); }, [savedSignature, ready]);
@@ -540,9 +540,11 @@ export default function App() {
     }, 120000); // 2 minutes
   }, [user, doLogout]);
 
+  const lastSaveRef = useRef(0);
   useEffect(() => {
     if (!ready) return;
     const interval = setInterval(async () => {
+      if (Date.now() - lastSaveRef.current < 10000) return;
       const projectId = "vinodhan-coating";
       const apiKey = "AIzaSyAz13tZTrb-qRfIui_6Q_X0U4NNm0mxtfE";
       const docs = ["workers", "exec", "sites", "attendance", "assignments", "invoices", "company", "client", "bank", "passwords", "recycleBin", "ledgers", "savedReports", "savedPermits", "savedSignature"];
