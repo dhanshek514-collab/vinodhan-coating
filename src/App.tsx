@@ -543,6 +543,7 @@ export default function App() {
   }, [user, doLogout]);
 
   const initialLoadDone = useRef(false);
+  const lastSaveRef = useRef(0);
   useEffect(() => {
     if (!ready) return;
     const interval = setInterval(async () => {
