@@ -386,6 +386,7 @@ export default function App() {
           if (loaded.savedSignature) setSavedSignature(loaded.savedSignature);
           console.log("✅ Loaded from Firebase!");
           setReady(true);
+          setTimeout(() => { initialLoadDone.current = true; }, 3000);
           return;
         }
 
@@ -409,6 +410,7 @@ export default function App() {
 
         console.log("✅ READY!");
         setReady(true);
+        setTimeout(() => { initialLoadDone.current = true; }, 3000);
       } catch (error) {
         console.error("❌ Error:", error);
         setReady(true);
@@ -479,21 +481,21 @@ export default function App() {
   // ════════════════════════════════════════════════════════════════════════════════
   // EFFECT 3-16: Auto-sync individual data to Firebase & localStorage
   // ════════════════════════════════════════════════════════════════════════════════
-  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_workers", workers); fbSet("workers", workers); }, [workers, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_exec", execProfile); fbSet("exec", execProfile); }, [execProfile, ready]);
-  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_sites", sites); fbSet("sites", sites); }, [sites, ready]);
-  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_attendance", attendance); fbSet("attendance", attendance); }, [attendance, ready]);
-  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_assignments", assignments); fbSet("assignments", assignments); }, [assignments, ready]);
-  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_invoices", invoices); fbSet("invoices", invoices); }, [invoices, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_company", company); fbSet("company", company); }, [company, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_client", client); fbSet("client", client); }, [client, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_bank", bank); fbSet("bank", bank); }, [bank, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_passwords", passwords); fbSet("passwords", passwords); }, [passwords, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_recyclebin", recycleBin); fbSet("recycleBin", recycleBin); }, [recycleBin, ready]);
-  useEffect(() => { if (!ready) return; lastSaveRef.current = Date.now(); saveS("vd_ledgers", ledgers); fbSet("ledgers", ledgers); }, [ledgers, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_savedReports", savedReports); fbSet("savedReports", savedReports); }, [savedReports, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_savedPermits", savedPermits); fbSet("savedPermits", savedPermits); }, [savedPermits, ready]);
-  useEffect(() => { if (!ready) return; saveS("vd_savedSignature", savedSignature); fbSet("savedSignature", savedSignature); }, [savedSignature, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; lastSaveRef.current = Date.now(); saveS("vd_workers", workers); fbSet("workers", workers); }, [workers, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; saveS("vd_exec", execProfile); fbSet("exec", execProfile); }, [execProfile, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; lastSaveRef.current = Date.now(); saveS("vd_sites", sites); fbSet("sites", sites); }, [sites, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; lastSaveRef.current = Date.now(); saveS("vd_attendance", attendance); fbSet("attendance", attendance); }, [attendance, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; lastSaveRef.current = Date.now(); saveS("vd_assignments", assignments); fbSet("assignments", assignments); }, [assignments, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; lastSaveRef.current = Date.now(); saveS("vd_invoices", invoices); fbSet("invoices", invoices); }, [invoices, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; saveS("vd_company", company); fbSet("company", company); }, [company, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; saveS("vd_client", client); fbSet("client", client); }, [client, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; saveS("vd_bank", bank); fbSet("bank", bank); }, [bank, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; saveS("vd_passwords", passwords); fbSet("passwords", passwords); }, [passwords, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; saveS("vd_recyclebin", recycleBin); fbSet("recycleBin", recycleBin); }, [recycleBin, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; lastSaveRef.current = Date.now(); saveS("vd_ledgers", ledgers); fbSet("ledgers", ledgers); }, [ledgers, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; saveS("vd_savedReports", savedReports); fbSet("savedReports", savedReports); }, [savedReports, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; saveS("vd_savedPermits", savedPermits); fbSet("savedPermits", savedPermits); }, [savedPermits, ready]);
+  useEffect(() => { if (!ready || !initialLoadDone.current) return; saveS("vd_savedSignature", savedSignature); fbSet("savedSignature", savedSignature); }, [savedSignature, ready]);
 
   // ════════════════════════════════════════════════════════════════════════════════
   // EFFECT 17: Daily Backup
@@ -540,7 +542,7 @@ export default function App() {
     }, 120000); // 2 minutes
   }, [user, doLogout]);
 
-  const lastSaveRef = useRef(0);
+  const initialLoadDone = useRef(false);
   useEffect(() => {
     if (!ready) return;
     const interval = setInterval(async () => {
@@ -556,14 +558,14 @@ export default function App() {
       ));
       const loaded: any = {};
       results.forEach(({ doc, data }) => { if (data) try { loaded[doc] = JSON.parse(data); } catch { } });
-      if (loaded.workers) setWorkers(loaded.workers);
-      if (loaded.sites) setSites(loaded.sites);
-      if (loaded.invoices) setInvoices(loaded.invoices);
-      if (loaded.attendance) setAttendance(loaded.attendance);
-      if (loaded.assignments) setAssignments(loaded.assignments);
-      if (loaded.ledgers) setLedgers(loaded.ledgers);
-      if (loaded.savedReports) setSavedReports(loaded.savedReports);
-      if (loaded.savedPermits) setSavedPermits(loaded.savedPermits);
+      if (loaded.workers?.length > 0) setWorkers(loaded.workers);
+      if (loaded.sites?.length > 0) setSites(loaded.sites);
+      if (loaded.invoices?.length > 0) setInvoices(loaded.invoices);
+      if (loaded.attendance && Object.keys(loaded.attendance).length > 0) setAttendance(loaded.attendance);
+      if (loaded.assignments && Object.keys(loaded.assignments).length > 0) setAssignments(loaded.assignments);
+      if (loaded.ledgers?.length > 0) setLedgers(loaded.ledgers);
+      if (loaded.savedReports?.length > 0) setSavedReports(loaded.savedReports);
+      if (loaded.savedPermits?.length > 0) setSavedPermits(loaded.savedPermits);
       if (loaded.recycleBin) setRecycleBin(loaded.recycleBin);
     }, 5000);
     return () => clearInterval(interval);
