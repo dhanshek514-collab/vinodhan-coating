@@ -597,7 +597,7 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return;
-    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"];
+    const events = ["mousemove", "mousedown", "keydown", "touchstart", "click"];
     events.forEach((e) => window.addEventListener(e, resetTimer, true));
     resetTimer();
     return () => {
