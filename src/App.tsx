@@ -60,9 +60,12 @@ async function fbGet(docId, fallback) {
     return fallback;
   }
 }
-async function fbSet(docId, data) {
+const pendingWrites = new Set();
+
+async function fbSet(docId, data, attempt = 1) {
+  pendingWrites.add(docId);
   try {
-    console.log("💾 Saving:", docId);
+    console.log("💾 Saving:", docId, "attempt", attempt);
 
     const res = await fetch(`${FB_BASE}/${docId}?key=${FB_API_KEY}`, {
       method: "PATCH",
@@ -70,15 +73,19 @@ async function fbSet(docId, data) {
       body: JSON.stringify({ fields: { data: { stringValue: JSON.stringify(data) } } })
     });
 
-    if (!res.ok) {
-      console.error(`❌ fbSet failed for ${docId}:`, res.status, res.statusText);
-      return;
-    }
+    if (!res.ok) throw new Error(`status ${res.status}`);
 
     console.log("✅ Saved:", docId);
+    pendingWrites.delete(docId);
 
   } catch (e) {
-    console.error("❌ fbSet error:", e);
+    console.error(`❌ fbSet error for ${docId} (attempt ${attempt}):`, e);
+    if (attempt < 4) {
+      setTimeout(() => fbSet(docId, data, attempt + 1), attempt * 2000);
+    } else {
+      console.error(`❌ fbSet gave up for ${docId} after ${attempt} attempts`);
+      pendingWrites.delete(docId);
+    }
   }
 }
 async function fbBackup(data) {
@@ -559,15 +566,15 @@ export default function App() {
       ));
       const loaded: any = {};
       results.forEach(({ doc, data }) => { if (data) try { loaded[doc] = JSON.parse(data); } catch { } });
-      if (loaded.workers?.length > 0) setWorkers(loaded.workers);
-      if (loaded.sites?.length > 0) setSites(loaded.sites);
-      if (loaded.invoices?.length > 0) setInvoices(loaded.invoices);
-      if (loaded.attendance && Object.keys(loaded.attendance).length > 0) setAttendance(loaded.attendance);
-      if (loaded.assignments && Object.keys(loaded.assignments).length > 0) setAssignments(loaded.assignments);
-      if (loaded.ledgers?.length > 0) setLedgers(loaded.ledgers);
-      if (loaded.savedReports?.length > 0) setSavedReports(loaded.savedReports);
-      if (loaded.savedPermits?.length > 0) setSavedPermits(loaded.savedPermits);
-      if (loaded.recycleBin) setRecycleBin(loaded.recycleBin);
+      if (loaded.workers?.length > 0 && !pendingWrites.has("workers")) setWorkers(loaded.workers);
+      if (loaded.sites?.length > 0 && !pendingWrites.has("sites")) setSites(loaded.sites);
+      if (loaded.invoices?.length > 0 && !pendingWrites.has("invoices")) setInvoices(loaded.invoices);
+      if (loaded.attendance && Object.keys(loaded.attendance).length > 0 && !pendingWrites.has("attendance")) setAttendance(loaded.attendance);
+      if (loaded.assignments && Object.keys(loaded.assignments).length > 0 && !pendingWrites.has("assignments")) setAssignments(loaded.assignments);
+      if (loaded.ledgers?.length > 0 && !pendingWrites.has("ledgers")) setLedgers(loaded.ledgers);
+      if (loaded.savedReports?.length > 0 && !pendingWrites.has("savedReports")) setSavedReports(loaded.savedReports);
+      if (loaded.savedPermits?.length > 0 && !pendingWrites.has("savedPermits")) setSavedPermits(loaded.savedPermits);
+      if (loaded.recycleBin && !pendingWrites.has("recycleBin")) setRecycleBin(loaded.recycleBin);
     }, 5000);
     return () => clearInterval(interval);
   }, [ready]);
