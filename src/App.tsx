@@ -708,6 +708,14 @@ export default function App() {
         setClient={setClient}
         bank={bank}
         setBank={setBank}
+        ledgers={ledgers}
+        setLedgers={setLedgers}
+        savedReports={savedReports}
+        setSavedReports={setSavedReports}
+        savedPermits={savedPermits}
+        setSavedPermits={setSavedPermits}
+        savedSignature={savedSignature}
+        setSavedSignature={setSavedSignature}
       />
 
       <div style={{
@@ -863,7 +871,7 @@ async function exportExcel({ workers, sites, invoices, attendance, assignments }
 }
 
 // ── TOP BAR ───────────────────────────────────────────
-function TopBar({ user, page, setPage, landscape, setLandscape, setUser, recycleBin, setRecycleBin, sites, setSites, invoices, setInvoices, workers, setWorkers, execProfile, setExecProfile, attendance, setAttendance, assignments, setAssignments, company, setCompany, client, setClient, bank, setBank }) {
+function TopBar({ user, page, setPage, landscape, setLandscape, setUser, recycleBin, setRecycleBin, sites, setSites, invoices, setInvoices, workers, setWorkers, execProfile, setExecProfile, attendance, setAttendance, assignments, setAssignments, company, setCompany, client, setClient, bank, setBank, ledgers, setLedgers, savedReports, setSavedReports, savedPermits, setSavedPermits, savedSignature, setSavedSignature }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showBin, setShowBin] = useState(false);
   const [pwModal, setPwModal] = useState(null);
