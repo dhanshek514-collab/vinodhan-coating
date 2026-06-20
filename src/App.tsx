@@ -847,9 +847,9 @@ async function exportExcel({ workers, sites, invoices, attendance, assignments }
   const months = {};
   Object.keys(attendance).forEach((key) => {
     const parts = key.split("_");
-    const date = parts[0],
-      siteId = parts[1],
-      wid = parts[2];
+    const date = parts[0];
+    const siteId = parts[1];
+    const wid = parts.length === 4 ? parts[3] : parts[2];
     const month = date.slice(0, 7);
     const k = `${month}_${siteId}_${wid}`;
     if (!months[k]) months[k] = { month, siteId, wid, present: 0, half: 0 };
