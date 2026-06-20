@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Data Recovery</title>
+</head>
+
+<body style="font-family:sans-serif;padding:20px;">
+    <h2>VinoDhan Data Recovery</h2>
+    <p>This reads data saved on THIS device only. Tap below to download it as a backup file.</p>
+    <button onclick="downloadBackup()"
+        style="padding:14px 22px;font-size:16px;background:#0f3172;color:#fff;border:none;border-radius:8px;">Download
+        Backup</button>
+    <pre id="out" style="white-space:pre-wrap;background:#f0f0f0;padding:10px;margin-top:20px;font-size:11px;"></pre>
+    <script>
+        function downloadBackup() {
+            const map = {
+                vd_workers: "workers",
+                vd_exec: "execProfile",
+                vd_sites: "sites",
+                vd_attendance: "attendance",
+                vd_assignments: "assignments",
+                vd_invoices: "invoices",
+                vd_company: "company",
+                vd_client: "client",
+                vd_bank: "bank",
+                vd_recyclebin: "recycleBin",
+                vd_ledgers: "ledgers",
+                vd_savedReports: "savedReports",
+                vd_savedPermits: "savedPermits",
+                vd_savedSignature: "savedSignature"
+            };
+            const data = {};
+            Object.keys(map).forEach(k => {
+                const v = localStorage.getItem(k);
+                if (v) try { data[map[k]] = JSON.parse(v); } catch { data[map[k]] = v; }
+            });
+            document.getElementById('out').textContent = "Found keys: " + Object.keys(data).join(", ");
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = "vinodhan-mobile-backup-" + new Date().toISOString().split('T')[0] + ".json";
+            document.body.appendChild(a);
+            a.click();
+        }
+    </script>
+</body>
+
+</html>
