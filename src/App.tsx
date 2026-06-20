@@ -61,30 +61,46 @@ async function fbGet(docId, fallback) {
   }
 }
 const pendingWrites = new Set();
+const latestPayload = new Map();
+const writeInProgress = new Set();
 
-async function fbSet(docId, data, attempt = 1) {
+async function fbSet(docId, data) {
+  latestPayload.set(docId, data);
   pendingWrites.add(docId);
-  try {
-    console.log("💾 Saving:", docId, "attempt", attempt);
+  if (writeInProgress.has(docId)) return;
+  writeInProgress.add(docId);
 
-    const res = await fetch(`${FB_BASE}/${docId}?key=${FB_API_KEY}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fields: { data: { stringValue: JSON.stringify(data) } } })
-    });
+  let attempt = 1;
+  while (attempt <= 4) {
+    const payload = latestPayload.get(docId);
+    try {
+      console.log("💾 Saving:", docId, "attempt", attempt);
+      const res = await fetch(`${FB_BASE}/${docId}?key=${FB_API_KEY}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: { data: { stringValue: JSON.stringify(payload) } } })
+      });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      console.log("✅ Saved:", docId);
 
-    if (!res.ok) throw new Error(`status ${res.status}`);
-
-    console.log("✅ Saved:", docId);
-    pendingWrites.delete(docId);
-
-  } catch (e) {
-    console.error(`❌ fbSet error for ${docId} (attempt ${attempt}):`, e);
-    if (attempt < 4) {
-      setTimeout(() => fbSet(docId, data, attempt + 1), attempt * 2000);
-    } else {
-      console.error(`❌ fbSet gave up for ${docId} after ${attempt} attempts`);
-      pendingWrites.delete(docId);
+      if (latestPayload.get(docId) === payload) {
+        writeInProgress.delete(docId);
+        pendingWrites.delete(docId);
+        return;
+      } else {
+        attempt = 1;
+        continue;
+      }
+    } catch (e) {
+      console.error(`❌ fbSet error for ${docId} (attempt ${attempt}):`, e);
+      attempt++;
+      if (attempt > 4) {
+        console.error(`❌ fbSet gave up for ${docId}`);
+        writeInProgress.delete(docId);
+        pendingWrites.delete(docId);
+        return;
+      }
+      await new Promise(r => setTimeout(r, (attempt - 1) * 2000));
     }
   }
 }
