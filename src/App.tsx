@@ -3099,6 +3099,204 @@ function EntryPermit({ workers, sites, assignments, setWorkers, savedPermits, se
 }
 
 // ── INVOICE ───────────────────────────────────────────
+function InvDoc({
+  inv, allWorks, total, invNum, setInvNum, invDate, setInvDate,
+  company, setCompany, client, setClient, invSiteName, setInvSiteName,
+  invSitePlace, setInvSitePlace, bank, setBank,
+  sigImage, setSigImage, sigMode, setSigMode, savedSignature, setSavedSignature
+}: any) {
+  const upC = (k: string, v: any) => setCompany((p: any) => ({ ...p, [k]: v }));
+  const upCl = (k: string, v: any) => setClient((p: any) => ({ ...p, [k]: v }));
+  const upB = (k: string, v: any) => setBank((p: any) => ({ ...p, [k]: v }));
+
+  const works = inv ? inv.works : allWorks;
+  const tot = inv ? inv.total : total;
+  const num = inv ? inv.number : invNum;
+  const dt = inv ? fmtDate(inv.date) : fmtDate(invDate);
+  const editable = !inv;
+  const displaySiteName = inv ? inv.siteName : invSiteName;
+  const displayMeasureNo = inv ? inv.measureNo : client.measureNo;
+  const snap = inv?.snapshot;
+  const dispCompany = snap ? snap.company : company;
+  const dispClient = snap ? snap.client : client;
+  const dispBank = snap ? snap.bank : bank;
+
+  return (
+    <div style={{ width: "210mm", maxWidth: "100%", minHeight: "auto", margin: "0 auto", background: "#fff", padding: "20mm", borderRadius: "12px", boxShadow: "0 2px 20px rgba(0,0,0,0.08)", fontSize: "13px", border: "2px solid #0f3172", outline: "4px solid #e8f0fe", outlineOffset: "-8px", boxSizing: "border-box" }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", paddingBottom: "16px", borderBottom: "2px solid #0f3172", marginBottom: "16px" }}>
+        <div style={{ flex: 1, minWidth: "180px" }}>
+          <div style={{ fontSize: "18px", fontWeight: 800, color: "#0f3172", marginBottom: "6px" }}>
+            {editable ? <EditField value={company.name} onChange={(v: any) => upC("name", v)} style={{ fontSize: "18px", fontWeight: 800, color: "#0f3172" }} /> : dispCompany.name}
+          </div>
+          <div style={{ fontSize: "11px" }}>
+            {[
+              ["Address", editable ? <EditField value={company.address} onChange={(v: any) => upC("address", v)} /> : dispCompany.address],
+              ["Ph", editable ? <EditField value={company.phone} onChange={(v: any) => upC("phone", v)} /> : dispCompany.phone],
+              ["Udyam", editable ? <EditField value={company.gstin} onChange={(v: any) => upC("gstin", v)} /> : dispCompany.gstin],
+            ].map(([lbl, val]: any) => (
+              <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
+                <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "55px", flexShrink: 0 }}>{lbl}</span>
+                <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
+                <span style={{ flex: 1 }}>{val}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <div style={{ fontSize: "22px", fontWeight: 800, color: "#0f3172", marginBottom: "8px", alignSelf: "flex-start" }}>INVOICE</div>
+          <div style={{ fontSize: "11px" }}>
+            {[
+              ["No", editable ? <input value={invNum} onChange={(e: any) => setInvNum(e.target.value)} style={{ border: "1.5px solid #bfdbfe", borderRadius: "5px", padding: "2px 6px", fontSize: "11px", outline: "none", width: "120px", color: "#1a2b4a", fontFamily: "inherit" }} /> : num],
+              ["Date", editable ? <input type="date" value={invDate} onChange={(e: any) => setInvDate(e.target.value)} style={{ border: "1.5px solid #bfdbfe", borderRadius: "5px", padding: "2px 6px", fontSize: "11px", outline: "none", width: "130px", color: "#1a2b4a", fontFamily: "inherit" }} /> : dt],
+            ].map(([lbl, val]: any) => (
+              <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "center", marginBottom: "4px" }}>
+                <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "35px", flexShrink: 0 }}>{lbl}</span>
+                <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
+                <span>{val}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Bill To + Site Details */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+        <div style={{ padding: "12px 14px", background: "#f0f6ff", borderRadius: "9px", flex: 1, minWidth: "200px" }}>
+          <div style={{ fontSize: "10px", fontWeight: 700, color: "#6b84a3", marginBottom: "6px" }}>BILL TO</div>
+          <div style={{ fontSize: "11px" }}>
+            {[
+              ["To", editable ? <EditField value={client.sendTo} onChange={(v: any) => upCl("sendTo", v)} placeholder="Recipient" /> : dispClient.sendTo],
+              ["Company", editable ? <EditField value={client.name} onChange={(v: any) => upCl("name", v)} style={{ fontWeight: 700 }} /> : <strong>{dispClient.name}</strong>],
+              ...(editable || (dispClient.address) ? [["Address", editable ? <EditField value={client.address || ""} onChange={(v: any) => upCl("address", v)} placeholder="Address" /> : dispClient.address]] : []),
+              ["Place", <>{editable ? <EditField value={client.place} onChange={(v: any) => upCl("place", v)} /> : dispClient.place}{" — "}{editable ? <EditField value={client.pincode} onChange={(v: any) => upCl("pincode", v)} style={{ width: "70px" }} /> : dispClient.pincode}</>],
+              ["Ph", editable ? <EditField value={client.phone} onChange={(v: any) => upCl("phone", v)} placeholder="Phone" /> : dispClient.phone],
+            ].map(([lbl, val]: any) => (
+              <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
+                <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "70px", flexShrink: 0 }}>{lbl}</span>
+                <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
+                <span style={{ flex: 1 }}>{val}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: "10px", paddingTop: "8px", borderTop: "1px dashed #bfdbfe", display: "flex", gap: "4px", alignItems: "flex-start" }}>
+            <span style={{ fontWeight: 600, color: "#6b84a3", fontSize: "11px", flexShrink: 0 }}>Measurement Job No</span>
+            <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px", fontSize: "11px" }}>:</span>
+            <span style={{ flex: 1, fontSize: "11px" }}>{editable ? <EditField value={client.measureNo} onChange={(v: any) => upCl("measureNo", v)} placeholder="Sheet no." /> : <strong>{displayMeasureNo || "—"}</strong>}</span>
+          </div>
+        </div>
+        <div style={{ padding: "12px 14px", background: "#f0f6ff", borderRadius: "9px", flex: 1, minWidth: "200px" }}>
+          <div style={{ fontSize: "10px", fontWeight: 700, color: "#6b84a3", marginBottom: "6px" }}>SITE DETAILS</div>
+          <div style={{ fontSize: "11px" }}>
+            {[
+              ["Site Name", editable ? <EditField value={invSiteName} onChange={(v: any) => setInvSiteName(v)} placeholder="Site name" /> : displaySiteName || "—"],
+              ...(editable || (inv?.sitePlace) ? [["Place", editable ? <EditField value={invSitePlace} onChange={(v: any) => setInvSitePlace(v)} placeholder="Site place" /> : inv?.sitePlace || "—"]] : []),
+            ].map(([lbl, val]: any) => (
+              <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
+                <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "70px", flexShrink: 0 }}>{lbl}</span>
+                <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
+                <span style={{ flex: 1 }}>{val}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{ overflowX: "auto", marginBottom: "16px" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+          <thead><tr style={{ background: "#0f3172", color: "#fff" }}>
+            {["S.No", "Description", "Unit", "Rate (₹)", "Amount (₹)"].map((h, i) => <th key={h} style={{ padding: "8px 9px", textAlign: i > 1 ? "right" : "left", fontWeight: 600, fontSize: "11px" }}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {works.length === 0 && <tr><td colSpan={5} style={{ padding: "16px", textAlign: "center", color: "#9db3cc" }}>No work entries.</td></tr>}
+            {works.map((w: any, i: number) => {
+              const type = w.workType || "SQM";
+              const unitStr = type === "Manpower" ? `${w.labour} Labour` : type === "RMT" ? `${w.area} rmt` : type === "KGS" ? `${w.area} kgs` : type === "Other" ? "—" : `${w.area} m²`;
+              return (
+                <tr key={w.id || i} style={{ borderBottom: "1px solid #f0f4f9", background: i % 2 === 0 ? "#fff" : "#f8faff" }}>
+                  <td style={{ padding: "8px 9px", color: "#6b84a3", textAlign: "center" }}>{i + 1}</td>
+                  <td style={{ padding: "8px 9px" }}>{w.place}</td>
+                  <td style={{ padding: "8px 9px", textAlign: "right" }}>{unitStr}</td>
+                  <td style={{ padding: "8px 9px", textAlign: "right" }}>₹{w.rate}</td>
+                  <td style={{ padding: "8px 9px", fontWeight: 700, textAlign: "right" }}>₹{w.amount.toLocaleString()}</td>
+                </tr>
+              );
+            })}
+            <tr style={{ background: "#0f3172", color: "#fff" }}><td colSpan={4} style={{ padding: "10px 9px", fontWeight: 700, textAlign: "right" }}>TOTAL</td><td style={{ padding: "10px 9px", fontWeight: 800, fontSize: "16px", textAlign: "right", color: "#f59e0b", letterSpacing: "0.5px" }}>₹{tot.toLocaleString()}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Bank + Signature */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "14px", marginTop: "20px" }}>
+        <div style={{ padding: "12px 14px", background: "#f8faff", borderRadius: "9px", fontSize: "11px", flex: 1, minWidth: "0", width: "100%", boxSizing: "border-box" }}>
+          <div style={{ fontWeight: 700, marginBottom: "6px" }}>Bank Details</div>
+          {[
+            ["Acc Name", editable ? <EditField value={bank.accName} onChange={(v: any) => upB("accName", v)} /> : dispBank.accName],
+            ["Bank", editable ? <EditField value={bank.bank} onChange={(v: any) => upB("bank", v)} /> : dispBank.bank],
+            ["A/C No", editable ? <EditField value={bank.accNo} onChange={(v: any) => upB("accNo", v)} /> : dispBank.accNo],
+            ["IFSC", editable ? <EditField value={bank.ifsc} onChange={(v: any) => upB("ifsc", v)} /> : dispBank.ifsc],
+            ["UPI", editable ? <EditField value={bank.upi} onChange={(v: any) => upB("upi", v)} /> : dispBank.upi],
+          ].map(([lbl, val]: any) => (
+            <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
+              <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "60px", flexShrink: 0 }}>{lbl}</span>
+              <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
+              <span style={{ flex: 1 }}>{val}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ textAlign: "center" }}>
+          {/* Signature box */}
+          <div style={{ width: "180px", height: "90px", border: "1.5px dashed #bfdbfe", borderRadius: "8px", marginBottom: "6px", overflow: "hidden", background: "#fafcff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {sigImage
+              ? <img src={sigImage} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              : <span className="no-print" style={{ fontSize: "11px", color: "#9db3cc" }}>
+                {sigMode === "physical" ? "Physical Sign" : "Seal / Signature"}
+              </span>
+            }
+          </div>
+
+          {/* Signature controls — hidden on print */}
+          {editable && <div className="no-print" style={{ display: "flex", gap: "4px", justifyContent: "center", marginBottom: "6px", flexWrap: "wrap" }}>
+            <button onClick={() => {
+              if (savedSignature) { setSigImage(savedSignature); setSigMode("saved"); }
+              else alert("No saved signature found. Please upload one first.");
+            }} style={{ ...S.btn(sigMode === "saved" ? "#1e50a0" : "#f0f6ff", sigMode === "saved" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>💾 Saved Sign</button>
+
+            <label style={{ ...S.btn(sigMode === "upload" ? "#1e50a0" : "#f0f6ff", sigMode === "upload" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px", cursor: "pointer" }}>
+              📁 Upload
+              <input type="file" accept="image/*" onChange={(e: any) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                const r = new FileReader();
+                r.onload = (ev: any) => { setSigImage(ev.target?.result); setSigMode("upload"); };
+                r.readAsDataURL(f);
+              }} style={{ display: "none" }} />
+            </label>
+
+            {sigMode === "upload" && sigImage && (
+              <button onClick={() => {
+                setSavedSignature(sigImage);
+                alert("✅ Signature saved for future use!");
+              }} style={{ ...S.btn("#166534", "#fff"), padding: "4px 8px", fontSize: "10px" }}>💾 Save Sign</button>
+            )}
+
+            <button onClick={() => { setSigMode("physical"); setSigImage(null); }}
+              style={{ ...S.btn(sigMode === "physical" ? "#1e50a0" : "#f0f6ff", sigMode === "physical" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>🖊️ Physical</button>
+
+            {sigImage && <button onClick={() => { setSigImage(null); setSigMode("none"); }}
+              style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 8px", fontSize: "10px" }}>✗</button>}
+          </div>}
+          <div style={{ borderTop: "1px solid #1a2b4a", paddingTop: "5px", fontSize: "11px", color: "#6b84a3" }}>Authorised Signatory<br /><strong>{dispCompany.name}</strong></div>
+        </div>
+      </div>
+      <div style={{ marginTop: "20px", paddingTop: "10px", borderTop: "1px dashed #bfdbfe", fontSize: "10px", color: "#9db3cc", textAlign: "center", fontStyle: "italic" }}>
+        This invoice is digitally generated by VinoDhan Coating. The details mentioned herein are accurate as per the work executed. For queries, contact us directly.
+      </div>
+    </div>
+  );
+}
 function Invoice({ sites, invoices, setInvoices, company, setCompany, client, setClient, bank, setBank, recycleBin, setRecycleBin, savedSignature, setSavedSignature }) {
   const [selWorks, setSelWorks] = useState([]);
   const [openSites, setOpenSites] = useState([]);
@@ -3152,196 +3350,6 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
   const upCl = (k, v) => setClient(p => ({ ...p, [k]: v }));
   const upB = (k, v) => setBank(p => ({ ...p, [k]: v }));
   const fmtD = d => { if (!d) return "—"; const [y, m, dy] = d.split("-"); return `${dy}/${m}/${y}`; };
-
-  const InvDoc = ({ inv, sigImage, setSigImage, sigMode, setSigMode }) => {
-    const works = inv ? inv.works : allWorks;
-    const tot = inv ? inv.total : total;
-    const num = inv ? inv.number : invNum;
-    const dt = inv ? fmtD(inv.date) : fmtD(invDate);
-    const editable = !inv;
-    const displaySiteName = inv ? inv.siteName : invSiteName;
-    const displayMeasureNo = inv ? inv.measureNo : client.measureNo;
-    const snap = inv?.snapshot;
-    const dispCompany = snap ? snap.company : company;
-    const dispClient = snap ? snap.client : client;
-    const dispBank = snap ? snap.bank : bank;
-    return (
-      <div style={{ width: "210mm", maxWidth: "100%", minHeight: "auto", margin: "0 auto", background: "#fff", padding: "20mm", borderRadius: "12px", boxShadow: "0 2px 20px rgba(0,0,0,0.08)", fontSize: "13px", border: "2px solid #0f3172", outline: "4px solid #e8f0fe", outlineOffset: "-8px", boxSizing: "border-box" }}>
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", paddingBottom: "16px", borderBottom: "2px solid #0f3172", marginBottom: "16px" }}>
-          <div style={{ flex: 1, minWidth: "180px" }}>
-            <div style={{ fontSize: "18px", fontWeight: 800, color: "#0f3172", marginBottom: "6px" }}>
-              {editable ? <EditField value={company.name} onChange={v => upC("name", v)} style={{ fontSize: "18px", fontWeight: 800, color: "#0f3172" }} /> : dispCompany.name}
-            </div>
-            <div style={{ fontSize: "11px" }}>
-              {[
-                ["Address", editable ? <EditField value={company.address} onChange={v => upC("address", v)} /> : dispCompany.address],
-                ["Ph", editable ? <EditField value={company.phone} onChange={v => upC("phone", v)} /> : dispCompany.phone],
-                ["Udyam", editable ? <EditField value={company.gstin} onChange={v => upC("gstin", v)} /> : dispCompany.gstin],
-              ].map(([lbl, val]) => (
-                <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
-                  <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "55px", flexShrink: 0 }}>{lbl}</span>
-                  <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
-                  <span style={{ flex: 1 }}>{val}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-            <div style={{ fontSize: "22px", fontWeight: 800, color: "#0f3172", marginBottom: "8px", alignSelf: "flex-start" }}>INVOICE</div>
-            <div style={{ fontSize: "11px" }}>
-              {[
-                ["No", editable ? <input value={invNum} onChange={e => setInvNum(e.target.value)} style={{ border: "1.5px solid #bfdbfe", borderRadius: "5px", padding: "2px 6px", fontSize: "11px", outline: "none", width: "120px", color: "#1a2b4a", fontFamily: "inherit" }} /> : num],
-                ["Date", editable ? <input type="date" value={invDate} onChange={e => setInvDate(e.target.value)} style={{ border: "1.5px solid #bfdbfe", borderRadius: "5px", padding: "2px 6px", fontSize: "11px", outline: "none", width: "130px", color: "#1a2b4a", fontFamily: "inherit" }} /> : dt],
-              ].map(([lbl, val]) => (
-                <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "center", marginBottom: "4px" }}>
-                  <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "35px", flexShrink: 0 }}>{lbl}</span>
-                  <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
-                  <span>{val}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bill To + Site Details */}
-        <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
-          <div style={{ padding: "12px 14px", background: "#f0f6ff", borderRadius: "9px", flex: 1, minWidth: "200px" }}>
-            <div style={{ fontSize: "10px", fontWeight: 700, color: "#6b84a3", marginBottom: "6px" }}>BILL TO</div>
-            <div style={{ fontSize: "11px" }}>
-              {[
-                ["To", editable ? <EditField value={client.sendTo} onChange={v => upCl("sendTo", v)} placeholder="Recipient" /> : dispClient.sendTo],
-                ["Company", editable ? <EditField value={client.name} onChange={v => upCl("name", v)} style={{ fontWeight: 700 }} /> : <strong>{dispClient.name}</strong>],
-                ...(editable || (dispClient.address) ? [["Address", editable ? <EditField value={client.address || ""} onChange={v => upCl("address", v)} placeholder="Address" /> : dispClient.address]] : []),
-                ["Place", <>{editable ? <EditField value={client.place} onChange={v => upCl("place", v)} /> : dispClient.place}{" — "}{editable ? <EditField value={client.pincode} onChange={v => upCl("pincode", v)} style={{ width: "70px" }} /> : dispClient.pincode}</>],
-                ["Ph", editable ? <EditField value={client.phone} onChange={v => upCl("phone", v)} placeholder="Phone" /> : dispClient.phone],
-              ].map(([lbl, val]) => (
-                <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
-                  <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "70px", flexShrink: 0 }}>{lbl}</span>
-                  <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
-                  <span style={{ flex: 1 }}>{val}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ marginTop: "10px", paddingTop: "8px", borderTop: "1px dashed #bfdbfe", display: "flex", gap: "4px", alignItems: "flex-start" }}>
-              <span style={{ fontWeight: 600, color: "#6b84a3", fontSize: "11px", flexShrink: 0 }}>Measurement Job No</span>
-              <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px", fontSize: "11px" }}>:</span>
-              <span style={{ flex: 1, fontSize: "11px" }}>{editable ? <EditField value={client.measureNo} onChange={v => upCl("measureNo", v)} placeholder="Sheet no." /> : <strong>{displayMeasureNo || "—"}</strong>}</span>
-            </div>
-          </div>
-          <div style={{ padding: "12px 14px", background: "#f0f6ff", borderRadius: "9px", flex: 1, minWidth: "200px" }}>
-            <div style={{ fontSize: "10px", fontWeight: 700, color: "#6b84a3", marginBottom: "6px" }}>SITE DETAILS</div>
-            <div style={{ fontSize: "11px" }}>
-              {[
-                ["Site Name", editable ? <EditField value={invSiteName} onChange={v => setInvSiteName(v)} placeholder="Site name" /> : displaySiteName || "—"],
-                ...(editable || (inv?.sitePlace) ? [["Place", editable ? <EditField value={invSitePlace} onChange={v => setInvSitePlace(v)} placeholder="Site place" /> : inv?.sitePlace || "—"]] : []),
-              ].map(([lbl, val]) => (
-                <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
-                  <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "70px", flexShrink: 0 }}>{lbl}</span>
-                  <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
-                  <span style={{ flex: 1 }}>{val}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div style={{ overflowX: "auto", marginBottom: "16px" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-            <thead><tr style={{ background: "#0f3172", color: "#fff" }}>
-              {["S.No", "Description", "Unit", "Rate (₹)", "Amount (₹)"].map((h, i) => <th key={h} style={{ padding: "8px 9px", textAlign: i > 1 ? "right" : "left", fontWeight: 600, fontSize: "11px" }}>{h}</th>)}
-            </tr></thead>
-            <tbody>
-              {works.length === 0 && <tr><td colSpan={5} style={{ padding: "16px", textAlign: "center", color: "#9db3cc" }}>No work entries.</td></tr>}
-              {works.map((w, i) => {
-                const type = w.workType || "SQM";
-                const unitStr = type === "Manpower" ? `${w.labour} Labour` : type === "RMT" ? `${w.area} rmt` : type === "KGS" ? `${w.area} kgs` : type === "Other" ? "—" : `${w.area} m²`;
-                return (
-                  <tr key={w.id || i} style={{ borderBottom: "1px solid #f0f4f9", background: i % 2 === 0 ? "#fff" : "#f8faff" }}>
-                    <td style={{ padding: "8px 9px", color: "#6b84a3", textAlign: "center" }}>{i + 1}</td>
-                    <td style={{ padding: "8px 9px" }}>{w.place}</td>
-                    <td style={{ padding: "8px 9px", textAlign: "right" }}>{unitStr}</td>
-                    <td style={{ padding: "8px 9px", textAlign: "right" }}>₹{w.rate}</td>
-                    <td style={{ padding: "8px 9px", fontWeight: 700, textAlign: "right" }}>₹{w.amount.toLocaleString()}</td>
-                  </tr>
-                );
-              })}
-              <tr style={{ background: "#0f3172", color: "#fff" }}><td colSpan={4} style={{ padding: "10px 9px", fontWeight: 700, textAlign: "right" }}>TOTAL</td><td style={{ padding: "10px 9px", fontWeight: 800, fontSize: "16px", textAlign: "right", color: "#f59e0b", letterSpacing: "0.5px" }}>₹{tot.toLocaleString()}</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Bank + Signature */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "14px", marginTop: "20px" }}>
-          <div style={{ padding: "12px 14px", background: "#f8faff", borderRadius: "9px", fontSize: "11px", flex: 1, minWidth: "0", width: "100%", boxSizing: "border-box" }}>
-            <div style={{ fontWeight: 700, marginBottom: "6px" }}>Bank Details</div>
-            {[
-              ["Acc Name", editable ? <EditField value={bank.accName} onChange={v => upB("accName", v)} /> : dispBank.accName],
-              ["Bank", editable ? <EditField value={bank.bank} onChange={v => upB("bank", v)} /> : dispBank.bank],
-              ["A/C No", editable ? <EditField value={bank.accNo} onChange={v => upB("accNo", v)} /> : dispBank.accNo],
-              ["IFSC", editable ? <EditField value={bank.ifsc} onChange={v => upB("ifsc", v)} /> : dispBank.ifsc],
-              ["UPI", editable ? <EditField value={bank.upi} onChange={v => upB("upi", v)} /> : dispBank.upi],
-            ].map(([lbl, val]) => (
-              <div key={lbl} style={{ display: "flex", gap: "4px", alignItems: "flex-start", marginBottom: "4px" }}>
-                <span style={{ fontWeight: 600, color: "#6b84a3", minWidth: "60px", flexShrink: 0 }}>{lbl}</span>
-                <span style={{ color: "#6b84a3", fontWeight: 600, paddingRight: "6px" }}>:</span>
-                <span style={{ flex: 1 }}>{val}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ textAlign: "center" }}>
-            {/* Signature box */}
-            <div style={{ width: "180px", height: "90px", border: "1.5px dashed #bfdbfe", borderRadius: "8px", marginBottom: "6px", overflow: "hidden", background: "#fafcff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {sigImage
-                ? <img src={sigImage} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-                : <span className="no-print" style={{ fontSize: "11px", color: "#9db3cc" }}>
-                  {sigMode === "physical" ? "Physical Sign" : "Seal / Signature"}
-                </span>
-              }
-            </div>
-
-            {/* Signature controls — hidden on print */}
-            {editable && <div className="no-print" style={{ display: "flex", gap: "4px", justifyContent: "center", marginBottom: "6px", flexWrap: "wrap" }}>
-              <button onClick={() => {
-                const saved = savedSignature;
-                if (saved) { setSigImage(saved); setSigMode("saved"); }
-                else alert("No saved signature found. Please upload one first.");
-              }} style={{ ...S.btn(sigMode === "saved" ? "#1e50a0" : "#f0f6ff", sigMode === "saved" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>💾 Saved Sign</button>
-
-              <label style={{ ...S.btn(sigMode === "upload" ? "#1e50a0" : "#f0f6ff", sigMode === "upload" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px", cursor: "pointer" }}>
-                📁 Upload
-                <input type="file" accept="image/*" onChange={e => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  const r = new FileReader();
-                  r.onload = ev => { setSigImage(ev.target?.result as string); setSigMode("upload"); };
-                  r.readAsDataURL(f);
-                }} style={{ display: "none" }} />
-              </label>
-
-              {sigMode === "upload" && sigImage && (
-                <button onClick={() => {
-                  setSavedSignature(sigImage);
-                  alert("✅ Signature saved for future use!");
-                }} style={{ ...S.btn("#166534", "#fff"), padding: "4px 8px", fontSize: "10px" }}>💾 Save Sign</button>
-              )}
-
-              <button onClick={() => { setSigMode("physical"); setSigImage(null); }}
-                style={{ ...S.btn(sigMode === "physical" ? "#1e50a0" : "#f0f6ff", sigMode === "physical" ? "#fff" : "#1e50a0"), padding: "4px 8px", fontSize: "10px" }}>🖊️ Physical</button>
-
-              {sigImage && <button onClick={() => { setSigImage(null); setSigMode("none"); }}
-                style={{ ...S.btn("#fee2e2", "#991b1b"), padding: "4px 8px", fontSize: "10px" }}>✗</button>}
-            </div>}
-            <div style={{ borderTop: "1px solid #1a2b4a", paddingTop: "5px", fontSize: "11px", color: "#6b84a3" }}>Authorised Signatory<br /><strong>{dispCompany.name}</strong></div>
-          </div>
-        </div>
-        <div style={{ marginTop: "20px", paddingTop: "10px", borderTop: "1px dashed #bfdbfe", fontSize: "10px", color: "#9db3cc", textAlign: "center", fontStyle: "italic" }}>
-          This invoice is digitally generated by VinoDhan Coating. The details mentioned herein are accurate as per the work executed. For queries, contact us directly.
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div>
@@ -3397,7 +3405,7 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
             <button onClick={saveInv} style={{ ...S.btn("#166534"), opacity: allWorks.length === 0 ? 0.5 : 1 }} disabled={allWorks.length === 0}>💾 Save Invoice</button>
           </div>
         </div>
-        <div id="invoice-doc"><InvDoc inv={null} sigImage={sigImage} setSigImage={setSigImage} sigMode={sigMode} setSigMode={setSigMode} /></div>
+        <div id="invoice-doc"><InvDoc inv={null} allWorks={allWorks} total={total} invNum={invNum} setInvNum={setInvNum} invDate={invDate} setInvDate={setInvDate} company={company} setCompany={setCompany} client={client} setClient={setClient} invSiteName={invSiteName} setInvSiteName={setInvSiteName} invSitePlace={invSitePlace} setInvSitePlace={setInvSitePlace} bank={bank} setBank={setBank} sigImage={sigImage} setSigImage={setSigImage} sigMode={sigMode} setSigMode={setSigMode} savedSignature={savedSignature} setSavedSignature={setSavedSignature} /></div>
       </>}
 
       {tab === "history" && (viewInv
@@ -3405,7 +3413,7 @@ function Invoice({ sites, invoices, setInvoices, company, setCompany, client, se
           <button onClick={() => { setViewInv(null); setSigImage(null); setSigMode("none"); }} style={S.btn("#f0f4f9", "#1a2b4a")}>← Back</button>
           <button onClick={() => printSection("invoice-history-doc")} style={S.btn()}>🖨️ Print</button>
         </div>
-          <div id="invoice-history-doc"><InvDoc inv={viewInv} sigImage={sigImage} setSigImage={setSigImage} sigMode={sigMode} setSigMode={setSigMode} /></div>
+          <div id="invoice-history-doc"><InvDoc inv={viewInv} allWorks={allWorks} total={total} invNum={invNum} setInvNum={setInvNum} invDate={invDate} setInvDate={setInvDate} company={company} setCompany={setCompany} client={client} setClient={setClient} invSiteName={invSiteName} setInvSiteName={setInvSiteName} invSitePlace={invSitePlace} setInvSitePlace={setInvSitePlace} bank={bank} setBank={setBank} sigImage={sigImage} setSigImage={setSigImage} sigMode={sigMode} setSigMode={setSigMode} savedSignature={savedSignature} setSavedSignature={setSavedSignature} /></div>
         </>
         : <div style={S.card}>
           <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>Saved Invoices</h3>
