@@ -108,8 +108,7 @@ async function fbBackup(data) {
   try {
     console.log("🔐 Creating backup...");
 
-    const backupId = new Date().toISOString().split("T")[0];
-    const res = await fetch(`${FB_BASE}/backup_${backupId}?key=${FB_API_KEY}`, {
+    const res = await fetch(`${FB_BASE}/dailyBackup?key=${FB_API_KEY}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fields: { data: { stringValue: JSON.stringify(data) } } })
@@ -524,13 +523,13 @@ export default function App() {
   // EFFECT 17: Daily Backup
   // ════════════════════════════════════════════════════════════════════════════════
   useEffect(() => {
-    if (!ready || !lastBackup) return;
+    if (!ready) return;
     const todayDate = new Date().toISOString().split("T")[0];
     const lastB = localStorage.getItem("vd_last_backup");
     if (lastB === todayDate) return;
-    fbBackup({ workers, execProfile, sites, attendance, assignments, invoices, company, client, bank, passwords, recycleBin, ledgers, savedReports, savedPermits });
+    fbBackup({ workers, execProfile, sites, attendance, assignments, invoices, company, client, bank, passwords, recycleBin, ledgers, savedReports, savedPermits, savedSignature });
     localStorage.setItem("vd_last_backup", todayDate);
-  }, [lastBackup, ready]);
+  }, [ready]);
 
   // ════════════════════════════════════════════════════════════════════════════════
   // EFFECT 18: Inactivity Logout Timer
