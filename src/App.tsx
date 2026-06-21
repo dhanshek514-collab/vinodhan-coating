@@ -2195,6 +2195,12 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
   const [reportDelModal, setReportDelModal] = useState(null);
   const [viewReportId, setViewReportId] = useState(null);
 
+  const isWorkDone = (workId: any) => {
+    if (savedReports.some((r: any) => r.workId === workId)) return true;
+    const inv = invoices.find((iv: any) => (iv.works || []).some((iw: any) => iw.id === workId));
+    return inv ? savedReports.some((r: any) => r.invoiceId === inv.id) : false;
+  };
+
   // ── Mark tab derived ──
   const markWorks = (sites.find((s: any) => s.id === selSite)?.works || []).filter((w: any) => !isWorkDone(w.id));
   const markWorkObj = markWorks.find((w: any) => w.id === selWork);
@@ -2203,11 +2209,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
   const sa = assignments[selSite] || {};
   const aids = Object.keys(sa).map(Number);
 
-  const isWorkDone = (workId: any) => {
-    if (savedReports.some((r: any) => r.workId === workId)) return true;
-    const inv = invoices.find((iv: any) => (iv.works || []).some((iw: any) => iw.id === workId));
-    return inv ? savedReports.some((r: any) => r.invoiceId === inv.id) : false;
-  };
+
   const getKey = (date: string, siteId: any, workId: any, workerId: any) =>
     `${date}_${siteId}_${workId}_${workerId}`;
   const getStatus = (wid: any) =>
