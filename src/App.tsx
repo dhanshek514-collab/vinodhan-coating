@@ -1325,10 +1325,11 @@ function Dashboard({ user, workers, sites, invoices, ledgers, landscape }) {
             </div>
           </div>
           {/* Revenue */}
-          <div style={{ ...S.card, background: "#fef3c7", boxShadow: "none", padding: "16px", minWidth: "130px", flexShrink: 0 }}>
+          <div onClick={() => setExpandCard(expandCard === "revenue" ? null : "revenue")} style={{ ...S.card, background: "#fef3c7", boxShadow: "none", padding: "16px", minWidth: "130px", flexShrink: 0, cursor: "pointer" }}>
             <div style={{ fontSize: "22px", marginBottom: "6px" }}>💰</div>
             <div style={{ fontSize: "18px", fontWeight: 800, color: "#0f3172" }}>₹{totalRev.toLocaleString()}</div>
             <div style={{ fontSize: "11px", color: "#6b84a3", marginTop: "2px" }}>Revenue</div>
+            <div style={{ fontSize: "10px", color: "#d97706", marginTop: "4px", fontWeight: 600 }}>{expandCard === "revenue" ? "▲ Hide" : "▼ Details"}</div>
           </div>
           {/* Invoices */}
           <div onClick={() => setExpandCard(expandCard === "inv" ? null : "inv")} style={{ ...S.card, background: "#fce7f3", boxShadow: "none", padding: "16px", minWidth: "160px", flexShrink: 0, cursor: "pointer" }}>
@@ -1509,6 +1510,32 @@ function Dashboard({ user, workers, sites, invoices, ledgers, landscape }) {
       </div>}
       {expandCard && (
         <div style={{ ...S.card, marginBottom: "20px" }}>
+          {expandCard === "revenue" && <>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+              <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700 }}>💰 Revenue by Client</h3>
+              <span style={{ fontWeight: 800, color: "#d97706", fontSize: "14px" }}>₹{totalRev.toLocaleString()} Total</span>
+            </div>
+            {(() => {
+              const revenueByClient = sites.reduce((acc: any, s: any) => {
+                const clientName = s.client || "Unknown";
+                const siteRev = (s.works || []).reduce((a: number, w: any) => a + calcWork(w), 0);
+                acc[clientName] = (acc[clientName] || 0) + siteRev;
+                return acc;
+              }, {});
+              const sorted = Object.entries(revenueByClient).sort((a: any, b: any) => b[1] - a[1]);
+              return sorted.map(([client, rev]: any) => (
+                <div key={client} style={{ marginBottom: "12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "2px" }}>
+                    <span style={{ fontWeight: 600, color: "#1a2b4a" }}>{client}</span>
+                    <span style={{ fontWeight: 700, color: "#d97706" }}>₹{rev.toLocaleString()}</span>
+                  </div>
+                  <div style={{ background: "#fef3c7", borderRadius: "4px", height: "10px", overflow: "hidden" }}>
+                    <div style={{ height: "100%", borderRadius: "4px", background: "linear-gradient(90deg,#d97706,#fbbf24)", width: `${totalRev > 0 ? (rev / totalRev) * 100 : 0}%`, transition: "width 0.5s" }} />
+                  </div>
+                </div>
+              ));
+            })()}
+          </>}
           {expandCard === "sqm" && <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
               <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700 }}>📐 SQM Breakdown</h3>
