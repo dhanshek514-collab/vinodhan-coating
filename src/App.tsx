@@ -2196,13 +2196,18 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
   const [viewReportId, setViewReportId] = useState(null);
 
   // ── Mark tab derived ──
-  const markWorks = (sites.find((s: any) => s.id === selSite)?.works || []).filter((w: any) => !savedReports.some((r: any) => r.workId === w.id));
+  const markWorks = (sites.find((s: any) => s.id === selSite)?.works || []).filter((w: any) => !isWorkDone(w.id));
   const markWorkObj = markWorks.find((w: any) => w.id === selWork);
   const minDate = markWorkObj?.fromDate || "";
   const maxDate = markWorkObj?.toDate || today;
   const sa = assignments[selSite] || {};
   const aids = Object.keys(sa).map(Number);
 
+  const isWorkDone = (workId: any) => {
+    if (savedReports.some((r: any) => r.workId === workId)) return true;
+    const inv = invoices.find((iv: any) => (iv.works || []).some((iw: any) => iw.id === workId));
+    return inv ? savedReports.some((r: any) => r.invoiceId === inv.id) : false;
+  };
   const getKey = (date: string, siteId: any, workId: any, workerId: any) =>
     `${date}_${siteId}_${workId}_${workerId}`;
   const getStatus = (wid: any) =>
@@ -2219,7 +2224,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
   const half = aids.filter(w => getStatus(w) === "Half").length;
 
   // ── Report tab derived ──
-  const repWorks = (sites.find((s: any) => s.id === repSite)?.works || []).filter((w: any) => !savedReports.some((r: any) => r.workId === w.id));
+  const repWorks = (sites.find((s: any) => s.id === repSite)?.works || []).filter((w: any) => !isWorkDone(w.id));
   const repWorkObj = repWorks.find((w: any) => w.id === repWork);
   const repSiteObj = sites.find((s: any) => s.id === repSite);
   const repAssign = assignments[repSite] || {};
@@ -2773,7 +2778,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
                       {historyRows.length === 0 ? (
                         <tr><td colSpan={5} style={{ padding: "30px", textAlign: "center", color: "#9db3cc" }}>No invoiced works yet.</td></tr>
                       ) : historyRows.map((row: any, idx: number) => {
-                        const saved = savedReports.find((r: any) => r.workId === row.workId);
+                        const saved = savedReports.find((r: any) => r.workId === row.workId) || savedReports.find((r: any) => r.invoiceId === row.invoiceId);
                         return (
                           <tr key={`${row.workId}-${idx}`} style={{ background: saved ? "#f0fdf4" : idx % 2 === 0 ? "#fff" : "#f8faff", borderBottom: "1px solid #f0f4f9" }}>
                             <td style={{ padding: "8px 10px", color: "#6b84a3", fontWeight: 600, fontSize: "12px" }}>{historyRows.length - idx}</td>
