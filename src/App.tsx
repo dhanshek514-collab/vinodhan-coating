@@ -2196,7 +2196,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
   const [viewReportId, setViewReportId] = useState(null);
 
   // ── Mark tab derived ──
-  const markWorks = (sites.find((s: any) => s.id === selSite)?.works || []);
+  const markWorks = (sites.find((s: any) => s.id === selSite)?.works || []).filter((w: any) => !savedReports.some((r: any) => r.workId === w.id));
   const markWorkObj = markWorks.find((w: any) => w.id === selWork);
   const minDate = markWorkObj?.fromDate || "";
   const maxDate = markWorkObj?.toDate || today;
@@ -2219,7 +2219,7 @@ function Attendance({ workers, sites, attendance, setAttendance, assignments, in
   const half = aids.filter(w => getStatus(w) === "Half").length;
 
   // ── Report tab derived ──
-  const repWorks = (sites.find((s: any) => s.id === repSite)?.works || []);
+  const repWorks = (sites.find((s: any) => s.id === repSite)?.works || []).filter((w: any) => !savedReports.some((r: any) => r.workId === w.id));
   const repWorkObj = repWorks.find((w: any) => w.id === repWork);
   const repSiteObj = sites.find((s: any) => s.id === repSite);
   const repAssign = assignments[repSite] || {};
