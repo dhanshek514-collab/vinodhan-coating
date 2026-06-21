@@ -1285,7 +1285,12 @@ function Dashboard({ user, workers, sites, invoices, ledgers, landscape }) {
   const nonSeakOutstanding = ledgerBalances
     .filter(l => !l.prefix.toUpperCase().startsWith("SEAK"))
     .reduce((a, l) => a + l.balance, 0);
-  const tallySum = totalTDS + totalRetention + bankPayments + nonSeakOutstanding;
+  const otherDebits = ledgers
+    .filter(l => !l.measurePrefix || !l.measurePrefix.toUpperCase().startsWith("SEAK"))
+    .flatMap(l => (l.entries || []))
+    .filter(e => e.debit > 0 && e.particulars !== "Bank Payment" && !e.particulars.includes("TDS") && !e.particulars.includes("Retention") && !e.particulars.startsWith("Transfer to"))
+    .reduce((a, e) => a + (e.debit || 0), 0);
+  const tallySum = totalTDS + totalRetention + bankPayments + otherDebits + nonSeakOutstanding;
   const tallyDiff = totalInvoiced - tallySum;
   const tallyOk = Math.abs(tallyDiff) < 1;
   return (
@@ -1495,6 +1500,7 @@ function Dashboard({ user, workers, sites, invoices, ledgers, landscape }) {
             ["Less: TDS", "#d97706", -totalTDS],
             ["Less: Retention", "#5b21b6", -totalRetention],
             ["Less: Bank Payments", "#166534", -bankPayments],
+            ["Less: Other Deductions", "#991b1b", -otherDebits],
             ["Outstanding Balance", "#1e50a0", nonSeakOutstanding],
           ].map(([lbl, color, val]) => (
             <div key={lbl} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid #f0f4f9", fontSize: "13px" }}>
