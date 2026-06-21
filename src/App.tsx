@@ -590,7 +590,7 @@ export default function App() {
       if (loaded.savedReports?.length > 0 && !pendingWrites.has("savedReports")) setSavedReports(loaded.savedReports);
       if (loaded.savedPermits?.length > 0 && !pendingWrites.has("savedPermits")) setSavedPermits(loaded.savedPermits);
       if (loaded.recycleBin && !pendingWrites.has("recycleBin")) setRecycleBin(loaded.recycleBin);
-    }, 5000);
+    }, 10000);
     return () => clearInterval(interval);
   }, [ready]);
 
