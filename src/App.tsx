@@ -319,6 +319,7 @@ export default function App() {
   // ─── PAGE & UI STATE ───
   const [page, setPage] = useState(() => localStorage.getItem("vd_last_page") || "dashboard");
   useEffect(() => { localStorage.setItem("vd_last_page", page); }, [page]);
+  const [landscape, setLandscape] = useState(true);
   const [ready, setReady] = useState(false);
   const [lastBackup, setLastBackup] = useState(null);
 
