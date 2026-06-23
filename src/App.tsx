@@ -106,6 +106,7 @@ async function fbSet(docId, data) {
 }
 async function fbBackup(data) {
   try {
+    alert("🔐 Backup function called!");
     console.log("🔐 Creating backup...");
 
     const res = await fetch(`${FB_BASE}/dailyBackup?key=${FB_API_KEY}`, {
