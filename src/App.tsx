@@ -119,7 +119,7 @@ async function fbBackup(data) {
       return;
     }
 
-    console.log("✅ Backup created:", backupId);
+    console.log("✅ Backup created");
 
   } catch (e) {
     console.error("❌ backup error:", e);
