@@ -106,21 +106,19 @@ async function fbSet(docId, data) {
 }
 async function fbBackup(data) {
   try {
-    console.log("🔐 Creating backup...");
-
-    const res = await fetch(`${FB_BASE}/dailyBackup?key=${FB_API_KEY}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fields: { data: { stringValue: JSON.stringify(data) } } })
-    });
-
-    if (!res.ok) {
-      console.error(`❌ Backup failed:`, res.status, res.statusText);
-      return;
+    console.log("🔐 Creating daily backup...");
+    const keys = Object.keys(data);
+    for (const k of keys) {
+      const res = await fetch(`${FB_BASE}/dailyBackup_${k}?key=${FB_API_KEY}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: { data: { stringValue: JSON.stringify(data[k]) } } })
+      });
+      if (!res.ok) {
+        console.error(`❌ Backup failed for ${k}:`, res.status);
+      }
     }
-
-    console.log("✅ Backup created");
-
+    console.log("✅ Daily backup completed");
   } catch (e) {
     console.error("❌ backup error:", e);
   }
@@ -442,65 +440,7 @@ export default function App() {
 
     loadAllData();
   }, []);
-  // EFFECT 2: Sync data to Firebase whenever it changes
-  useEffect(() => {
-    if (!ready) return; // Don't sync until initial load is done
 
-    const syncToFirebase = async () => {
-      try {
-        console.log("☁️ Syncing to Firebase...");
-
-        const allData = {
-          workers,
-          sites,
-          invoices,
-          ledgers,
-          attendance,
-          assignments,
-          company,
-          client,
-          bank,
-          passwords,
-          recycleBin,
-          savedReports,
-          savedPermits,
-          exec: execProfile,
-          savedSignature,
-        };
-
-        const projectId = "vinodhan-coating";
-        const apiKey = "AIzaSyAz13tZTrb-qRfIui_6Q_X0U4NNm0mxtfE";
-
-        const response = await fetch(
-          `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/vinodhan/appData?key=${apiKey}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              fields: {
-                data: { stringValue: JSON.stringify(allData) },
-              },
-            }),
-          }
-        );
-
-        if (response.ok) {
-          console.log("✅ Synced to Firebase!");
-        } else {
-          console.error("❌ Sync failed:", response.status);
-        }
-      } catch (error) {
-        console.error("⚠️ Firebase sync error:", error);
-      }
-    };
-
-    // Debounce: sync after 2 seconds of no changes
-    const timer = setTimeout(() => {
-      syncToFirebase();
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [workers, sites, invoices, ledgers, attendance, assignments, company, client, bank, passwords, recycleBin, savedReports, savedPermits, execProfile, savedSignature, ready]);
   // ════════════════════════════════════════════════════════════════════════════════
   // EFFECT 3-16: Auto-sync individual data to Firebase & localStorage
   // ════════════════════════════════════════════════════════════════════════════════
